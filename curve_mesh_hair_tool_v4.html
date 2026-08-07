@@ -31,6 +31,7 @@ input[type=checkbox]{accent-color:var(--accent)}
 .brand{font-weight:700;padding:0 9px 0 3px;border-right:1px solid #2d2d2d}.brand small{font-weight:400;color:var(--accent-strong)}
 .toolgroup{display:flex;align-items:center;gap:3px;padding-right:6px;border-right:1px solid #2d2d2d}.toolgroup:last-child{border-right:0}
 .tool-label{color:var(--muted);margin:0 2px}.topbar select{width:auto;min-width:100px}.icon-btn{min-width:28px;height:27px;padding:2px 6px;font-weight:600}.view-btn{min-width:42px}
+.project-state{min-width:78px;padding:4px 7px;border:1px solid #707070;background:#353535;color:var(--muted);font-size:10px;text-align:center}.project-state[data-state="saved"]{color:var(--ok);border-color:#668866}.project-state[data-state="unsaved"]{color:#ffd08a;border-color:#9a7a45}.project-state[data-state="recovered"]{color:var(--accent-strong);border-color:#659090}.project-file-input{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;white-space:nowrap!important}
 .workspace{display:grid;grid-template-columns:232px minmax(320px,1fr) 342px;min-height:0}
 .scene-panel,.command-panel{min-height:0;background:var(--chrome);border-color:var(--border-dark);display:flex;flex-direction:column}
 .scene-panel{border-right:1px solid var(--border-dark)}.command-panel{border-left:1px solid var(--border-dark)}
@@ -46,7 +47,7 @@ input[type=checkbox]{accent-color:var(--accent)}
 .object-header{display:grid;grid-template-columns:minmax(0,1fr) 28px;gap:4px;padding:4px 2px 6px}.color-chip{background:var(--accent);border:1px solid #222}
 .rollout{margin:0 0 4px;border:1px solid #2a2a2a;background:#494949}.rollout-header{width:100%;height:24px;text-align:left;border:0;border-radius:0;background:#3a3a3a;padding:3px 6px;font-weight:600}.rollout-header:before{content:'▾';display:inline-block;width:14px}.rollout.collapsed .rollout-header:before{content:'▸'}.rollout.collapsed .rollout-body{display:none}.rollout-body{padding:7px}.rollout-body label{display:block;margin:5px 0 2px;color:#ddd}.checkrow{display:flex!important;align-items:center;gap:5px;margin:4px 0!important;color:#eee!important}.checkrow input{margin:0}.section-label{font-size:10px;color:#c9c9c9;margin:6px 0 2px}.selected-label{min-height:19px;padding:4px 5px;background:#373737;border:1px solid #666;color:var(--accent-strong);margin-bottom:5px}.primary{background:#4d7377;border-color:#9ccfd0;font-weight:600}.danger:hover{border-color:var(--danger)}.ok{color:var(--ok)}.warning{color:#ffd08a}.stat{margin-top:6px;padding:5px;border:1px solid #666;background:#363636;color:#ccc;font-size:10px;line-height:1.4}.scroll-list{max-height:150px;overflow:auto;background:#3a3a3a;border:1px solid #616161;padding:3px}.brush-item{display:block;width:100%;text-align:left;margin:1px 0}.brush-item.selected{background:#557071;border-color:var(--accent)}
 .kbd{display:inline-block;min-width:20px;text-align:center;padding:0 3px;border:1px solid #777;background:#2e2e2e}.live{font-size:10px;color:var(--ok);margin-top:5px}.statusbar{display:flex;align-items:center;padding:0 8px;background:#343434;border-top:1px solid #1f1f1f;color:#ddd;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.status-mode{margin-left:auto;color:var(--accent-strong);padding-left:12px}.mini-separator{height:1px;background:#2a2a2a;margin:7px 0}.point-nav{display:grid;grid-template-columns:30px 1fr 30px;gap:3px;margin-bottom:5px}.point-nav .index{display:flex;align-items:center;justify-content:center;background:#373737;border:1px solid #666}.range-header{display:flex!important;align-items:center;justify-content:space-between}.range-value{min-width:38px;text-align:right;color:var(--accent-strong);font-variant-numeric:tabular-nums}.range-control{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:6px;color:var(--muted);font-size:10px}
-@media(max-width:1080px){.workspace{grid-template-columns:200px minmax(300px,1fr) 320px}.brand{display:none}}
+@media(max-width:1080px){.editor-shell{grid-template-rows:72px minmax(0,1fr) 24px}.topbar{height:72px;align-content:center;flex-wrap:wrap;overflow:visible}.workspace{grid-template-columns:200px minmax(300px,1fr) 320px}.brand,.tool-label,.project-state{display:none}.viewport-badge{top:auto;bottom:8px}.hint{max-width:calc(100% - 16px)}}
 @media(max-width:820px){html,body{overflow:auto}.editor-shell{height:auto;min-height:100vh;grid-template-rows:auto 1fr auto}.topbar{flex-wrap:wrap}.workspace{grid-template-columns:1fr;grid-template-rows:240px 62vh auto}.scene-panel{border-right:0}.command-panel{border-left:0}.viewport-wrap{grid-row:2}.command-panel{grid-row:3;height:650px}}
 </style>
 </head>
@@ -58,6 +59,12 @@ input[type=checkbox]{accent-color:var(--accent)}
     <div class="toolgroup">
       <button id="undoBtn" class="icon-btn" type="button" title="Undo (Ctrl+Z)">Undo</button>
       <button id="redoBtn" class="icon-btn" type="button" title="Redo (Ctrl+Y / Ctrl+Shift+Z)">Redo</button>
+    </div>
+    <div class="toolgroup">
+      <button id="saveProjectBtn" class="icon-btn" type="button" title="편집 가능한 프로젝트 저장 (Ctrl+S)">Save Project</button>
+      <button id="openProjectBtn" class="icon-btn" type="button" title="프로젝트 열기 (Ctrl+O)">Open Project</button>
+      <input id="projectFileInput" class="project-file-input" type="file" accept=".json,.hairmesh.json,application/json" />
+      <span id="projectStatus" class="project-state" data-state="saved">Empty</span>
     </div>
     <div class="toolgroup">
       <span class="tool-label">Mode</span>
@@ -273,6 +280,9 @@ input[type=checkbox]{accent-color:var(--accent)}
 
 <script type="module">
 import { createHistory } from './src/state/history.js';
+import { createProjectDocument, parseProjectDocument, serializeProjectDocument } from './src/state/project-format.js';
+import { canEditCurve, hasReadyMesh } from './src/state/curve-policy.js';
+import { normalizeMeshBudget } from './src/geometry/mesh-limits.js';
 import { canFinishLine, lineCreationExitAction, MIN_LINE_POINTS } from './src/state/line-creation-policy.js';
 import { allPointIndices, normalizePointSelection, selectedPointIndices as orderedPointSelection } from './src/state/point-selection.js';
 import { initNumericScrubbers } from './src/ui/numeric-scrubber.js';
@@ -344,6 +354,7 @@ scene.add(modelRoot, curvesRoot);
 
 const COLORS = { accent: 0x6da6ff, curve: 0x9bc1ff, tangent: 0xffb86b, selected: 0xffff8a, wire: 0xe8f1ff };
 const AXIS_COLORS = Object.freeze({ X:0xff5a5a, Y:0x65d66e, Z:0x5795ff });
+const RECOVERY_KEY = 'hair-mesh-web:recovery:v1';
 const axisGuideGroup = new THREE.Group();
 axisGuideGroup.name = 'MoveAxisGuides';
 axisGuideGroup.visible = false;
@@ -384,6 +395,11 @@ let brushes = [];
 let nextBrushId = 1;
 let pointerDownState = null;
 let activeCommandTab = 'modify';
+let projectLifecycleReady = false;
+let projectOperation = false;
+let projectDirty = false;
+let projectFileName = 'untitled.hairmesh.json';
+let recoveryTimer = null;
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
@@ -437,7 +453,12 @@ new ResizeObserver(resize).observe(viewport);
 resize();
 
 function setStatus(text) { statusEl.textContent = text; }
-function isTypingTarget(el) { return el && ['INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName); }
+function isTypingTarget(el) {
+  if (!el) return false;
+  if (el.isContentEditable || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') return true;
+  if (el.tagName !== 'INPUT') return false;
+  return !['button', 'checkbox', 'color', 'file', 'radio', 'range', 'reset', 'submit'].includes((el.type || 'text').toLowerCase());
+}
 function disposeMaterial(m) { if (Array.isArray(m)) m.forEach(x => x?.dispose?.()); else m?.dispose?.(); }
 function disposeTree(obj) { obj?.traverse?.(c => { c.geometry?.dispose?.(); disposeMaterial(c.material); }); }
 function clearGroup(group) { while (group.children.length) { const c = group.children[group.children.length - 1]; group.remove(c); disposeTree(c); } }
@@ -558,6 +579,8 @@ function makeCurveRecord(source = null) {
     visualGroup: null, controlObjects: [], line: null,
     meshGroup: null, solidMesh: null, wireMesh: null, topology: null,
     meshEnabled: source ? source.meshEnabled : false,
+    meshStatus: 'disabled',
+    meshError: '',
     settings: { ...defaultSettings(), ...(source ? source.settings : {}) }
   };
   curve.group.visible = curve.visible;
@@ -616,9 +639,38 @@ function pointFromState(state) {
   return point;
 }
 
+function brushState(brush) {
+  return {
+    id: brush.id,
+    name: brush.name,
+    topologyType: brush.topologyType,
+    positions: brush.positions.map(position => position.toArray()),
+    uvs: (brush.uvs || []).map(uv => uv.toArray()),
+    faces: brush.faces.map(face => [...face]),
+    faceUvs: (brush.faceUvs || []).map(face => face ? [...face] : null)
+  };
+}
+
+function brushFromState(state) {
+  const positions = (state.positions || []).map(position => new THREE.Vector3().fromArray(position));
+  const uvs = (state.uvs || []).map(uv => new THREE.Vector2().fromArray(uv));
+  return {
+    id: state.id,
+    name: state.name || `Brush ${state.id}`,
+    topologyType: state.topologyType || 'Saved project topology',
+    positions,
+    uvs,
+    faces: (state.faces || []).map(face => [...face]),
+    faceUvs: (state.faceUvs || []).map(face => face ? [...face] : null),
+    bounds: new THREE.Box3().setFromPoints(positions)
+  };
+}
+
 function captureAppState() {
   return {
     nextCurveId,
+    nextBrushId,
+    brushes: brushes.map(brushState),
     selectedCurveId: selectedCurve?.id ?? null,
     drawingCurveId: drawingCurve?.id ?? null,
     creationPreviousCurveId: creationPreviousCurve?.id ?? null,
@@ -628,6 +680,17 @@ function captureAppState() {
     objectTransformMode,
     pointTool,
     activeCommandTab,
+    display: {
+      viewMode: $('viewMode').value,
+      showPoints: $('showPoints').checked,
+      showTangents: $('showTangents').checked,
+      showCurveLines: $('showCurveLines').checked,
+      xrayControls: $('xrayControls').checked,
+      modelVisible: $('modelVisible').checked,
+      modelOpacity: $('modelOpacity').value,
+      modelWireframe: $('modelWireframe').checked,
+      gridVisible: $('gridVisible').checked
+    },
     curves: curves.map(curve => ({
       id: curve.id,
       name: curve.name,
@@ -663,6 +726,8 @@ function curveFromState(state) {
     visualGroup: null, controlObjects: [], line: null,
     meshGroup: null, solidMesh: null, wireMesh: null, topology: null,
     meshEnabled: state.meshEnabled,
+    meshStatus: 'disabled',
+    meshError: '',
     settings: { ...defaultSettings(), ...state.settings }
   };
   curves.push(curve);
@@ -685,6 +750,9 @@ function restoreAppState(state) {
   selectedPointIndices = new Set();
   drawingCurve = null;
   creationPreviousCurve = null;
+  brushes = (state.brushes || []).map(brushFromState);
+  nextBrushId = Math.max(state.nextBrushId || 1, ...brushes.map(brush => brush.id + 1), 1);
+  refreshBrushUI();
   state.curves.forEach(curveFromState);
   nextCurveId = Math.max(state.nextCurveId, ...curves.map(curve => curve.id + 1), 1);
   selectedCurve = curves.find(curve => curve.id === state.selectedCurveId) || null;
@@ -702,6 +770,18 @@ function restoreAppState(state) {
   );
   objectTransformMode = state.objectTransformMode;
   pointTool = state.pointTool;
+  const display = state.display || {};
+  if (display.viewMode) $('viewMode').value = display.viewMode;
+  if (typeof display.showPoints === 'boolean') $('showPoints').checked = display.showPoints;
+  if (typeof display.showTangents === 'boolean') $('showTangents').checked = display.showTangents;
+  if (typeof display.showCurveLines === 'boolean') $('showCurveLines').checked = display.showCurveLines;
+  if (typeof display.xrayControls === 'boolean') $('xrayControls').checked = display.xrayControls;
+  if (typeof display.modelVisible === 'boolean') $('modelVisible').checked = display.modelVisible;
+  if (display.modelOpacity != null) $('modelOpacity').value = display.modelOpacity;
+  if (typeof display.modelWireframe === 'boolean') $('modelWireframe').checked = display.modelWireframe;
+  if (typeof display.gridVisible === 'boolean') $('gridVisible').checked = display.gridVisible;
+  grid.visible = $('gridVisible').checked;
+  applyModelDisplay();
   curves.forEach(curve => {
     updateControlVisuals(curve);
     if (curve.meshEnabled) rebuildCurveMesh(curve, false);
@@ -709,6 +789,7 @@ function restoreAppState(state) {
   syncModifierUIFromCurve(selectedCurve);
   refreshCurveList();
   updateCurveSelectionStyles();
+  applyViewModeAll();
   updatePointPanel();
   updateSelectionBadge();
   updateMeshStats();
@@ -721,9 +802,93 @@ function updateHistoryButtons({ canUndo, canRedo, undoLabel, redoLabel }) {
   $('redoBtn').disabled = !canRedo;
   $('undoBtn').title = canUndo ? `Undo ${undoLabel} (Ctrl+Z)` : 'Undo (Ctrl+Z)';
   $('redoBtn').title = canRedo ? `Redo ${redoLabel} (Ctrl+Y / Ctrl+Shift+Z)` : 'Redo (Ctrl+Y / Ctrl+Shift+Z)';
+  if (projectLifecycleReady && !projectOperation) markProjectChanged();
 }
 
 const history = createHistory({ capture:captureAppState, restore:restoreAppState, onChange:updateHistoryButtons });
+
+function updateProjectStatus(state, label = '') {
+  const chip = $('projectStatus');
+  chip.dataset.state = state;
+  chip.textContent = label || (state === 'saved' ? 'Saved' : state === 'recovered' ? 'Recovered' : 'Unsaved');
+  chip.title = `${projectFileName} · ${chip.textContent}`;
+}
+
+function recoveryDocument() {
+  return createProjectDocument(captureAppState(), { projectName: projectFileName, recovery: true });
+}
+
+function writeRecoveryNow() {
+  if (recoveryTimer) { clearTimeout(recoveryTimer); recoveryTimer = null; }
+  try {
+    localStorage.setItem(RECOVERY_KEY, serializeProjectDocument(recoveryDocument()));
+  } catch (error) {
+    console.warn('Automatic recovery save failed', error);
+    updateProjectStatus('unsaved', 'Recovery full');
+  }
+}
+
+function scheduleRecovery() {
+  if (!projectLifecycleReady) return;
+  if (recoveryTimer) clearTimeout(recoveryTimer);
+  recoveryTimer = setTimeout(writeRecoveryNow, 250);
+}
+
+function markProjectChanged() {
+  projectDirty = true;
+  updateProjectStatus('unsaved');
+  scheduleRecovery();
+}
+
+function saveProject() {
+  const document = createProjectDocument(captureAppState(), { projectName: projectFileName, recovery: false });
+  downloadBlob(new Blob([serializeProjectDocument(document)], { type:'application/json;charset=utf-8' }), projectFileName);
+  projectDirty = false;
+  updateProjectStatus('saved');
+  writeRecoveryNow();
+  setStatus(`프로젝트 저장 완료: ${projectFileName}`);
+}
+
+async function openProjectFile(file) {
+  projectOperation = true;
+  try {
+    const document = parseProjectDocument(await file.text());
+    restoreAppState(document.appState);
+    history.clear();
+    projectFileName = file.name.endsWith('.json') ? file.name : `${file.name}.hairmesh.json`;
+    projectDirty = false;
+    updateProjectStatus('saved');
+    writeRecoveryNow();
+    setStatus(`프로젝트 열기 완료: ${file.name} · Curve ${curves.length}개 · Brush ${brushes.length}개`);
+  } catch (error) {
+    console.error(error);
+    setStatus(`프로젝트 열기 실패: ${error.message}`);
+  } finally {
+    projectOperation = false;
+    $('projectFileInput').value = '';
+  }
+}
+
+function restoreRecovery() {
+  const source = localStorage.getItem(RECOVERY_KEY);
+  if (!source) return false;
+  projectOperation = true;
+  try {
+    const document = parseProjectDocument(source);
+    if (!document.appState.curves.length && !(document.appState.brushes || []).length) return false;
+    restoreAppState(document.appState);
+    history.clear();
+    projectFileName = document.metadata?.projectName || projectFileName;
+    projectDirty = true;
+    updateProjectStatus('recovered');
+    setStatus(`자동복구 완료 · Curve ${curves.length}개 · Save Project로 파일을 보관하세요.`);
+    return true;
+  } catch (error) {
+    console.warn('Automatic recovery restore failed', error);
+    localStorage.removeItem(RECOVERY_KEY);
+    return false;
+  } finally { projectOperation = false; }
+}
 
 function createControlMesh(radius, color, shape = 'sphere') {
   const geo = shape === 'box' ? new THREE.BoxGeometry(radius * 1.35, radius * 1.35, radius * 1.35) : new THREE.SphereGeometry(radius, 14, 9);
@@ -835,7 +1000,7 @@ function updateAverageAmountOutput() {
 
 function averageSelectedGeometry({ pointPosition = false, handles = false } = {}) {
   const point = selectedPoint();
-  if (!point || !selectedCurve || selectedCurve.locked || !selectedControl) return;
+  if (!point || !curveIsEditable() || !selectedControl) return;
   const index = selectedControl.pointIndex;
   const previous = selectedCurve.points[index - 1] || null;
   const next = selectedCurve.points[index + 1] || null;
@@ -924,7 +1089,7 @@ function finishPointTopologyChange(curve, selectedIndex, message) {
 }
 
 function splitCurveSegment(curve, segmentIndex, u = .5) {
-  if (!curve || curve.locked || curve.points.length < 2) return null;
+  if (!curveIsEditable(curve) || curve.points.length < 2) return null;
   history.begin('Point 삽입');
   const i = THREE.MathUtils.clamp(segmentIndex, 0, curve.points.length - 2);
   const t = THREE.MathUtils.clamp(u, .0001, .9999);
@@ -966,7 +1131,7 @@ function insertPointAtRawParameter(curve, rawT) {
 }
 
 function insertRelativeToSelected(direction) {
-  if (!selectedCurve || !selectedControl) { setStatus('기준 Point를 먼저 선택하세요.'); return; }
+  if (!curveIsEditable() || !selectedControl) { setStatus('편집 가능한 기준 Point를 먼저 선택하세요.'); return; }
   const i = selectedControl.pointIndex;
   if (direction < 0) {
     if (i <= 0) { setStatus('첫 Point 앞에는 분할할 이전 Segment가 없습니다.'); return; }
@@ -978,15 +1143,37 @@ function insertRelativeToSelected(direction) {
 }
 
 function activateCommandTab(name) {
-  activeCommandTab = name;
-  document.querySelectorAll('[data-command-tab]').forEach(btn => btn.classList.toggle('active', btn.dataset.commandTab === name));
-  document.querySelectorAll('[data-command-panel]').forEach(panel => panel.classList.toggle('hidden', panel.dataset.commandPanel !== name));
+  const target = ['create', 'modify', 'display', 'export'].includes(name) ? name : (curves.length ? 'modify' : 'create');
+  activeCommandTab = target;
+  document.querySelectorAll('[data-command-tab]').forEach(btn => btn.classList.toggle('active', btn.dataset.commandTab === target));
+  document.querySelectorAll('[data-command-panel]').forEach(panel => panel.classList.toggle('hidden', panel.dataset.commandPanel !== target));
+}
+
+function curveIsEditable(curve = selectedCurve) { return canEditCurve(curve); }
+function curveHasReadyMesh(curve) { return hasReadyMesh({ enabled:curve?.meshEnabled, status:curve?.meshStatus, hasTopology:!!curve?.topology }); }
+
+function updateCommandAvailability() {
+  const hasCurve = !!selectedCurve;
+  const editable = curveIsEditable();
+  const hasPoint = editable && !!selectedControl && selectedControl.curve === selectedCurve;
+  $('curveNameInput').disabled = !editable;
+  ['duplicateCurveBtn','objectMoveBtn','objectRotateBtn','objectScaleBtn','resetTransformBtn'].forEach(id => { $(id).disabled = !editable; });
+  ['enableLiveMesh','meshType','widthInput','depthInput','segmentsInput','radialInput','brushScale','brushSelect','generateUV','smoothShading','twistCorrection','capStart','capEnd','generateBtn'].forEach(id => {
+    const element = $(id); if (element) element.disabled = !editable;
+  });
+  ['pointMoveBtn','pointRotateBtn','pointScaleBtn','sectionMoveBtn','sectionRotateBtn','sectionScaleBtn','insertPointBtn','deletePointBtn','insertBeforeBtn','insertAfterBtn','averageAmount','averagePointBtn','averageHandlesBtn','averageBothBtn','applyPointValuesBtn','makeTipBtn','resetSectionBtn'].forEach(id => {
+    const element = $(id); if (element && !hasPoint) element.disabled = true;
+  });
+  if (!hasCurve) $('enableLiveMesh').checked = false;
+  updateMeshTypeUI();
 }
 
 function updateSelectionBadge() {
   if (!selectedCurve) { viewportBadge.textContent = 'No Selection'; return; }
-  const live = selectedCurve.meshEnabled ? ` · LIVE ${selectedCurve.settings.type.toUpperCase()}` : '';
-  viewportBadge.textContent = `${selectedCurve.name} · ${selectedCurve.points.length} Points${live}${selectedCurve.locked ? ' · LOCKED' : ''}`;
+  const meshState = curveHasReadyMesh(selectedCurve)
+    ? ` · LIVE ${selectedCurve.settings.type.toUpperCase()}`
+    : selectedCurve.meshStatus === 'error' ? ' · MESH ERROR' : '';
+  viewportBadge.textContent = `${selectedCurve.name} · ${selectedCurve.points.length} Points${meshState}${selectedCurve.visible ? '' : ' · HIDDEN'}${selectedCurve.locked ? ' · LOCKED' : ''}`;
 }
 
 function selectCurve(curve, options = {}) {
@@ -1007,14 +1194,15 @@ function selectCurve(curve, options = {}) {
   updatePointPanel();
   updateSelectionBadge();
   activateCommandTab('modify');
-  if (curve && enterEdit && !curve.locked) setMode('edit');
+  if (curve && enterEdit && curveIsEditable(curve)) setMode('edit');
   else { updateControlVisibility(); syncGizmo(); }
+  updateCommandAvailability();
   updateMeshStats();
   if (curve) setStatus(`${curve.name} 선택${curve.locked ? ' · 잠김' : ' · Point 편집 준비'}`);
 }
 
 function selectControl(curve, pointIndex, kind) {
-  if (!curve || curve.locked) { if (curve?.locked) setStatus(`${curve.name}은 잠겨 있습니다.`); return; }
+  if (!curveIsEditable(curve)) { if (curve) setStatus(`${curve.name}은 ${curve.visible ? '잠겨' : '숨겨'} 있습니다.`); return; }
   selectedCurve = curve;
   selectedControl = { curve, pointIndex, kind };
   selectedPointIndices = new Set([pointIndex]);
@@ -1031,26 +1219,37 @@ function selectControl(curve, pointIndex, kind) {
 }
 
 function setCurveVisible(curve, visible) {
+  if (curve === drawingCurve) { setStatus('생성 중인 Line은 Finish 또는 Cancel 후 숨길 수 있습니다.'); return false; }
   history.begin('Spline 표시 변경');
   curve.visible = visible;
   curve.group.visible = visible;
+  if (curve === selectedCurve && !visible && ['edit','insert','transform'].includes(mode)) setMode('orbit');
   refreshCurveList();
   updateControlVisibility();
+  syncGizmo();
+  updatePointPanel();
+  updateCommandAvailability();
   updateSelectionBadge();
   setStatus(`${curve.name}: ${visible ? '표시' : '숨김'}`);
   history.commit();
+  return true;
 }
 
 function setCurveLocked(curve, locked) {
+  if (curve === drawingCurve) { setStatus('생성 중인 Line은 Finish 또는 Cancel 후 잠글 수 있습니다.'); return false; }
   history.begin('Spline 잠금 변경');
   curve.locked = locked;
   if (curve === selectedCurve && locked && (mode === 'edit' || mode === 'insert' || mode === 'transform')) setMode('orbit');
   refreshCurveList();
   updateControlVisibility();
   syncGizmo();
+  updatePointPanel();
+  syncModifierUIFromCurve(selectedCurve);
+  updateCommandAvailability();
   updateSelectionBadge();
   setStatus(`${curve.name}: ${locked ? '편집 잠금' : '잠금 해제'}`);
   history.commit();
+  return true;
 }
 
 function refreshCurveList() {
@@ -1068,9 +1267,13 @@ function refreshCurveList() {
     const main = document.createElement('button');
     main.type = 'button'; main.className = 'scene-row-main';
     const nameText = document.createTextNode(curve.name);
-    const meta = document.createElement('span'); meta.className = 'scene-row-meta'; meta.textContent = `${curve.points.length} pts${curve.meshEnabled ? ' · LIVE' : ''}`;
+    const meta = document.createElement('span'); meta.className = 'scene-row-meta'; meta.textContent = `${curve.points.length} pts${curveHasReadyMesh(curve) ? ' · LIVE' : curve.meshStatus === 'error' ? ' · ERROR' : ''}`;
     main.append(nameText, meta);
-    main.addEventListener('click', () => { if (mode === 'draw') cancelLineCreation(); selectCurve(curve, { enterEdit: true }); });
+    main.addEventListener('click', () => {
+      if (curve === drawingCurve) { setStatus('현재 Line 생성 중 · Finish, Finish & Edit 또는 Cancel을 선택하세요.'); return; }
+      if (mode === 'draw') cancelLineCreation();
+      if (curves.includes(curve)) selectCurve(curve, { enterEdit: true });
+    });
 
     const lock = document.createElement('button');
     lock.type = 'button'; lock.className = 'scene-lock'; lock.textContent = curve.locked ? 'L' : 'U'; lock.title = '편집 잠금';
@@ -1102,7 +1305,7 @@ function pointInFreePlane(event) {
   return raycaster.ray.intersectPlane(plane, out) ? out : null;
 }
 function findControl(event) {
-  if (!selectedCurve || selectedCurve.locked) return null;
+  if (!curveIsEditable()) return null;
   pointerNDC(event);
   return raycaster.intersectObjects(selectedCurve.controlObjects.filter(o => o.visible), false)[0]?.object || null;
 }
@@ -1332,12 +1535,15 @@ function topologyToWireGeometry(topology) {
 }
 
 function getCurrentSettings() {
+  const { segments, radial } = normalizeMeshBudget({ segments:$('segmentsInput').value, radial:$('radialInput').value });
+  $('segmentsInput').value = String(segments);
+  $('radialInput').value = String(radial);
   return {
     type: $('meshType').value,
     width: Math.max(parseFloat($('widthInput').value) || 0, 0),
     depth: Math.max(parseFloat($('depthInput').value) || 0, 0),
-    segments: Math.max(2, parseInt($('segmentsInput').value) || 32),
-    radial: Math.max(3, parseInt($('radialInput').value) || 8),
+    segments,
+    radial,
     brushScale: Math.max(parseFloat($('brushScale').value) || 1, .000001),
     brushId: Number($('brushSelect').value) || null,
     generateUV: $('generateUV').checked,
@@ -1350,11 +1556,12 @@ function getCurrentSettings() {
 
 function updateMeshTypeUI() {
   const type = $('meshType').value;
+  const editable = curveIsEditable();
   $('brushControls').classList.toggle('hidden', type !== 'brush');
   $('tubeCapControls').classList.toggle('hidden', type !== 'tube');
-  $('radialInput').disabled = type !== 'tube';
-  $('depthInput').disabled = type !== 'tube';
-  $('widthInput').disabled = type === 'brush';
+  $('radialInput').disabled = !editable || type !== 'tube';
+  $('depthInput').disabled = !editable || type !== 'tube';
+  $('widthInput').disabled = !editable || type === 'brush';
 }
 
 function syncModifierUIFromCurve(curve) {
@@ -1366,11 +1573,12 @@ function syncModifierUIFromCurve(curve) {
     updateSelectionBadge();
     suppressModifierEvents = false;
     updateMeshStats();
+    updateCommandAvailability();
     return;
   }
   curve.settings = { ...defaultSettings(), ...curve.settings };
   const s = curve.settings;
-  $('curveNameInput').disabled = false;
+  $('curveNameInput').disabled = !curveIsEditable(curve);
   $('curveNameInput').value = curve.name;
   $('meshType').value = s.type;
   $('widthInput').value = s.width;
@@ -1391,6 +1599,7 @@ function syncModifierUIFromCurve(curve) {
   suppressModifierEvents = false;
   updateSelectionBadge();
   updateMeshStats();
+  updateCommandAvailability();
 }
 
 function makeTopologyForCurve(curve) {
@@ -1404,16 +1613,31 @@ function makeTopologyForCurve(curve) {
   }
   return null;
 }
-function removeCurveMesh(curve) {
+function removeCurveMesh(curve, status = 'disabled', error = '') {
   if (!curve) return;
-  if (!curve.meshGroup) { curve.topology = null; return; }
-  curve.group.remove(curve.meshGroup); disposeTree(curve.meshGroup);
+  if (curve.meshGroup) { curve.group.remove(curve.meshGroup); disposeTree(curve.meshGroup); }
   curve.meshGroup = curve.solidMesh = curve.wireMesh = curve.topology = null;
+  curve.meshStatus = status;
+  curve.meshError = error;
+}
+function failCurveMesh(curve, message) {
+  curve.meshEnabled = false;
+  removeCurveMesh(curve, 'error', message);
+  updateSelectionBadge();
+  updateMeshStats();
+  setStatus(message);
+  return false;
 }
 function rebuildCurveMesh(curve, announce = false) {
-  if (!curve?.meshEnabled || curve.points.length < 2) { if (curve?.points.length < 2) removeCurveMesh(curve); updateMeshStats(); return false; }
-  const topology = makeTopologyForCurve(curve); if (!topology) { removeCurveMesh(curve); updateMeshStats(); return false; }
-  removeCurveMesh(curve);
+  if (!curve?.meshEnabled) { removeCurveMesh(curve); updateMeshStats(); return false; }
+  if (curve.points.length < 2) return failCurveMesh(curve, 'Live Mesh에는 Point가 2개 이상 필요합니다.');
+  if (curve.settings.type === 'brush' && !brushes.some(brush => brush.id === curve.settings.brushId)) {
+    return failCurveMesh(curve, 'Mesh Brush를 먼저 추가하고 선택하세요.');
+  }
+  curve.meshStatus = 'evaluating';
+  curve.meshError = '';
+  const topology = makeTopologyForCurve(curve); if (!topology) return failCurveMesh(curve, '현재 설정으로 Mesh topology를 생성할 수 없습니다.');
+  removeCurveMesh(curve, 'evaluating');
   const meshGroup = new THREE.Group(); meshGroup.name = `CurveMeshModifier_${curve.id}`; meshGroup.userData.curveId = curve.id;
   const solidMat = new THREE.MeshStandardMaterial({ color: COLORS.accent, roughness: .55, metalness: 0, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
   const solid = new THREE.Mesh(topologyToGeometry(topology, curve.settings.smooth), solidMat); solid.name = `CurveMesh_${curve.id}`; solid.userData.curveId = curve.id;
@@ -1421,6 +1645,7 @@ function rebuildCurveMesh(curve, announce = false) {
   const wire = new THREE.LineSegments(topologyToWireGeometry(topology), wireMat); wire.name = `CurveQuadEdges_${curve.id}`; wire.userData.curveId = curve.id; wire.renderOrder = 15;
   meshGroup.add(solid, wire); curve.group.add(meshGroup);
   curve.meshGroup = meshGroup; curve.solidMesh = solid; curve.wireMesh = wire; curve.topology = topology;
+  curve.meshStatus = 'ready'; curve.meshError = '';
   applyViewModeToCurve(curve); updateMeshStats(); updateControlVisibility(); updateSelectionBadge();
   if (announce) setStatus(`${curve.name}: Live Mesh 활성화/갱신 완료`); return true;
 }
@@ -1435,7 +1660,14 @@ function topologyStats(topology) {
   return { vertices: topology?.positions?.length || 0, faces, quads, tris, ngons, renderTris };
 }
 function updateMeshStats() {
-  if (!selectedCurve?.topology) { $('meshStats').textContent = selectedCurve?.meshEnabled ? '메쉬를 생성할 수 없는 상태' : '선택 메쉬 없음'; return; }
+  if (!selectedCurve?.topology) {
+    $('meshStats').textContent = selectedCurve?.meshStatus === 'error'
+      ? `ERROR · ${selectedCurve.meshError || '메쉬를 생성할 수 없습니다.'}`
+      : '선택 메쉬 없음';
+    $('meshStats').classList.toggle('warning', selectedCurve?.meshStatus === 'error');
+    return;
+  }
+  $('meshStats').classList.remove('warning');
   const s = topologyStats(selectedCurve.topology);
   $('meshStats').textContent = `Logical Vertices ${s.vertices.toLocaleString()} · Faces ${s.faces.toLocaleString()} · Quads ${s.quads.toLocaleString()} · Tris ${s.tris.toLocaleString()}${s.ngons ? ` · N-gons ${s.ngons.toLocaleString()}` : ''} · Render triangles ${s.renderTris.toLocaleString()}`;
 }
@@ -1498,14 +1730,16 @@ async function loadBrushFile(file) {
   brushes.push(brush); return brush;
 }
 async function loadBrushFiles(fileList) {
+  history.begin('Mesh Brush 추가');
   let last = null, loaded = 0;
   for (const file of [...fileList]) {
     try { last = await loadBrushFile(file); loaded++; }
     catch (err) { console.error(err); setStatus(`브러시 ${file.name} 로드 실패: ${err.message}`); }
   }
-  if (last && selectedCurve) { selectedCurve.settings.brushId = last.id; if (selectedCurve.settings.type === 'brush' && selectedCurve.meshEnabled) rebuildCurveMesh(selectedCurve, false); }
+  if (last && curveIsEditable()) { selectedCurve.settings.brushId = last.id; if (selectedCurve.settings.type === 'brush' && selectedCurve.meshEnabled) rebuildCurveMesh(selectedCurve, false); }
   refreshBrushUI(); syncModifierUIFromCurve(selectedCurve);
-  if (loaded) setStatus(`Mesh Brush ${loaded}개 추가 완료. OBJ는 원래 polygon topology를 유지합니다.`);
+  if (loaded) { history.commit(); setStatus(`Mesh Brush ${loaded}개 추가 완료. OBJ는 원래 polygon topology를 유지합니다.`); }
+  else history.cancel();
 }
 function refreshBrushUI() {
   const select = $('brushSelect'), list = $('brushList');
@@ -1530,14 +1764,14 @@ function selectedPointTargetIndices() {
   return orderedPointSelection(selectedPointIndices, selectedCurve.points.length, selectedControl?.pointIndex ?? null);
 }
 function selectAllCurvePoints() {
-  if (!selectedCurve?.points.length) return false;
+  if (!curveIsEditable() || !selectedCurve?.points.length) return false;
   selectedPointIndices = new Set(allPointIndices(selectedCurve.points.length));
   if (!selectedControl || selectedControl.curve !== selectedCurve) {
     selectedControl = { curve:selectedCurve, pointIndex:0, kind:'anchor' };
   }
   selectedControl.kind = 'anchor';
   selectedCurve.lastControl = { pointIndex:selectedControl.pointIndex, kind:'anchor' };
-  if (!selectedCurve.locked && mode !== 'edit') setMode('edit');
+  if (mode !== 'edit') setMode('edit');
   curves.forEach(updateControlVisuals);
   updateControlVisibility();
   updatePointPanel();
@@ -1554,7 +1788,7 @@ const KNOT_TYPE_BUTTONS = Object.freeze({
 const KNOT_TYPE_LABELS = Object.freeze({ bezierCorner:'Bezier Corner', bezier:'Bezier', corner:'Corner', smooth:'Smooth' });
 function updateKnotTypeButtons() {
   const indices = selectedPointTargetIndices();
-  const canEdit = !!indices.length && !!selectedCurve && !selectedCurve.locked;
+  const canEdit = !!indices.length && curveIsEditable();
   Object.entries(KNOT_TYPE_BUTTONS).forEach(([type, id]) => {
     $(id).disabled = !canEdit;
     $(id).classList.toggle('active', canEdit && indices.every(index => selectedCurve.points[index].handleMode === type));
@@ -1568,14 +1802,16 @@ function updatePointPanel() {
   $('pointIndexLabel').textContent = p && selectedControl
     ? selectionCount > 1 ? `All ${selectionCount} · Active ${selectedControl.pointIndex + 1} / ${pointCount}` : `${selectedControl.pointIndex + 1} / ${pointCount}`
     : `— / ${pointCount || '—'}`;
-  if (!p || !selectedCurve) {
-    label.textContent = selectedCurve ? `${selectedCurve.name} · Point를 선택하세요` : '선택된 포인트 없음';
+  if (!p || !selectedCurve || !curveIsEditable()) {
+    label.textContent = selectedCurve
+      ? `${selectedCurve.name} · ${selectedCurve.visible ? '잠금됨' : '숨김'} · 편집할 수 없음`
+      : '선택된 포인트 없음';
     ['px','py','pz','ox','oy','oz','sx','sz','rx','ry','rz'].forEach(id => $(id).value = '');
     $('averageAmount').disabled = true;
     ['averagePointBtn','averageHandlesBtn','averageBothBtn'].forEach(id => $(id).disabled = true);
     $('deletePointBtn').disabled = true; $('insertBeforeBtn').disabled = true; $('insertAfterBtn').disabled = true;
     $('prevPointBtn').disabled = pointCount < 1; $('nextPointBtn').disabled = pointCount < 1;
-    updateKnotTypeButtons(); updatePointToolButtons(); return;
+    updateKnotTypeButtons(); updatePointToolButtons(); updateCommandAvailability(); return;
   }
   const kind = selectedControl.kind === 'anchor' ? 'Anchor' : selectedControl.kind === 'in' ? 'Bezier In Handle' : 'Bezier Out Handle';
   label.textContent = selectionCount > 1
@@ -1593,20 +1829,22 @@ function updatePointPanel() {
   $('sx').value = p.scaleX.toFixed(5); $('sz').value = p.scaleZ.toFixed(5);
   const e = new THREE.Euler().setFromQuaternion(p.rotation, 'XYZ');
   $('rx').value = THREE.MathUtils.radToDeg(e.x).toFixed(3); $('ry').value = THREE.MathUtils.radToDeg(e.y).toFixed(3); $('rz').value = THREE.MathUtils.radToDeg(e.z).toFixed(3);
-  updateKnotTypeButtons(); updatePointToolButtons();
+  updateKnotTypeButtons(); updatePointToolButtons(); updateCommandAvailability();
 }
 
 function updatePointToolButtons() {
   const tangent = selectedControl && selectedControl.kind !== 'anchor';
-  const canSection = !!selectedControl && !tangent && (selectedCurve?.points.length || 0) >= 2;
+  const canEdit = curveIsEditable() && !!selectedControl;
+  const canSection = canEdit && !tangent && (selectedCurve?.points.length || 0) >= 2;
   const sectionTools = new Set(['sectionMove','sectionRotate','sectionScale']);
   const map = { pointMove:'pointMoveBtn', pointRotate:'pointRotateBtn', pointScale:'pointScaleBtn', sectionMove:'sectionMoveBtn', sectionRotate:'sectionRotateBtn', sectionScale:'sectionScaleBtn' };
   Object.entries(map).forEach(([tool,id]) => {
     $(id).classList.toggle('active', !tangent && pointTool === tool && mode === 'edit');
-    $(id).disabled = !selectedControl || tangent || (sectionTools.has(tool) && !canSection);
+    $(id).disabled = !canEdit || tangent || (sectionTools.has(tool) && !canSection);
   });
 }
 function setPointTool(tool) {
+  if (!curveIsEditable()) { setStatus(selectedCurve?.visible === false ? '숨긴 커브는 편집할 수 없습니다.' : '잠긴 커브는 편집할 수 없습니다.'); return; }
   if (tool.startsWith('section') && (selectedCurve?.points.length || 0) < 2) { setStatus('Section 편집에는 Point가 2개 이상 필요합니다.'); return; }
   pointTool = tool; if (mode !== 'edit') setMode('edit'); updatePointToolButtons(); syncGizmo(); updateHint();
 }
@@ -1628,7 +1866,7 @@ function finishKnotEdit(label, indices) {
 
 function setSelectedKnotType(type) {
   const indices = selectedPointTargetIndices();
-  if (!indices.length || !selectedCurve || selectedCurve.locked) return;
+  if (!indices.length || !curveIsEditable()) return;
   history.begin(`Knot Type · ${KNOT_TYPE_LABELS[type]}`);
   indices.forEach(index => applyHandleMode(selectedCurve.points, index, type));
   finishKnotEdit(KNOT_TYPE_LABELS[type], indices);
@@ -1636,7 +1874,7 @@ function setSelectedKnotType(type) {
 
 function resetSelectedTangents() {
   const indices = selectedPointTargetIndices();
-  if (!indices.length || !selectedCurve || selectedCurve.locked) return;
+  if (!indices.length || !curveIsEditable()) return;
   history.begin('Reset Tangents');
   indices.forEach(index => recalculateHandles(selectedCurve.points, index));
   finishKnotEdit('Tangents Reset', indices);
@@ -1770,13 +2008,13 @@ function syncGizmo() {
   if (transformDragging) return;
   gizmoContext = null; transformControls.detach(); transformControls.getHelper().visible = false;
   syncAxisGuides();
-  if (mode === 'transform' && selectedCurve && !selectedCurve.locked) {
+  if (mode === 'transform' && curveIsEditable()) {
     const worldPos = curveRootWorldPosition(selectedCurve);
     const q = coordinateFrameQuaternion($('transformSpace').value, selectedCurve);
     setProxyTransform(worldPos, q); transformControls.attach(gizmoProxy); transformControls.setMode(objectTransformMode); transformControls.showX = transformControls.showY = transformControls.showZ = true;
     transformControls.getHelper().visible = true; gizmoContext = { type:'object', curve:selectedCurve, operation:objectTransformMode }; syncAxisGuides(); return;
   }
-  if (mode === 'edit' && selectedControl && selectedCurve && !selectedCurve.locked) {
+  if (mode === 'edit' && selectedControl && curveIsEditable()) {
     const p = selectedPoint(); if (!p) return;
     const tangent = selectedControl.kind !== 'anchor';
     const operation = tangent ? 'translate' : (pointTool === 'pointRotate' || pointTool === 'sectionRotate') ? 'rotate' : (pointTool === 'pointScale' || pointTool === 'sectionScale') ? 'scale' : 'translate';
@@ -1943,7 +2181,9 @@ function finishLineCreation(enterEdit = false) {
 function cancelLineCreation() {
   if (mode !== 'draw') return false;
   const draft = drawingCurve;
-  const previous = creationPreviousCurve && curves.includes(creationPreviousCurve) ? creationPreviousCurve : null;
+  const previous = creationPreviousCurve && curves.includes(creationPreviousCurve)
+    ? creationPreviousCurve
+    : curves.find(curve => curve !== draft) || null;
   if (draft) history.begin('Line 생성 취소');
   drawingCurve = null;
   creationPreviousCurve = null;
@@ -1982,7 +2222,7 @@ function leaveLineCreationForMode(nextMode) {
 }
 
 function setMode(next) {
-  if (selectedCurve?.locked && ['edit','insert','transform'].includes(next)) next = 'orbit';
+  if (!curveIsEditable() && ['edit','insert','transform'].includes(next)) next = 'orbit';
   mode = next;
   $('modeSelect').value = next;
   if (mode !== 'draw') drawCameraOverride = false;
@@ -2008,7 +2248,7 @@ function updateHint() {
   else hintEl.textContent = 'Select · 커브 클릭 후 W/E/R: Root Move/Rotate/Scale · 드래그 회전 / 휠 줌';
 }
 
-function setObjectTransformMode(next) { if (!selectedCurve || selectedCurve.locked) { setStatus(selectedCurve?.locked ? `${selectedCurve.name}은 잠겨 있습니다.` : '커브를 먼저 선택하세요.'); return; } objectTransformMode = next; setMode('transform'); updateObjectTransformButtons(); syncGizmo(); updateHint(); }
+function setObjectTransformMode(next) { if (!curveIsEditable()) { setStatus(selectedCurve ? `${selectedCurve.name}은 ${selectedCurve.visible ? '잠겨' : '숨겨'} 있습니다.` : '커브를 먼저 선택하세요.'); return; } objectTransformMode = next; setMode('transform'); updateObjectTransformButtons(); syncGizmo(); updateHint(); }
 function updateObjectTransformButtons() {
   $('objectMoveBtn').classList.toggle('active', mode === 'transform' && objectTransformMode === 'translate');
   $('objectRotateBtn').classList.toggle('active', mode === 'transform' && objectTransformMode === 'rotate');
@@ -2062,7 +2302,7 @@ function setStandardView(kind) {
 }
 
 function cyclePoint(step) {
-  if (!selectedCurve?.points.length || selectedCurve.locked) return;
+  if (!curveIsEditable() || !selectedCurve?.points.length) return;
   const current = selectedControl?.pointIndex ?? (step > 0 ? -1 : 0);
   const next = (current + step + selectedCurve.points.length) % selectedCurve.points.length;
   setMode('edit');
@@ -2070,8 +2310,8 @@ function cyclePoint(step) {
 }
 
 function toggleDrawCameraOverride() {
-  if (mode !== 'draw') { beginLineCreation(); drawCameraOverride = false; }
-  else drawCameraOverride = !drawCameraOverride;
+  if (mode !== 'draw') { setStatus('Caps 카메라 토글은 Line 생성 중에만 사용할 수 있습니다.'); return; }
+  drawCameraOverride = !drawCameraOverride;
   orbit.enabled = drawCameraOverride;
   updateHint();
   $('drawCameraToggleBtn').classList.toggle('active', drawCameraOverride);
@@ -2086,7 +2326,7 @@ function handleViewportClick(event) {
   pointerDownState = null;
   if (moved > 5 || wasControl || transformControls.axis) return;
   if (mode === 'insert') {
-    if (!selectedCurve || selectedCurve.locked) { setStatus('삽입할 편집 가능 커브를 선택하세요.'); return; }
+    if (!curveIsEditable()) { setStatus('삽입할 편집 가능 커브를 선택하세요.'); return; }
     const nearest = findNearestCurveParameter(event, selectedCurve);
     if (!nearest) { setStatus('커브에서 18px 이내를 클릭하세요.'); return; }
     insertPointAtRawParameter(selectedCurve, nearest.rawT);
@@ -2136,6 +2376,14 @@ renderer.domElement.addEventListener('pointercancel', event => {
 }, true);
 
 $('modelFile').addEventListener('change', e => { const f = e.target.files?.[0]; if (f) loadModel(f); });
+$('saveProjectBtn').addEventListener('click', saveProject);
+$('openProjectBtn').addEventListener('click', () => $('projectFileInput').click());
+$('projectFileInput').addEventListener('change', e => { const file = e.target.files?.[0]; if (file) openProjectFile(file); });
+window.addEventListener('beforeunload', event => {
+  if (!projectDirty) return;
+  event.preventDefault();
+  event.returnValue = '';
+});
 $('modeSelect').addEventListener('change', e => {
   const nextMode = e.target.value;
   if (nextMode === 'draw') beginLineCreation();
@@ -2150,7 +2398,7 @@ $('drawTarget').addEventListener('change', () => updateDrawTargetUI());
 $('drawCameraToggleBtn').addEventListener('click', toggleDrawCameraOverride);
 
 $('deletePointBtn').addEventListener('click', () => {
-  if (!selectedCurve || !selectedControl || selectedCurve.locked) return;
+  if (!curveIsEditable() || !selectedControl) return;
   history.begin('Point 제거');
   const i = selectedControl.pointIndex;
   selectedCurve.points.splice(i,1);
@@ -2160,14 +2408,14 @@ $('deletePointBtn').addEventListener('click', () => {
   finishPointTopologyChange(selectedCurve, Math.min(i, selectedCurve.points.length - 1), `${selectedCurve.name}: Point ${i + 1} 제거`);
   history.commit();
 });
-$('insertPointBtn').addEventListener('click', () => { if (!selectedCurve || selectedCurve.points.length < 2) { setStatus('Point가 2개 이상인 커브를 선택하세요.'); return; } setMode(mode === 'insert' ? 'edit' : 'insert'); });
+$('insertPointBtn').addEventListener('click', () => { if (!curveIsEditable() || selectedCurve.points.length < 2) { setStatus('Point가 2개 이상인 편집 가능 커브를 선택하세요.'); return; } setMode(mode === 'insert' ? 'edit' : 'insert'); });
 $('insertBeforeBtn').addEventListener('click', () => insertRelativeToSelected(-1));
 $('insertAfterBtn').addEventListener('click', () => insertRelativeToSelected(1));
 $('prevPointBtn').addEventListener('click', () => cyclePoint(-1));
 $('nextPointBtn').addEventListener('click', () => cyclePoint(1));
 
 $('duplicateCurveBtn').addEventListener('click', () => {
-  if (!selectedCurve) { setStatus('복제할 커브를 먼저 선택하세요.'); return; }
+  if (!curveIsEditable()) { setStatus('복제할 편집 가능 커브를 먼저 선택하세요.'); return; }
   history.begin('Spline 복제');
   const source = selectedCurve, copy = makeCurveRecord(source);
   setObjectTransformMode('translate');
@@ -2175,7 +2423,7 @@ $('duplicateCurveBtn').addEventListener('click', () => {
   history.commit();
 });
 function deleteSelectedCurve() {
-  if (!selectedCurve) return;
+  if (!curveIsEditable()) { if (selectedCurve) setStatus('숨김/잠금 커브는 삭제하기 전에 표시하고 잠금을 해제하세요.'); return; }
   history.begin('Spline 삭제');
   const c = selectedCurve;
   curves = curves.filter(x => x !== c);
@@ -2190,14 +2438,14 @@ $('objectScaleBtn').addEventListener('click', () => setObjectTransformMode('scal
 $('axisGuidesToggleBtn').addEventListener('click', toggleAxisGuides);
 $('transformSpace').addEventListener('change', syncGizmo);
 $('resetTransformBtn').addEventListener('click', () => {
-  if (!selectedCurve || selectedCurve.locked) return;
+  if (!curveIsEditable()) return;
   history.begin('Spline Root Transform 초기화');
   selectedCurve.group.position.set(0,0,0); selectedCurve.group.quaternion.identity(); selectedCurve.group.scale.set(1,1,1); selectedCurve.group.updateMatrixWorld(true);
   syncGizmo(); setStatus(`${selectedCurve.name}: Object Transform 초기화`);
   history.commit();
 });
 $('curveNameInput').addEventListener('input', e => {
-  if (!selectedCurve || suppressModifierEvents) return;
+  if (!curveIsEditable() || suppressModifierEvents) return;
   history.begin('Spline 이름 변경');
   const next = e.target.value.trimStart();
   selectedCurve.name = next || `Line${String(selectedCurve.id).padStart(3,'0')}`;
@@ -2219,7 +2467,7 @@ $('averageHandlesBtn').addEventListener('click', () => averageSelectedGeometry({
 $('averageBothBtn').addEventListener('click', () => averageSelectedGeometry({ pointPosition:true, handles:true }));
 $('averageAmount').addEventListener('input', updateAverageAmountOutput);
 $('applyPointValuesBtn').addEventListener('click', () => {
-  const p = selectedPoint(); if (!p || selectedCurve.locked) return;
+  const p = selectedPoint(); if (!p || !curveIsEditable()) return;
   const nums = ['px','py','pz','ox','oy','oz','sx','sz','rx','ry','rz'].map(id => parseFloat($(id).value));
   if (!nums.every(Number.isFinite)) { setStatus('Point 수치 입력에 유효하지 않은 값이 있습니다.'); return; }
   history.begin('Point 수치 적용');
@@ -2229,23 +2477,26 @@ $('applyPointValuesBtn').addEventListener('click', () => {
   updateControlVisuals(selectedCurve); updateCurveVisual(selectedCurve); if (selectedCurve.meshEnabled) rebuildCurveMesh(selectedCurve,false); updatePointPanel(); syncGizmo();
   history.commit();
 });
-$('makeTipBtn').addEventListener('click', () => { const p = selectedPoint(); if (!p || selectedCurve.locked) return; history.begin('Tip 설정'); p.scaleX = 0; p.scaleZ = 0; if (selectedCurve.meshEnabled) rebuildCurveMesh(selectedCurve,false); updatePointPanel(); syncGizmo(); setStatus('현재 Point의 단면 Scale X/Z를 0으로 설정'); history.commit(); });
-$('resetSectionBtn').addEventListener('click', () => { const p = selectedPoint(); if (!p || selectedCurve.locked) return; history.begin('Section 초기화'); p.offset.set(0,0,0); p.rotation.identity(); p.scaleX = p.scaleZ = 1; if (selectedCurve.meshEnabled) rebuildCurveMesh(selectedCurve,false); updatePointPanel(); syncGizmo(); history.commit(); });
+$('makeTipBtn').addEventListener('click', () => { const p = selectedPoint(); if (!p || !curveIsEditable()) return; history.begin('Tip 설정'); p.scaleX = 0; p.scaleZ = 0; if (selectedCurve.meshEnabled) rebuildCurveMesh(selectedCurve,false); updatePointPanel(); syncGizmo(); setStatus('현재 Point의 단면 Scale X/Z를 0으로 설정'); history.commit(); });
+$('resetSectionBtn').addEventListener('click', () => { const p = selectedPoint(); if (!p || !curveIsEditable()) return; history.begin('Section 초기화'); p.offset.set(0,0,0); p.rotation.identity(); p.scaleX = p.scaleZ = 1; if (selectedCurve.meshEnabled) rebuildCurveMesh(selectedCurve,false); updatePointPanel(); syncGizmo(); history.commit(); });
 
 $('enableLiveMesh').addEventListener('change', () => {
-  if (!selectedCurve || suppressModifierEvents) return;
+  if (!curveIsEditable() || suppressModifierEvents) return;
   history.begin('Live Mesh 표시 변경');
   selectedCurve.settings = getCurrentSettings();
   selectedCurve.meshEnabled = $('enableLiveMesh').checked;
   if (selectedCurve.meshEnabled) rebuildCurveMesh(selectedCurve, true); else removeCurveMesh(selectedCurve);
+  $('enableLiveMesh').checked = curveHasReadyMesh(selectedCurve);
   refreshCurveList(); syncModifierUIFromCurve(selectedCurve); updateControlVisibility();
   history.commit();
 });
 $('generateBtn').addEventListener('click', () => {
-  if (!selectedCurve || selectedCurve.points.length < 2) { setStatus('Point가 2개 이상인 커브를 먼저 선택하세요.'); return; }
+  if (!curveIsEditable() || selectedCurve.points.length < 2) { setStatus('편집 가능한 2 Point 이상 커브를 먼저 선택하세요.'); return; }
   history.begin('Live Mesh 생성');
-  selectedCurve.settings = getCurrentSettings(); selectedCurve.meshEnabled = true; $('enableLiveMesh').checked = true;
-  rebuildCurveMesh(selectedCurve,true); syncModifierUIFromCurve(selectedCurve); refreshCurveList(); updateControlVisibility(); setMode('edit');
+  selectedCurve.settings = getCurrentSettings(); selectedCurve.meshEnabled = true;
+  const built = rebuildCurveMesh(selectedCurve,true);
+  $('enableLiveMesh').checked = built;
+  syncModifierUIFromCurve(selectedCurve); refreshCurveList(); updateControlVisibility(); if (built) setMode('edit');
   history.commit();
 });
 ['meshType','widthInput','depthInput','segmentsInput','radialInput','brushScale','generateUV','smoothShading','twistCorrection','capStart','capEnd'].forEach(id => {
@@ -2253,7 +2504,7 @@ $('generateBtn').addEventListener('click', () => {
   el.addEventListener(eventName, () => {
     if (suppressModifierEvents) return;
     updateMeshTypeUI();
-    if (!selectedCurve) return;
+    if (!curveIsEditable()) return;
     history.begin('Live Mesh Modifier 변경');
     selectedCurve.settings = getCurrentSettings();
     if (selectedCurve.meshEnabled) rebuildCurveMesh(selectedCurve,false); else updateMeshStats();
@@ -2263,23 +2514,25 @@ $('generateBtn').addEventListener('click', () => {
   if (eventName === 'input') el.addEventListener('change', () => history.commit());
 });
 $('brushFiles').addEventListener('change', e => { if (e.target.files?.length) loadBrushFiles(e.target.files); e.target.value = ''; });
-$('brushSelect').addEventListener('change', () => { if (!selectedCurve || suppressModifierEvents) return; selectedCurve.settings.brushId = Number($('brushSelect').value) || null; refreshBrushUI(); if (selectedCurve.meshEnabled && selectedCurve.settings.type === 'brush') rebuildCurveMesh(selectedCurve,false); });
+$('brushSelect').addEventListener('change', () => { if (!curveIsEditable() || suppressModifierEvents) return; history.begin('Mesh Brush 할당'); selectedCurve.settings.brushId = Number($('brushSelect').value) || null; refreshBrushUI(); if (selectedCurve.meshEnabled && selectedCurve.settings.type === 'brush') rebuildCurveMesh(selectedCurve,false); history.commit(); });
 $('removeBrushBtn').addEventListener('click', () => {
   const id = Number($('brushSelect').value); if (!id) return;
+  history.begin('Mesh Brush 제거');
   const brush = brushes.find(b => b.id === id); brushes = brushes.filter(b => b.id !== id);
   curves.forEach(c => { if (c.settings.brushId === id) { c.settings.brushId = brushes[0]?.id ?? null; if (c.meshEnabled && c.settings.type === 'brush') rebuildCurveMesh(c,false); } });
-  refreshBrushUI(); syncModifierUIFromCurve(selectedCurve); setStatus(`Mesh Brush ${brush?.name || id} 제거`);
+  refreshBrushUI(); syncModifierUIFromCurve(selectedCurve); setStatus(`Mesh Brush ${brush?.name || id} 제거`); history.commit();
 });
 
-$('viewMode').addEventListener('change', applyViewModeAll);
-$('showPoints').addEventListener('change', updateControlVisibility);
-$('showTangents').addEventListener('change', updateControlVisibility);
-$('showCurveLines').addEventListener('change', updateCurveSelectionStyles);
-$('xrayControls').addEventListener('change', updateControlVisibility);
-$('modelVisible').addEventListener('change', applyModelDisplay);
+$('viewMode').addEventListener('change', () => { applyViewModeAll(); markProjectChanged(); });
+$('showPoints').addEventListener('change', () => { updateControlVisibility(); markProjectChanged(); });
+$('showTangents').addEventListener('change', () => { updateControlVisibility(); markProjectChanged(); });
+$('showCurveLines').addEventListener('change', () => { updateCurveSelectionStyles(); markProjectChanged(); });
+$('xrayControls').addEventListener('change', () => { updateControlVisibility(); markProjectChanged(); });
+$('modelVisible').addEventListener('change', () => { applyModelDisplay(); markProjectChanged(); });
+$('modelOpacity').addEventListener('change', () => { applyModelDisplay(); markProjectChanged(); });
 $('modelOpacity').addEventListener('input', applyModelDisplay);
-$('modelWireframe').addEventListener('change', applyModelDisplay);
-$('gridVisible').addEventListener('change', () => { grid.visible = $('gridVisible').checked; });
+$('modelWireframe').addEventListener('change', () => { applyModelDisplay(); markProjectChanged(); });
+$('gridVisible').addEventListener('change', () => { grid.visible = $('gridVisible').checked; markProjectChanged(); });
 $('clearGeneratedBtn').addEventListener('click', () => { history.begin('모든 Live Mesh 비활성화'); curves.forEach(c => { c.meshEnabled = false; removeCurveMesh(c); }); refreshCurveList(); syncModifierUIFromCurve(selectedCurve); updateControlVisibility(); setStatus('모든 Live Mesh 비활성화 · 커브와 Modifier 값은 유지'); history.commit(); });
 $('fitBtn').addEventListener('click', () => { if (surfaceMeshes.length) fitObject(modelRoot); else if (curves.length) fitObject(curvesRoot); });
 $('fitSelectedBtn').addEventListener('click', frameSelected);
@@ -2371,6 +2624,8 @@ $('exportFbxBtn').addEventListener('click', () => {
 
 document.addEventListener('keydown', e => {
   const commandKey = e.ctrlKey || e.metaKey;
+  if (commandKey && (e.key === 's' || e.key === 'S')) { e.preventDefault(); saveProject(); return; }
+  if (commandKey && (e.key === 'o' || e.key === 'O')) { e.preventDefault(); $('projectFileInput').click(); return; }
   if (commandKey && (e.key === 'z' || e.key === 'Z')) {
     e.preventDefault();
     const message = e.shiftKey ? history.redo() : history.undo();
@@ -2392,7 +2647,7 @@ document.addEventListener('keydown', e => {
   }
   if (e.shiftKey && (e.key === 'g' || e.key === 'G')) { e.preventDefault(); toggleAxisGuides(); return; }
   if (e.key === 'Delete') { if (mode === 'draw') cancelLineCreation(); else if (mode === 'edit' && selectedControl) $('deletePointBtn').click(); else if (selectedCurve) deleteSelectedCurve(); return; }
-  if (e.key === 'i' || e.key === 'I') { if (selectedCurve?.points.length >= 2) setMode(mode === 'insert' ? 'edit' : 'insert'); return; }
+  if (e.key === 'i' || e.key === 'I') { if (curveIsEditable() && selectedCurve.points.length >= 2) setMode(mode === 'insert' ? 'edit' : 'insert'); return; }
   if (e.key === 'q' || e.key === 'Q') { if (mode === 'draw') leaveLineCreationForMode('orbit'); else setMode('orbit'); return; }
   if (mode === 'edit') {
     if (e.key === 'w' || e.key === 'W') setPointTool('pointMove');
@@ -2411,7 +2666,13 @@ initNumericScrubbers(document, {
   onStart: ({ label }) => { history.begin(`${label} 수치 조정`); setStatus(`${label} · 좌우 드래그로 값 조정 · Shift 미세 · Ctrl/⌘ 정밀`); },
   onEnd: ({ label, value }) => { history.commit(); setStatus(`${label}: ${value}`); }
 });
-animate(); activateCommandTab('modify'); refreshCurveList(); refreshBrushUI(); updateControlVisibility(); updatePointPanel(); updateAverageAmountOutput(); updateObjectTransformButtons(); updateHint(); updateSelectionBadge(); updateMeshTypeUI(); updateDrawTargetUI(); applyModelDisplay(); setMode('orbit');
+animate();
+refreshCurveList(); refreshBrushUI(); syncModifierUIFromCurve(null); updateControlVisibility(); updatePointPanel();
+updateAverageAmountOutput(); updateObjectTransformButtons(); updateHint(); updateSelectionBadge(); updateMeshTypeUI(); updateDrawTargetUI(); applyModelDisplay(); setMode('orbit');
+const recoveredProject = restoreRecovery();
+if (!recoveredProject) { activateCommandTab('create'); updateProjectStatus('saved', 'Empty'); }
+projectLifecycleReady = true;
+updateCommandAvailability();
 </script>
 </body>
 </html>

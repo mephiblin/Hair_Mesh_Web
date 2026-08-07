@@ -1,5 +1,7 @@
 # Curve Mesh Hair Tool v4 구현 감사
 
+> **상태 안내 · 2026-08-07:** 이 문서는 원본 `b1b121a` 이전 구현의 기준선 감사입니다. `agent/stabilization-v1-from-b1b121a` 브랜치에서 해결한 항목과 현재 검증 결과는 [`docs/product-audit/recursive-audit.md`](./docs/product-audit/recursive-audit.md)를 우선 기준으로 사용하십시오.
+
 > 감사일: 2026-08-07
 >
 > 기준 커밋: `8078d82` (`프로토타입`)

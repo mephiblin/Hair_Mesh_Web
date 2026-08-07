@@ -9,9 +9,11 @@ import {
   setAveragedHandleTypes
 } from '../geometry/bezier-handles.js';
 import { buildSweepFrames } from '../geometry/sweep-frames.js';
+import { normalizeMeshBudget } from '../geometry/mesh-limits.js';
 import { canPickVisibleControl, modeAfterControlPick } from '../viewport/interaction-policy.js';
 import { canFinishLine, lineCreationExitAction } from '../state/line-creation-policy.js';
 import { allPointIndices, normalizePointSelection, selectedPointIndices } from '../state/point-selection.js';
+import { canEditCurve, hasReadyMesh } from '../state/curve-policy.js';
 import { axisDragScalar, axisVector, createAxisDragPlane } from '../viewport/axis-guide-drag.js';
 
 function finiteQuaternion(quaternion) {
@@ -61,6 +63,17 @@ export function runCoreSelfChecks(THREE) {
     'Select All produces every point index exactly once',
     JSON.stringify(allPointIndices(4)) === JSON.stringify([0, 1, 2, 3])
   );
+  check(
+    'Hidden and locked curves share one editability policy',
+    canEditCurve({ visible:true, locked:false })
+      && !canEditCurve({ visible:false, locked:false })
+      && !canEditCurve({ visible:true, locked:true })
+  );
+  check(
+    'LIVE presentation requires enabled ready topology',
+    hasReadyMesh({ enabled:true, status:'ready', hasTopology:true })
+      && !hasReadyMesh({ enabled:true, status:'error', hasTopology:false })
+  );
 
   const axisCamera = {
     up:new THREE.Vector3(0, 1, 0),
@@ -76,6 +89,11 @@ export function runCoreSelfChecks(THREE) {
   check(
     'Axis guide scalar ignores off-axis pointer motion',
     axisDragScalar(new THREE.Vector3(3, 9, -4), new THREE.Vector3(), xAxis) === 3
+  );
+  const clampedBudget = normalizeMeshBudget({ segments: 999999, radial: -40 });
+  check(
+    'Live mesh budget clamps direct input at the domain boundary',
+    clampedBudget.segments === 512 && clampedBudget.radial === 3
   );
 
   const points = [point(-1, 0, 0), point(0, 1, 0), point(2, 0, 1)];
