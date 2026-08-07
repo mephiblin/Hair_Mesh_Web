@@ -1,4 +1,5 @@
 export const HANDLE_MODE = Object.freeze({
+  BEZIER_CORNER: 'bezierCorner',
   BEZIER: 'bezier',
   CORNER: 'corner',
   SMOOTH: 'smooth'
@@ -15,11 +16,13 @@ const EPSILON_SQ = 1e-12;
 const VALID_TYPES = new Set(Object.values(HANDLE_TYPE));
 
 export function normalizeHandleMode(mode) {
+  if (mode === HANDLE_MODE.BEZIER_CORNER || mode === 'broken') return HANDLE_MODE.BEZIER_CORNER;
   if (mode === HANDLE_MODE.CORNER || mode === HANDLE_MODE.SMOOTH) return mode;
   return HANDLE_MODE.BEZIER;
 }
 
 function typeForMode(mode) {
+  if (mode === HANDLE_MODE.BEZIER_CORNER) return HANDLE_TYPE.FREE;
   if (mode === HANDLE_MODE.CORNER) return HANDLE_TYPE.VECTOR;
   if (mode === HANDLE_MODE.SMOOTH) return HANDLE_TYPE.AUTO;
   return HANDLE_TYPE.ALIGNED;
@@ -28,7 +31,8 @@ function typeForMode(mode) {
 function modeForTypes(inType, outType) {
   if (inType === HANDLE_TYPE.AUTO && outType === HANDLE_TYPE.AUTO) return HANDLE_MODE.SMOOTH;
   if (inType === HANDLE_TYPE.ALIGNED && outType === HANDLE_TYPE.ALIGNED) return HANDLE_MODE.BEZIER;
-  return HANDLE_MODE.CORNER;
+  if (inType === HANDLE_TYPE.VECTOR && outType === HANDLE_TYPE.VECTOR) return HANDLE_MODE.CORNER;
+  return HANDLE_MODE.BEZIER_CORNER;
 }
 
 export function ensureHandleTypes(point) {
@@ -38,6 +42,11 @@ export function ensureHandleTypes(point) {
   if (!VALID_TYPES.has(point.outHandleType)) point.outHandleType = fallback;
   point.handleMode = modeForTypes(point.inHandleType, point.outHandleType);
   return point;
+}
+
+export function hasEditableHandles(point) {
+  ensureHandleTypes(point);
+  return point?.handleMode === HANDLE_MODE.BEZIER || point?.handleMode === HANDLE_MODE.BEZIER_CORNER;
 }
 
 function finiteVector(vector) {
@@ -119,24 +128,23 @@ export function refreshDependentHandle(point, targets) {
   return changed;
 }
 
-/** Recalculate the current preset, including manual Bezier handles on request. */
+/** Discard manual edits and rebuild tangents for the current 3ds Max-style knot type. */
 export function recalculateHandles(points, index) {
   const point = points[index];
   const targets = calculateTargets(points, index);
   if (!point || !targets) return false;
   ensureHandleTypes(point);
-
-  if (point.handleMode === HANDLE_MODE.BEZIER) {
-    point.inTangent.copy(targets.smoothIn);
-    point.outTangent.copy(targets.smoothOut);
-    point.inHandleType = HANDLE_TYPE.ALIGNED;
-    point.outHandleType = HANDLE_TYPE.ALIGNED;
-    return true;
-  }
-  return refreshDependentHandle(point, targets);
+  const mode = normalizeHandleMode(point.handleMode);
+  const type = typeForMode(mode);
+  point.handleMode = mode;
+  point.inHandleType = type;
+  point.outHandleType = type;
+  point.inTangent.copy(mode === HANDLE_MODE.CORNER ? targets.vectorIn : targets.smoothIn);
+  point.outTangent.copy(mode === HANDLE_MODE.CORNER ? targets.vectorOut : targets.smoothOut);
+  return true;
 }
 
-/** Apply one of the three UI presets and initialize its exact left/right types. */
+/** Apply one of the four 3ds Max-style knot presets. */
 export function applyHandleMode(points, index, mode) {
   const point = points[index];
   const targets = calculateTargets(points, index);
@@ -158,6 +166,14 @@ export function applyHandleMode(points, index, mode) {
     return true;
   }
 
+  if (normalizedMode === HANDLE_MODE.BEZIER_CORNER) {
+    const inValid = finiteVector(point.inTangent) && point.inTangent.lengthSq() > EPSILON_SQ;
+    const outValid = finiteVector(point.outTangent) && point.outTangent.lengthSq() > EPSILON_SQ;
+    if (!inValid) point.inTangent.copy(targets.smoothIn);
+    if (!outValid) point.outTangent.copy(targets.smoothOut);
+    return true;
+  }
+
   const inValid = finiteVector(point.inTangent) && point.inTangent.lengthSq() > EPSILON_SQ;
   const outValid = finiteVector(point.outTangent) && point.outTangent.lengthSq() > EPSILON_SQ;
   if (!inValid && !outValid) {
@@ -171,7 +187,7 @@ export function applyHandleMode(points, index, mode) {
 
 /**
  * Apply the exact type transition after a handle is moved.
- * Auto becomes Aligned/Bezier. Vector becomes Free on the moved side.
+ * Auto becomes Aligned/Bezier. Vector becomes Free/Bezier Corner on the moved side.
  */
 export function constrainMovedHandle(point, movedKind) {
   if (!point) return { constrained: false, modeChanged: false };

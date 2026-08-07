@@ -153,9 +153,6 @@ input[type=checkbox]{accent-color:var(--accent)}
               <div class="row3"><button id="pointMoveBtn" type="button">Move · W</button><button id="pointRotateBtn" type="button">Rotate · E</button><button id="pointScaleBtn" type="button">Scale · R</button></div>
               <div class="row" style="margin-top:4px"><button id="insertPointBtn" type="button">Insert</button><button id="deletePointBtn" class="danger" type="button">Remove</button></div>
               <div class="row" style="margin-top:4px"><button id="insertBeforeBtn" type="button">Split Previous</button><button id="insertAfterBtn" type="button">Split Next</button></div>
-              <label>Curve Handle Type<select id="handleMode"><option value="bezier">Bezier</option><option value="corner">Corner</option><option value="smooth">Smooth</option></select></label>
-              <button id="autoHandleBtn" class="wide" type="button">Auto Tangents</button>
-              <p class="muted">Bezier는 양쪽 정렬, Corner는 이웃 방향에서 시작해 개별 편집, Smooth는 이웃 기반 자동입니다. Smooth 핸들을 직접 움직이면 Bezier로 전환됩니다.</p>
               <div class="mini-separator"></div>
               <div class="section-label">Average with Connected Points</div>
               <label class="range-header" for="averageAmount"><span>Average Amount · 0–1</span><output id="averageAmountValue" class="range-value" for="averageAmount">0.50</output></label>
@@ -170,10 +167,13 @@ input[type=checkbox]{accent-color:var(--accent)}
           <div class="rollout">
             <button class="rollout-header" type="button">Curve Object</button>
             <div class="rollout-body">
-              <div class="section-label">Spline Root Transform · Point 1 Pivot</div>
-              <div class="row3"><button id="rootMoveBtn" type="button">Move · W</button><button id="rootRotateBtn" type="button">Rotate · E</button><button id="rootScaleBtn" type="button">Scale · R</button></div>
-              <div class="row"><button id="resetTransformBtn" type="button">Reset Transform</button><button id="deleteCurveBtn" class="danger" type="button">Delete Object</button></div>
-              <p class="muted"><span class="kbd">Q</span> Select · <span class="kbd">W</span> Move · <span class="kbd">E</span> Rotate · <span class="kbd">R</span> Scale · 좌표계는 상단 World / View / Local을 공통으로 사용합니다.</p>
+              <button id="resetTransformBtn" class="wide" type="button">Reset Transform</button>
+              <div class="mini-separator"></div>
+              <div class="section-label">Selected Point · 3ds Max Knot Type</div>
+              <div class="row"><button id="bezierCornerBtn" type="button">Bezier Corner</button><button id="bezierBtn" type="button">Bezier</button></div>
+              <div class="row" style="margin-top:4px"><button id="cornerBtn" type="button">Corner</button><button id="smoothBtn" type="button">Smooth</button></div>
+              <button id="resetTangentsBtn" class="wide" type="button" style="margin-top:4px">Reset Tangents</button>
+              <p class="muted">Bezier는 연속 핸들, Bezier Corner는 독립 핸들입니다. Corner와 Smooth는 자동 형태이며 직접 조절 핸들을 표시하지 않습니다.</p>
             </div>
           </div>
 
@@ -275,8 +275,10 @@ import {
   applyHandleMode,
   constrainMovedHandle,
   ensureHandleTypes,
+  hasEditableHandles,
   markHandleSideManual,
   markPointHandlesTransformed,
+  recalculateHandles,
   refreshDependentNeighborhood,
   setAveragedHandleTypes
 } from './src/geometry/bezier-handles.js';
@@ -557,7 +559,7 @@ function pointState(point) {
 }
 
 function pointFromState(state) {
-  const migratedMode = state.handleMode === 'aligned' ? 'bezier' : state.handleMode === 'broken' ? 'corner' : state.handleMode;
+  const migratedMode = state.handleMode === 'aligned' ? 'bezier' : state.handleMode === 'broken' ? 'bezierCorner' : state.handleMode;
   const point = {
     position: new THREE.Vector3().fromArray(state.position),
     inTangent: new THREE.Vector3().fromArray(state.inTangent),
@@ -680,9 +682,9 @@ function rebuildControlVisuals(curve) {
   curve.points.forEach((p, i) => {
     const anchor = createControlMesh(handleRadius, COLORS.accent, 'sphere');
     anchor.userData = { curveId: curve.id, pointIndex: i, kind: 'anchor' };
-    const inHandle = createControlMesh(handleRadius * .7, COLORS.tangent, 'box');
+    const inHandle = createControlMesh(handleRadius * .5, COLORS.tangent, 'box');
     inHandle.userData = { curveId: curve.id, pointIndex: i, kind: 'in' };
-    const outHandle = createControlMesh(handleRadius * .7, COLORS.tangent, 'box');
+    const outHandle = createControlMesh(handleRadius * .5, COLORS.tangent, 'box');
     outHandle.userData = { curveId: curve.id, pointIndex: i, kind: 'out' };
     const lineGeo = new THREE.BufferGeometry();
     lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(12), 3));
@@ -730,12 +732,16 @@ function updateControlVisibility() {
     const selected = curve === selectedCurve && curve.visible;
     const tangentEditing = selected && !curve.locked && (mode === 'edit' || mode === 'insert');
     if (curve.visualGroup) curve.visualGroup.visible = selected && (showPoints || showTangents);
-    curve.points.forEach(p => {
+    curve.points.forEach((p, pointIndex) => {
       const v = p._visual; if (!v) return;
+      const handlesFocused = tangentEditing
+        && selectedControl?.curve === curve
+        && selectedControl.pointIndex === pointIndex
+        && hasEditableHandles(p);
       v.anchor.visible = selected && showPoints;
-      v.inHandle.visible = tangentEditing && showTangents;
-      v.outHandle.visible = tangentEditing && showTangents;
-      v.tangentLines.visible = tangentEditing && showTangents;
+      v.inHandle.visible = handlesFocused && showTangents;
+      v.outHandle.visible = handlesFocused && showTangents;
+      v.tangentLines.visible = handlesFocused && showTangents;
     });
     applyControlAppearance(curve);
   });
@@ -1459,6 +1465,22 @@ function refreshBrushUI() {
 }
 
 function selectedPoint() { return selectedControl?.curve?.points?.[selectedControl.pointIndex] || null; }
+const KNOT_TYPE_BUTTONS = Object.freeze({
+  bezierCorner: 'bezierCornerBtn',
+  bezier: 'bezierBtn',
+  corner: 'cornerBtn',
+  smooth: 'smoothBtn'
+});
+const KNOT_TYPE_LABELS = Object.freeze({ bezierCorner:'Bezier Corner', bezier:'Bezier', corner:'Corner', smooth:'Smooth' });
+function updateKnotTypeButtons() {
+  const point = selectedPoint();
+  const canEdit = !!point && !!selectedCurve && !selectedCurve.locked;
+  Object.entries(KNOT_TYPE_BUTTONS).forEach(([type, id]) => {
+    $(id).disabled = !canEdit;
+    $(id).classList.toggle('active', canEdit && point.handleMode === type);
+  });
+  $('resetTangentsBtn').disabled = !canEdit;
+}
 function updatePointPanel() {
   const p = selectedPoint(), label = $('selectedControlLabel');
   const pointCount = selectedCurve?.points?.length || 0;
@@ -1466,15 +1488,15 @@ function updatePointPanel() {
   if (!p || !selectedCurve) {
     label.textContent = selectedCurve ? `${selectedCurve.name} · Point를 선택하세요` : '선택된 포인트 없음';
     ['px','py','pz','ox','oy','oz','sx','sz','rx','ry','rz'].forEach(id => $(id).value = '');
-    $('handleMode').disabled = true; $('autoHandleBtn').disabled = true; $('averageAmount').disabled = true;
+    $('averageAmount').disabled = true;
     ['averagePointBtn','averageHandlesBtn','averageBothBtn'].forEach(id => $(id).disabled = true);
     $('deletePointBtn').disabled = true; $('insertBeforeBtn').disabled = true; $('insertAfterBtn').disabled = true;
     $('prevPointBtn').disabled = pointCount < 1; $('nextPointBtn').disabled = pointCount < 1;
-    updatePointToolButtons(); return;
+    updateKnotTypeButtons(); updatePointToolButtons(); return;
   }
   const kind = selectedControl.kind === 'anchor' ? 'Anchor' : selectedControl.kind === 'in' ? 'Bezier In Handle' : 'Bezier Out Handle';
   label.textContent = `${selectedCurve.name} · Point ${selectedControl.pointIndex + 1} · ${kind}`;
-  $('handleMode').disabled = false; $('autoHandleBtn').disabled = false; $('averageAmount').disabled = false; $('handleMode').value = p.handleMode;
+  $('averageAmount').disabled = false;
   ['averagePointBtn','averageHandlesBtn','averageBothBtn'].forEach(id => $(id).disabled = false);
   $('deletePointBtn').disabled = false;
   $('insertBeforeBtn').disabled = selectedControl.pointIndex <= 0;
@@ -1486,7 +1508,7 @@ function updatePointPanel() {
   $('sx').value = p.scaleX.toFixed(5); $('sz').value = p.scaleZ.toFixed(5);
   const e = new THREE.Euler().setFromQuaternion(p.rotation, 'XYZ');
   $('rx').value = THREE.MathUtils.radToDeg(e.x).toFixed(3); $('ry').value = THREE.MathUtils.radToDeg(e.y).toFixed(3); $('rz').value = THREE.MathUtils.radToDeg(e.z).toFixed(3);
-  updatePointToolButtons();
+  updateKnotTypeButtons(); updatePointToolButtons();
 }
 
 function updatePointToolButtons() {
@@ -1502,6 +1524,33 @@ function updatePointToolButtons() {
 function setPointTool(tool) {
   if (tool.startsWith('section') && (selectedCurve?.points.length || 0) < 2) { setStatus('Section 편집에는 Point가 2개 이상 필요합니다.'); return; }
   pointTool = tool; if (mode !== 'edit') setMode('edit'); updatePointToolButtons(); syncGizmo(); updateHint();
+}
+
+function finishKnotEdit(label) {
+  selectedControl.kind = 'anchor';
+  selectedCurve.lastControl = { pointIndex:selectedControl.pointIndex, kind:'anchor' };
+  updateControlVisuals(selectedCurve);
+  updateCurveVisual(selectedCurve);
+  if (selectedCurve.meshEnabled) rebuildCurveMesh(selectedCurve, false);
+  updatePointPanel();
+  updateControlVisibility();
+  syncGizmo();
+  history.commit();
+  setStatus(`${selectedCurve.name} · Point ${selectedControl.pointIndex + 1} · ${label}`);
+}
+
+function setSelectedKnotType(type) {
+  if (!selectedPoint() || !selectedCurve || selectedCurve.locked) return;
+  history.begin(`Knot Type · ${KNOT_TYPE_LABELS[type]}`);
+  applyHandleMode(selectedCurve.points, selectedControl.pointIndex, type);
+  finishKnotEdit(KNOT_TYPE_LABELS[type]);
+}
+
+function resetSelectedTangents() {
+  if (!selectedPoint() || !selectedCurve || selectedCurve.locked) return;
+  history.begin('Reset Tangents');
+  recalculateHandles(selectedCurve.points, selectedControl.pointIndex);
+  finishKnotEdit('Tangents Reset');
 }
 
 function coordinateFrameQuaternion(space, curve, pointIndex = null) {
@@ -1679,9 +1728,6 @@ function updateObjectTransformButtons() {
   $('objectMoveBtn').classList.toggle('active', mode === 'transform' && objectTransformMode === 'translate');
   $('objectRotateBtn').classList.toggle('active', mode === 'transform' && objectTransformMode === 'rotate');
   $('objectScaleBtn').classList.toggle('active', mode === 'transform' && objectTransformMode === 'scale');
-  $('rootMoveBtn').classList.toggle('active', mode === 'transform' && objectTransformMode === 'translate');
-  $('rootRotateBtn').classList.toggle('active', mode === 'transform' && objectTransformMode === 'rotate');
-  $('rootScaleBtn').classList.toggle('active', mode === 'transform' && objectTransformMode === 'scale');
 }
 function disposeCurve(curve) { if (!curve) return; transformControls.detach(); curvesRoot.remove(curve.group); disposeTree(curve.group); }
 
@@ -1828,7 +1874,7 @@ $('duplicateCurveBtn').addEventListener('click', () => {
   setStatus(`${source.name} → ${copy.name} 복제 · 같은 위치에 겹쳐 있음`);
   history.commit();
 });
-$('deleteCurveBtn').addEventListener('click', () => {
+function deleteSelectedCurve() {
   if (!selectedCurve) return;
   history.begin('Spline 삭제');
   const c = selectedCurve;
@@ -1837,13 +1883,10 @@ $('deleteCurveBtn').addEventListener('click', () => {
   selectCurve(curves[0] || null, { enterEdit:true });
   setStatus(`${c.name} 삭제`);
   history.commit();
-});
+}
 $('objectMoveBtn').addEventListener('click', () => setObjectTransformMode('translate'));
 $('objectRotateBtn').addEventListener('click', () => setObjectTransformMode('rotate'));
 $('objectScaleBtn').addEventListener('click', () => setObjectTransformMode('scale'));
-$('rootMoveBtn').addEventListener('click', () => setObjectTransformMode('translate'));
-$('rootRotateBtn').addEventListener('click', () => setObjectTransformMode('rotate'));
-$('rootScaleBtn').addEventListener('click', () => setObjectTransformMode('scale'));
 $('transformSpace').addEventListener('change', syncGizmo);
 $('resetTransformBtn').addEventListener('click', () => {
   if (!selectedCurve || selectedCurve.locked) return;
@@ -1868,14 +1911,8 @@ $('pointScaleBtn').addEventListener('click', () => setPointTool('pointScale'));
 $('sectionMoveBtn').addEventListener('click', () => setPointTool('sectionMove'));
 $('sectionRotateBtn').addEventListener('click', () => setPointTool('sectionRotate'));
 $('sectionScaleBtn').addEventListener('click', () => setPointTool('sectionScale'));
-$('handleMode').addEventListener('change', e => {
-  const p = selectedPoint(); if (!p || selectedCurve.locked) return;
-  history.begin('Bezier Handle Type 변경');
-  applyHandleMode(selectedCurve.points, selectedControl.pointIndex, e.target.value);
-  updateControlVisuals(selectedCurve); updateCurveVisual(selectedCurve); if (selectedCurve.meshEnabled) rebuildCurveMesh(selectedCurve,false); syncGizmo();
-  history.commit();
-});
-$('autoHandleBtn').addEventListener('click', () => { if (!selectedControl || selectedCurve.locked) return; history.begin('Auto Tangents'); applyHandleMode(selectedCurve.points, selectedControl.pointIndex, selectedPoint().handleMode); updateControlVisuals(selectedCurve); updateCurveVisual(selectedCurve); if (selectedCurve.meshEnabled) rebuildCurveMesh(selectedCurve,false); syncGizmo(); history.commit(); });
+Object.entries(KNOT_TYPE_BUTTONS).forEach(([type, id]) => $(id).addEventListener('click', () => setSelectedKnotType(type)));
+$('resetTangentsBtn').addEventListener('click', resetSelectedTangents);
 $('averagePointBtn').addEventListener('click', () => averageSelectedGeometry({ pointPosition:true }));
 $('averageHandlesBtn').addEventListener('click', () => averageSelectedGeometry({ handles:true }));
 $('averageBothBtn').addEventListener('click', () => averageSelectedGeometry({ pointPosition:true, handles:true }));
@@ -2047,7 +2084,7 @@ document.addEventListener('keydown', e => {
   }
   if (e.code === 'CapsLock' && mode === 'draw') { e.preventDefault(); toggleDrawCameraOverride(); return; }
   if (isTypingTarget(e.target)) return;
-  if (e.key === 'Delete') { if (mode === 'edit' && selectedControl) $('deletePointBtn').click(); else if (selectedCurve) $('deleteCurveBtn').click(); return; }
+  if (e.key === 'Delete') { if (mode === 'edit' && selectedControl) $('deletePointBtn').click(); else if (selectedCurve) deleteSelectedCurve(); return; }
   if (e.key === 'i' || e.key === 'I') { if (selectedCurve?.points.length >= 2) setMode(mode === 'insert' ? 'edit' : 'insert'); return; }
   if (e.key === 'q' || e.key === 'Q') { setMode('orbit'); return; }
   if (mode === 'edit') {

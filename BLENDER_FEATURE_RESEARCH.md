@@ -31,10 +31,10 @@
 
 ### 1차 안정화 반영 상태 · 2026-08-07
 
-- `src/geometry/bezier-handles.js`: UI의 `Bezier / Corner / Smooth`를 유지하면서 좌우별 `Aligned / Vector / Free / Auto` 타입을 내부에 추가했다.
-- Corner는 처음에 이웃을 향하는 Vector이며, 직접 움직인 쪽만 Free로 전환된다. 더 이상 0 길이 핸들로 코너를 표현하지 않는다.
-- Smooth 핸들을 직접 움직이면 양쪽 Aligned인 Bezier로 전환된다.
-- 포인트 전체 회전·스케일 시 Auto는 Aligned, Vector는 Free로 전환해 화면의 실제 형상과 타입 의미가 어긋나지 않게 했다.
+- `src/geometry/bezier-handles.js`: UI를 3ds Max의 `Bezier Corner / Bezier / Corner / Smooth`로 맞추고 좌우별 `Free / Aligned / Vector / Auto` 타입을 내부에 추가했다.
+- Corner는 이웃을 향하는 비조절 Vector이며, 수동 핸들이 필요한 경우 Bezier Corner의 Free 타입을 사용한다. 더 이상 0 길이 핸들로 코너를 표현하지 않는다.
+- Smooth는 비조절 Auto로 유지하며, 포인트 전체 회전·스케일처럼 자동 핸들을 수동 형상으로 바꾸는 조작에서는 양쪽 Aligned인 Bezier로 전환된다.
+- 포인트 전체 회전·스케일 시 Auto는 Aligned, Vector는 Free/Bezier Corner로 전환해 화면의 실제 형상과 타입 의미가 어긋나지 않게 했다.
 - `src/geometry/sweep-frames.js`: Three.js 기본 호출을 직접 사용하던 코드를 회전 최소화 프레임 모듈로 분리하고, 0 접선·NaN arc mapping·180도 접선 반전에 fallback을 추가했다.
 - `src/diagnostics/core-self-check.js`: `?selftest=1`에서만 핸들 상태 전이와 퇴화 프레임을 검사한다. 일반 실행에는 자가진단 비용이 없다.
 
@@ -58,8 +58,8 @@
 | `+ Line`, 포인트 생성 | Curve primitive, Bézier spline | 높음 | `Create` 탭 배치는 적절하다. 스플라인 타입과 생성 도구를 구분한다. |
 | 포인트 + `inTangent` + `outTangent` | `BezierSplinePoint.co`, `handle_left`, `handle_right` | 높음 | 내부 명칭을 `handleLeft/Right` 또는 명확한 입·출력 규칙으로 통일한다. |
 | 포인트 선택 후 포인트·핸들 일체 이동/회전/스케일 | 중앙 제어점 선택 시 제어점과 핸들을 한 단위로 취급 | 높음 | 개별 핸들 선택과 전체 포인트 선택을 선택 상태에서 분명히 구분한다. |
-| `Bezier`, `Corner`, `Smooth` | `ALIGNED`, `VECTOR`/`FREE`, `AUTO` | 높음 | 3개 UI 프리셋과 좌우별 4타입 내부 모델을 분리했다. 고급 좌우 타입 UI는 후속 항목이다. |
-| `Auto Tangents` | Automatic handles, Recalculate Handles | 중간 | 타입 전환과 일회성 재계산을 별도 명령으로 만든다. |
+| `Bezier Corner`, `Bezier`, `Corner`, `Smooth` | `FREE`, `ALIGNED`, `VECTOR`, `AUTO` | 높음 | 3ds Max식 4개 Knot Type과 좌우별 내부 타입을 분리했다. |
+| `Reset Tangents` | Automatic handles, Recalculate Handles | 높음 | 타입 전환과 일회성 재계산을 별도 명령으로 분리했다. |
 | Point 평균화 | Smooth control points | 중간 | 현재 0~1 계수는 유용한 확장이다. 끝점·순환 곡선·다중 선택 규칙을 명시한다. |
 | Handle 평균화 | Recalculate Handles | 중간 | 현재처럼 자동으로 `Smooth` 타입으로 바꾸지 않도록 옵션을 분리한다. |
 | de Casteljau 포인트 삽입 | Subdivide Curve | 높음 | 형상 불변 오차 테스트와 속성 보간 테스트를 추가한다. |
@@ -94,13 +94,16 @@ Blender Curve의 Bézier 핸들 타입은 다음과 같다.
 
 | 프로젝트 표시명 | 현재 실제 동작 | 가장 가까운 Blender 개념 | 문제점 |
 |---|---|---|---|
+| Bezier Corner | 양쪽 Free. 두 핸들의 방향과 길이를 완전히 독립 편집 | Free | 3ds Max의 불연속 조절 핸들과 대응한다. |
 | Bezier | 양쪽 Aligned. 이동한 핸들의 반대편을 반대 방향에 정렬하고 반대편 길이는 유지 | Aligned | 표시명은 3ds Max식 프리셋명으로 유지한다. |
-| Corner | 처음에는 좌우 Vector. 직접 움직인 쪽은 Free가 되어 반대편과 독립 | Vector / Free | 혼합 좌우 타입을 UI에서 세부 표시하는 고급 모드가 아직 없다. |
-| Smooth | 이웃 위치와 인접 거리를 이용한 좌우 Auto. 직접 핸들 편집 시 Bezier로 전환 | Automatic | Blender와 같은 핵심 상태 전이를 적용했다. |
+| Corner | 좌우 Vector를 이웃 방향으로 자동 계산하고 조절 핸들은 숨김 | Vector | 3ds Max의 비조절 sharp corner와 대응한다. |
+| Smooth | 이웃 위치와 인접 거리를 이용한 좌우 Auto. 조절 핸들은 숨기고 포인트 전체 변형 시 Bezier로 전환 | Automatic | 3ds Max식 비조절 Smooth와 자동 계산을 결합했다. |
+
+Autodesk도 Smooth와 Corner를 비조절 타입, Bezier를 연속 잠금 핸들, Bezier Corner를 불연속 독립 핸들로 정의한다. [3ds Max Editable Spline Vertex](https://help.autodesk.com/cloudhelp/2026/ENU/3DSMax-Modeling/files/GUID-34949ADC-7B53-4D74-AFC7-5EEA7CABF88F.htm)
 
 ### 4.2 권장 데이터 모델
 
-UI가 3ds Max식 `Bezier / Corner / Smooth` 세 항목을 유지하더라도 내부 데이터는 다음처럼 더 정확해야 한다.
+UI의 3ds Max식 네 Knot Type과 별개로 내부 데이터는 다음처럼 좌우 상태를 정확히 보존해야 한다.
 
 ```text
 BezierPoint
@@ -120,12 +123,13 @@ BezierPoint
 
 UI 프리셋은 내부 타입의 조합으로 번역한다.
 
+- `Bezier Corner` 프리셋 → 양쪽 `FREE`
 - `Bezier` 프리셋 → 양쪽 `ALIGNED`
-- `Corner` 프리셋 → 기본은 양쪽 `VECTOR`, 사용자가 한쪽을 꺾으면 그쪽 `FREE`
+- `Corner` 프리셋 → 양쪽 `VECTOR`
 - `Smooth` 프리셋 → 양쪽 `AUTO`
 - 고급 패널 → 좌우 타입을 따로 편집
 
-이렇게 하면 사용자에게 익숙한 세 분류를 유지하면서 Blender식 세밀한 상태 전이와 향후 파일 호환성을 확보할 수 있다.
+이렇게 하면 3ds Max식 네 분류를 유지하면서 Blender식 세밀한 상태 전이와 향후 파일 호환성을 확보할 수 있다.
 
 ### 4.3 포인트와 핸들의 “일심동체” 조작
 
@@ -158,7 +162,7 @@ factor = 1: 목표값 완전 적용
 - **Smooth Position & Handles**: 위 두 연산을 명시된 순서로 실행
 - **Change Handle Type**: 데이터 타입만 전환하며 필요한 핸들 계산을 한 번 수행
 
-현재 구현은 Handle 평균화 후 `handleMode = 'smooth'`로 강제한다. 이는 계산 명령과 타입 변경이 결합된 상태이므로 Undo 결과와 후속 핸들 드래그가 예상과 달라질 수 있다.
+현재 구현은 부분 Handle 평균화를 수동 `Bezier/Aligned`, factor 1을 자동 `Smooth/Auto` 결과로 명시하며, 별도의 `Reset Tangents`는 현재 Knot Type을 유지한 채 수동 편집값만 재계산한다.
 
 Blender의 새 Curves 스무딩 구현은 반복적인 이웃 평균을 Gaussian과 유사한 가중치로 계산하며, 순환 여부, 끝점 처리, 형상 유지, 포인트별 영향도를 별도 입력으로 취급한다. 구현 참고 영역은 [`smooth_curves.cc`](https://github.com/blender/blender/blob/main/source/blender/geometry/intern/smooth_curves.cc)다. 프로젝트가 다중 포인트 평균화로 확장될 때 같은 매개변수 분리가 유용하다.
 

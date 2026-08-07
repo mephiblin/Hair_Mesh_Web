@@ -1,8 +1,10 @@
 import {
   applyHandleMode,
   constrainMovedHandle,
+  hasEditableHandles,
   handlesAreFinite,
   markPointHandlesTransformed,
+  recalculateHandles,
   refreshDependentNeighborhood,
   setAveragedHandleTypes
 } from '../geometry/bezier-handles.js';
@@ -53,6 +55,27 @@ export function runCoreSelfChecks(THREE) {
       && points[1].inTangent.clone().cross(points[1].outTangent).length() < 1e-9
   );
 
+  applyHandleMode(points, 1, 'bezierCorner');
+  const independentIn = points[1].inTangent.clone();
+  points[1].outTangent.set(0.5, -0.25, 0.75);
+  constrainMovedHandle(points[1], 'out');
+  check(
+    'Bezier Corner exposes independent Free handles',
+    points[1].handleMode === 'bezierCorner'
+      && points[1].inHandleType === 'free'
+      && points[1].outHandleType === 'free'
+      && independentIn.distanceTo(points[1].inTangent) < 1e-12
+      && hasEditableHandles(points[1])
+  );
+  recalculateHandles(points, 1);
+  check(
+    'Reset Tangents preserves Bezier Corner type and restores finite handles',
+    points[1].handleMode === 'bezierCorner'
+      && points[1].inHandleType === 'free'
+      && points[1].outHandleType === 'free'
+      && handlesAreFinite(points[1])
+  );
+
   applyHandleMode(points, 1, 'corner');
   points[1].outTangent.set(0.25, 0.75, -0.5);
   constrainMovedHandle(points[1], 'out');
@@ -60,8 +83,8 @@ export function runCoreSelfChecks(THREE) {
   points[2].position.set(10, 4, -3);
   refreshDependentNeighborhood(points, 2);
   check(
-    'Corner moved side becomes Free and survives neighbor edits',
-    points[1].handleMode === 'corner'
+    'Editing a Corner vector converts it to Bezier Corner and preserves the manual side',
+    points[1].handleMode === 'bezierCorner'
       && points[1].inHandleType === 'vector'
       && points[1].outHandleType === 'free'
       && manualOut.distanceTo(points[1].outTangent) < 1e-12
@@ -91,10 +114,11 @@ export function runCoreSelfChecks(THREE) {
   applyHandleMode(points, 1, 'corner');
   markPointHandlesTransformed(points[1]);
   check(
-    'Transforming Vector handles preserves Corner shape as Free',
-    points[1].handleMode === 'corner'
+    'Transforming Corner vectors produces a Bezier Corner',
+    points[1].handleMode === 'bezierCorner'
       && points[1].inHandleType === 'free'
       && points[1].outHandleType === 'free'
+      && hasEditableHandles(points[1])
   );
 
   const degeneratePath = {
