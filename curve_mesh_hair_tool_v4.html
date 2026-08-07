@@ -22,6 +22,7 @@ button:hover{background:#5d5d5d;border-color:#9a9a9a}
 button.active{background:#42666a;border-color:var(--accent-strong);box-shadow:inset 0 0 0 1px #1f3537}
 button:disabled,input:disabled,select:disabled{opacity:.42;cursor:not-allowed}
 input[type=number],input[type=text],select{width:100%;padding:3px 5px}
+label.numeric-scrub-label{cursor:ew-resize;touch-action:none}label.numeric-scrub-label:has(>input[type=number]:disabled){cursor:default}label.numeric-scrub-label>input[type=number]{cursor:text}html.numeric-scrubbing,html.numeric-scrubbing *{cursor:ew-resize!important;user-select:none!important}
 input[type=file]{width:100%;font-size:11px;color:var(--muted)}
 input[type=checkbox]{accent-color:var(--accent)}
 .editor-shell{height:100vh;display:grid;grid-template-rows:42px minmax(0,1fr) 24px;background:var(--bg)}
@@ -55,7 +56,6 @@ input[type=checkbox]{accent-color:var(--accent)}
   <header class="topbar">
     <div class="brand">Curve Mesh Hair Tool <small>v4</small></div>
     <div class="toolgroup">
-      <button id="newCurveBtn" class="icon-btn" type="button" title="새 커브">＋ Line</button>
       <span class="tool-label">Mode</span>
       <select id="modeSelect" title="작업 모드">
         <option value="orbit">Object / Camera</option>
@@ -68,9 +68,9 @@ input[type=checkbox]{accent-color:var(--accent)}
     </div>
     <div class="toolgroup">
       <button id="duplicateCurveBtn" class="icon-btn" type="button" title="복제">Clone</button>
-      <button id="objectMoveBtn" class="icon-btn" type="button" title="Move (G)">Move</button>
-      <button id="objectRotateBtn" class="icon-btn" type="button" title="Rotate (R)">Rotate</button>
-      <button id="objectScaleBtn" class="icon-btn" type="button" title="Scale (S)">Scale</button>
+      <button id="objectMoveBtn" class="icon-btn" type="button" title="Move (W)">Move</button>
+      <button id="objectRotateBtn" class="icon-btn" type="button" title="Rotate (E)">Rotate</button>
+      <button id="objectScaleBtn" class="icon-btn" type="button" title="Scale (R)">Scale</button>
       <select id="objectSpace" title="오브젝트 기즈모 좌표계"><option value="world">World</option><option value="view">View</option><option value="local">Local</option></select>
     </div>
     <div class="toolgroup">
@@ -120,6 +120,7 @@ input[type=checkbox]{accent-color:var(--accent)}
           <div class="rollout">
             <button class="rollout-header" type="button">Line Creation</button>
             <div class="rollout-body">
+              <button id="newCurveBtn" class="wide primary" type="button" title="새 Line 만들기">＋ Line</button>
               <label>포인트 배치<select id="drawTarget"><option value="surface">Reference Surface</option><option value="free">View Plane / Free</option></select></label>
               <div class="row" style="margin-top:6px"><button id="finishCurveBtn" type="button">Finish Line</button><button id="createEditBtn" type="button">Finish & Edit</button></div>
               <p class="muted">Create Points 중 <span class="kbd">Caps Lock</span>으로 생성과 카메라 조작을 전환합니다.</p>
@@ -160,7 +161,7 @@ input[type=checkbox]{accent-color:var(--accent)}
             <div class="rollout-body">
               <div class="row"><button id="resetTransformBtn" type="button">Reset Transform</button><button id="deleteCurveBtn" class="danger" type="button">Delete Object</button></div>
               <label>Point Gizmo Axis<select id="pointSpace"><option value="world">World / Scene</option><option value="view">View / Camera</option><option value="local" selected>Local Section</option></select></label>
-              <p class="muted"><span class="kbd">G</span> Move · <span class="kbd">R</span> Rotate · <span class="kbd">S</span> Scale · Object 버튼은 상단 도구막대에 있습니다.</p>
+              <p class="muted"><span class="kbd">Q</span> Select · <span class="kbd">W</span> Move · <span class="kbd">E</span> Rotate · <span class="kbd">R</span> Scale · Object 버튼은 상단 도구막대에 있습니다.</p>
             </div>
           </div>
 
@@ -255,6 +256,7 @@ input[type=checkbox]{accent-color:var(--accent)}
 </div>
 
 <script type="module">
+import { initNumericScrubbers } from './src/ui/numeric-scrubber.js';
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/+esm';
 import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/controls/OrbitControls.js/+esm';
 import { TransformControls } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/controls/TransformControls.js/+esm';
@@ -1783,19 +1785,24 @@ document.addEventListener('keydown', e => {
   if (isTypingTarget(e.target)) return;
   if (e.key === 'Delete') { if (mode === 'edit' && selectedControl) $('deletePointBtn').click(); else if (selectedCurve) $('deleteCurveBtn').click(); return; }
   if (e.key === 'i' || e.key === 'I') { if (selectedCurve?.points.length >= 2) setMode(mode === 'insert' ? 'edit' : 'insert'); return; }
+  if (e.key === 'q' || e.key === 'Q') { setMode('orbit'); return; }
   if (mode === 'edit') {
-    if (e.key === 'g' || e.key === 'G') setPointTool('pointMove');
+    if (e.key === 'w' || e.key === 'W') setPointTool('pointMove');
     else if (e.key === 'm' || e.key === 'M') setPointTool('sectionMove');
-    else if (e.key === 'r' || e.key === 'R') setPointTool('sectionRotate');
-    else if (e.key === 's' || e.key === 'S') setPointTool('sectionScale');
+    else if (e.key === 'e' || e.key === 'E') setPointTool('sectionRotate');
+    else if (e.key === 'r' || e.key === 'R') setPointTool('sectionScale');
   } else {
-    if (e.key === 'g' || e.key === 'G') setObjectTransformMode('translate');
-    else if (e.key === 'r' || e.key === 'R') setObjectTransformMode('rotate');
-    else if (e.key === 's' || e.key === 'S') setObjectTransformMode('scale');
+    if (e.key === 'w' || e.key === 'W') setObjectTransformMode('translate');
+    else if (e.key === 'e' || e.key === 'E') setObjectTransformMode('rotate');
+    else if (e.key === 'r' || e.key === 'R') setObjectTransformMode('scale');
   }
 });
 
 function animate() { requestAnimationFrame(animate); orbit.update(); renderer.render(scene, camera); }
+initNumericScrubbers(document, {
+  onStart: ({ label }) => setStatus(`${label} · 좌우 드래그로 값 조정 · Shift 미세 · Ctrl/⌘ 정밀`),
+  onEnd: ({ label, value }) => setStatus(`${label}: ${value}`)
+});
 animate(); activateCommandTab('modify'); refreshCurveList(); refreshBrushUI(); updateControlVisibility(); updatePointPanel(); updateObjectTransformButtons(); updateHint(); updateModifierStack(); updateSelectionBadge(); updateMeshTypeUI(); applyModelDisplay(); setMode('orbit');
 </script>
 </body>
