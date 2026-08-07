@@ -10,6 +10,7 @@ import {
 } from '../geometry/bezier-handles.js';
 import { buildSweepFrames } from '../geometry/sweep-frames.js';
 import { canPickVisibleControl, modeAfterControlPick } from '../viewport/interaction-policy.js';
+import { canFinishLine, lineCreationExitAction } from '../state/line-creation-policy.js';
 
 function finiteQuaternion(quaternion) {
   return [quaternion.x, quaternion.y, quaternion.z, quaternion.w].every(Number.isFinite);
@@ -33,6 +34,20 @@ export function runCoreSelfChecks(THREE) {
       && !canPickVisibleControl('draw')
       && !canPickVisibleControl('insert')
       && modeAfterControlPick() === 'edit'
+  );
+
+  check(
+    'Empty and one-point Line sessions cancel instead of materializing an object',
+    !canFinishLine(0)
+      && !canFinishLine(1)
+      && lineCreationExitAction(0, 'orbit') === 'cancel'
+      && lineCreationExitAction(1, 'edit') === 'cancel'
+  );
+  check(
+    'Two-point Line sessions distinguish Finish from Finish & Edit',
+    canFinishLine(2)
+      && lineCreationExitAction(2, 'orbit') === 'finish'
+      && lineCreationExitAction(2, 'edit') === 'finish-edit'
   );
 
   const points = [point(-1, 0, 0), point(0, 1, 0), point(2, 0, 1)];

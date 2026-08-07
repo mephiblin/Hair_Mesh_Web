@@ -124,10 +124,12 @@ input[type=checkbox]{accent-color:var(--accent)}
           <div class="rollout">
             <button class="rollout-header" type="button">Line Creation</button>
             <div class="rollout-body">
-              <button id="newCurveBtn" class="wide primary" type="button" title="새 Line 만들기">＋ Line</button>
-              <label>포인트 배치<select id="drawTarget"><option value="surface">Reference Surface</option><option value="free">View Plane / Free</option></select></label>
-              <div class="row" style="margin-top:6px"><button id="finishCurveBtn" type="button">Finish Line</button><button id="createEditBtn" type="button">Finish & Edit</button></div>
-              <p class="muted">Create Points 중 <span class="kbd">Caps Lock</span>으로 생성과 카메라 조작을 전환합니다.</p>
+              <div class="row3"><button id="newCurveBtn" class="primary" type="button" title="Line 생성 시작">＋ Line</button><button id="finishCurveBtn" type="button" disabled>Finish Line</button><button id="createEditBtn" type="button" disabled>Finish & Edit</button></div>
+              <button id="cancelCurveBtn" class="wide danger" type="button" style="margin-top:4px" disabled>Cancel Line · Esc</button>
+              <div id="lineCreationStatus" class="selected-label" style="margin-top:6px">Ready · + Line으로 시작</div>
+              <label>포인트 배치<select id="drawTarget"><option value="surface" disabled>Reference Surface · Loaded Model</option><option value="free" selected>View Plane / Free · Camera Plane</option></select></label>
+              <p id="drawTargetHelp" class="muted">View Plane / Free는 모델 없이 카메라를 향한 평면에 포인트를 배치합니다.</p>
+              <p class="muted">첫 포인트를 찍을 때 Curve Object가 생성됩니다. 생성 중 <span class="kbd">Caps Lock</span>으로 카메라 조작을 전환합니다.</p>
             </div>
           </div>
           <div class="rollout">
@@ -269,6 +271,7 @@ input[type=checkbox]{accent-color:var(--accent)}
 
 <script type="module">
 import { createHistory } from './src/state/history.js';
+import { canFinishLine, lineCreationExitAction, MIN_LINE_POINTS } from './src/state/line-creation-policy.js';
 import { initNumericScrubbers } from './src/ui/numeric-scrubber.js';
 import {
   HANDLE_TYPE,
@@ -342,6 +345,8 @@ let handleRadius = .015;
 let curves = [];
 let selectedCurve = null;
 let selectedControl = null;
+let drawingCurve = null;
+let creationPreviousCurve = null;
 let nextCurveId = 1;
 let mode = 'orbit';
 let objectTransformMode = 'translate';
@@ -452,6 +457,18 @@ function normalizeMaterials(root) {
   });
 }
 
+function updateDrawTargetUI(preferSurface = false) {
+  const select = $('drawTarget');
+  const surfaceOption = select.querySelector('option[value="surface"]');
+  const hasSurface = surfaceMeshes.length > 0;
+  surfaceOption.disabled = !hasSurface;
+  if (preferSurface && hasSurface) select.value = 'surface';
+  else if (!hasSurface && select.value === 'surface') select.value = 'free';
+  $('drawTargetHelp').textContent = select.value === 'surface'
+    ? 'Reference Surface는 불러온 모델을 레이캐스트해 실제 표면 위에 포인트를 배치합니다.'
+    : 'View Plane / Free는 모델 없이 카메라를 향한 평면에 포인트를 배치합니다.';
+}
+
 async function loadModel(file) {
   clearGroup(modelRoot); surfaceMeshes = [];
   const ext = file.name.split('.').pop().toLowerCase(), url = URL.createObjectURL(file);
@@ -462,12 +479,12 @@ async function loadModel(file) {
     else if (ext === 'glb' || ext === 'gltf') {
       const gltf = await new Promise((res, rej) => new GLTFLoader().load(url, res, undefined, rej)); object = gltf.scene;
     } else throw new Error('지원하지 않는 형식입니다.');
-    normalizeMaterials(object); modelRoot.add(object); fitObject(modelRoot); applyModelDisplay();
+    normalizeMaterials(object); modelRoot.add(object); fitObject(modelRoot); applyModelDisplay(); updateDrawTargetUI(true);
     $('modelStatus').textContent = `${file.name} · Mesh ${surfaceMeshes.length}개`;
     setStatus('기준 모델 로드 완료. 새 커브를 만든 뒤 표면을 클릭하세요.');
   } catch (err) {
     console.error(err); $('modelStatus').textContent = '로드 실패'; setStatus(`모델 로드 실패: ${err.message}`);
-  } finally { URL.revokeObjectURL(url); }
+  } finally { URL.revokeObjectURL(url); updateDrawTargetUI(); }
 }
 
 function makePointRecord(position) {
@@ -539,7 +556,6 @@ function makeCurveRecord(source = null) {
   updateSelectionBadge();
   return curve;
 }
-function ensureCurve() { return selectedCurve || makeCurveRecord(); }
 function curveObject(curve) { return curve?.points?.length >= 2 ? new BezierChainCurve(curve.points) : null; }
 
 function pointState(point) {
@@ -580,6 +596,8 @@ function captureAppState() {
   return {
     nextCurveId,
     selectedCurveId: selectedCurve?.id ?? null,
+    drawingCurveId: drawingCurve?.id ?? null,
+    creationPreviousCurveId: creationPreviousCurve?.id ?? null,
     selectedControl: selectedControl ? { curveId:selectedControl.curve.id, pointIndex:selectedControl.pointIndex, kind:selectedControl.kind } : null,
     mode,
     objectTransformMode,
@@ -637,9 +655,13 @@ function restoreAppState(state) {
   curves = [];
   selectedCurve = null;
   selectedControl = null;
+  drawingCurve = null;
+  creationPreviousCurve = null;
   state.curves.forEach(curveFromState);
   nextCurveId = Math.max(state.nextCurveId, ...curves.map(curve => curve.id + 1), 1);
   selectedCurve = curves.find(curve => curve.id === state.selectedCurveId) || null;
+  drawingCurve = curves.find(curve => curve.id === state.drawingCurveId) || null;
+  creationPreviousCurve = curves.find(curve => curve.id === state.creationPreviousCurveId) || null;
   if (selectedCurve && state.selectedControl?.curveId === selectedCurve.id && selectedCurve.points.length) {
     const pointIndex = THREE.MathUtils.clamp(state.selectedControl.pointIndex, 0, selectedCurve.points.length - 1);
     selectedControl = { curve:selectedCurve, pointIndex, kind:state.selectedControl.kind };
@@ -821,7 +843,8 @@ function averageSelectedGeometry({ pointPosition = false, handles = false } = {}
 
 function addPoint(worldPosition) {
   history.begin('Point 생성');
-  const curve = ensureCurve();
+  const curve = drawingCurve || makeCurveRecord();
+  if (!drawingCurve) drawingCurve = curve;
   if (curve.locked) { history.cancel(); setStatus(`${curve.name}은 잠겨 있습니다.`); return; }
   curve.group.updateMatrixWorld(true);
   const local = curve.group.worldToLocal(worldPosition.clone());
@@ -849,6 +872,7 @@ function addPoint(worldPosition) {
   selectControl(curve, curve.points.length - 1, 'anchor');
   if (curve.meshEnabled) rebuildCurveMesh(curve, false);
   refreshCurveList();
+  updateLineCreationUI();
   setStatus(`${curve.name}: Point ${curve.points.length} 생성`);
   history.commit();
 }
@@ -1010,7 +1034,7 @@ function refreshCurveList() {
     const nameText = document.createTextNode(curve.name);
     const meta = document.createElement('span'); meta.className = 'scene-row-meta'; meta.textContent = `${curve.points.length} pts${curve.meshEnabled ? ' · LIVE' : ''}`;
     main.append(nameText, meta);
-    main.addEventListener('click', () => selectCurve(curve, { enterEdit: true }));
+    main.addEventListener('click', () => { if (mode === 'draw') cancelLineCreation(); selectCurve(curve, { enterEdit: true }); });
 
     const lock = document.createElement('button');
     lock.type = 'button'; lock.className = 'scene-lock'; lock.textContent = curve.locked ? 'L' : 'U'; lock.title = '편집 잠금';
@@ -1031,7 +1055,7 @@ function pointOnSurface(event) {
   return raycaster.intersectObjects(surfaceMeshes, false)[0]?.point?.clone() || null;
 }
 function pointInFreePlane(event) {
-  pointerNDC(event); const curve = selectedCurve;
+  pointerNDC(event); const curve = drawingCurve;
   let origin;
   if (curve && curve.points.length) {
     curve.group.updateMatrixWorld(true);
@@ -1697,6 +1721,96 @@ transformControls.addEventListener('objectChange', handleGizmoChange);
 transformControls.addEventListener('mouseUp', endGizmoDrag);
 orbit.addEventListener('change', () => { if (!transformDragging && $('transformSpace').value === 'view') syncGizmo(); });
 
+function updateLineCreationUI() {
+  const creating = mode === 'draw';
+  const pointCount = drawingCurve?.points.length || 0;
+  $('newCurveBtn').disabled = creating;
+  $('finishCurveBtn').disabled = !creating || !canFinishLine(pointCount);
+  $('createEditBtn').disabled = !creating || !canFinishLine(pointCount);
+  $('cancelCurveBtn').disabled = !creating;
+  $('lineCreationStatus').textContent = creating
+    ? drawingCurve
+      ? `Creating ${drawingCurve.name} · ${pointCount} Point${pointCount === 1 ? '' : 's'}`
+      : 'Creating · 첫 포인트를 찍으면 Curve Object 생성'
+    : 'Ready · + Line으로 시작';
+}
+
+function beginLineCreation() {
+  if (mode === 'draw') { setStatus('이미 Line 생성 중입니다. 포인트를 찍거나 Finish/Cancel을 사용하세요.'); return; }
+  drawingCurve = null;
+  creationPreviousCurve = selectedCurve;
+  selectedCurve = null;
+  selectedControl = null;
+  syncModifierUIFromCurve(null);
+  refreshCurveList();
+  updateCurveSelectionStyles();
+  updatePointPanel();
+  updateSelectionBadge();
+  updateMeshStats();
+  activateCommandTab('create');
+  setMode('draw');
+  setStatus('Line 생성 준비 · 첫 포인트에서 Curve Object가 생성됩니다.');
+}
+
+function finishLineCreation(enterEdit = false) {
+  const curve = drawingCurve;
+  if (mode !== 'draw' || !curve || !canFinishLine(curve.points.length)) {
+    setStatus(`Line을 완료하려면 포인트를 최소 ${MIN_LINE_POINTS}개 생성하세요.`);
+    return false;
+  }
+  history.begin(enterEdit ? 'Line 완료 후 편집' : 'Line 완료');
+  drawingCurve = null;
+  creationPreviousCurve = null;
+  selectedCurve = curve;
+  setMode(enterEdit ? 'edit' : 'orbit');
+  activateCommandTab(enterEdit ? 'modify' : 'create');
+  updateLineCreationUI();
+  $('lineCreationStatus').textContent = `Completed ${curve.name} · ${curve.points.length} Points`;
+  setStatus(`${curve.name} 완료${enterEdit ? ' · Point/Tangent/Section 편집 가능' : ' · Select 모드'}`);
+  history.commit();
+  return true;
+}
+
+function cancelLineCreation() {
+  if (mode !== 'draw') return false;
+  const draft = drawingCurve;
+  const previous = creationPreviousCurve && curves.includes(creationPreviousCurve) ? creationPreviousCurve : null;
+  if (draft) history.begin('Line 생성 취소');
+  drawingCurve = null;
+  creationPreviousCurve = null;
+  if (draft) {
+    curves = curves.filter(curve => curve !== draft);
+    disposeCurve(draft);
+    if (draft.id === nextCurveId - 1) nextCurveId = draft.id;
+  }
+  selectedCurve = null;
+  selectedControl = null;
+  if (previous) selectCurve(previous, { enterEdit:false });
+  else {
+    syncModifierUIFromCurve(null);
+    refreshCurveList();
+    updateCurveSelectionStyles();
+    updatePointPanel();
+    updateSelectionBadge();
+    updateMeshStats();
+  }
+  activateCommandTab('create');
+  setMode('orbit');
+  updateLineCreationUI();
+  if (draft) history.commit();
+  setStatus(draft ? `${draft.name} 생성 취소 · ${draft.points.length}개 초안 Point 제거` : 'Line 생성 취소 · 오브젝트가 생성되지 않았습니다.');
+  return true;
+}
+
+function leaveLineCreationForMode(nextMode) {
+  const action = lineCreationExitAction(drawingCurve?.points.length || 0, nextMode);
+  if (action === 'finish-edit') finishLineCreation(true);
+  else if (action === 'finish') finishLineCreation(false);
+  else cancelLineCreation();
+  if (action === 'cancel' && nextMode === 'edit' && selectedCurve) setMode('edit');
+  else if (!['orbit', 'edit', 'draw'].includes(nextMode)) setMode(nextMode);
+}
+
 function setMode(next) {
   if (selectedCurve?.locked && ['edit','insert','transform'].includes(next)) next = 'orbit';
   mode = next;
@@ -1711,10 +1825,11 @@ function setMode(next) {
   $('statusMode').textContent = mode === 'draw' ? (drawCameraOverride ? 'CREATE · CAMERA' : 'CREATE POINTS') : mode === 'edit' ? 'EDIT POINTS' : mode === 'insert' ? 'INSERT POINT' : mode === 'transform' ? 'SPLINE ROOT' : 'SELECT / CAMERA';
   $('insertPointBtn').classList.toggle('active', mode === 'insert');
   $('drawCameraToggleBtn').classList.toggle('active', mode === 'draw' && drawCameraOverride);
+  updateLineCreationUI();
 }
 
 function updateHint() {
-  if (mode === 'draw') hintEl.textContent = drawCameraOverride ? 'CREATE 일시 정지 · 카메라 조작 ON · Caps Lock으로 Point 생성 복귀' : '클릭: 새 Point · Caps Lock: 카메라 조작 토글';
+  if (mode === 'draw') hintEl.textContent = drawCameraOverride ? 'CREATE 일시 정지 · 카메라 조작 ON · Caps Lock으로 Point 생성 복귀 · Esc 취소' : '클릭: 새 Point · Caps Lock: 카메라 조작 토글 · Esc: Line 취소';
   else if (mode === 'insert') hintEl.textContent = '커브 위 클릭: Bezier Segment 정확히 분할 · 드래그: 카메라';
   else if (mode === 'edit') {
     const tool = selectedControl?.kind !== 'anchor' ? 'Bezier Handle Move' : pointTool === 'pointMove' ? 'Point + Handles Move' : pointTool === 'pointRotate' ? 'Point + Handles Rotate' : pointTool === 'pointScale' ? 'Point + Handles Scale' : pointTool === 'sectionMove' ? 'Section Offset' : pointTool === 'sectionRotate' ? 'Section Rotate' : 'Section Scale / Taper';
@@ -1785,7 +1900,7 @@ function cyclePoint(step) {
 }
 
 function toggleDrawCameraOverride() {
-  if (mode !== 'draw') { setMode('draw'); drawCameraOverride = false; }
+  if (mode !== 'draw') { beginLineCreation(); drawCameraOverride = false; }
   else drawCameraOverride = !drawCameraOverride;
   orbit.enabled = drawCameraOverride;
   updateHint();
@@ -1820,8 +1935,10 @@ renderer.domElement.addEventListener('pointerdown', event => {
   if (mode === 'draw') {
     if (drawCameraOverride) return;
     event.preventDefault();
-    const p = $('drawTarget').value === 'surface' ? pointOnSurface(event) : pointInFreePlane(event);
-    if (p) addPoint(p); else setStatus('클릭 위치에서 Point를 만들 수 없습니다.');
+    const surfacePlacement = $('drawTarget').value === 'surface';
+    const p = surfacePlacement ? pointOnSurface(event) : pointInFreePlane(event);
+    if (p) addPoint(p);
+    else setStatus(surfacePlacement ? 'Reference 모델의 Mesh 표면을 클릭하세요.' : '현재 View Plane에서 Point 위치를 계산할 수 없습니다.');
     return;
   }
   if (canPickVisibleControl(mode)) {
@@ -1840,14 +1957,17 @@ renderer.domElement.addEventListener('pointerup', handleViewportClick, true);
 renderer.domElement.addEventListener('pointercancel', () => { pointerDownState = null; }, true);
 
 $('modelFile').addEventListener('change', e => { const f = e.target.files?.[0]; if (f) loadModel(f); });
-$('modeSelect').addEventListener('change', e => setMode(e.target.value));
-$('newCurveBtn').addEventListener('click', () => { history.begin('새 Line'); const curve = makeCurveRecord(); activateCommandTab('create'); setMode('draw'); setStatus(`${curve.name} 생성 시작.`); history.commit(); });
-const finishCurrentCurve = () => {
-  if (!selectedCurve || selectedCurve.points.length < 2) { setStatus('Point를 최소 2개 생성하세요.'); return; }
-  setMode('edit'); activateCommandTab('modify'); setStatus(`${selectedCurve.name} 완료 · Point/Tangent/Section 편집 가능`);
-};
-$('finishCurveBtn').addEventListener('click', finishCurrentCurve);
-$('createEditBtn').addEventListener('click', finishCurrentCurve);
+$('modeSelect').addEventListener('change', e => {
+  const nextMode = e.target.value;
+  if (nextMode === 'draw') beginLineCreation();
+  else if (mode === 'draw') leaveLineCreationForMode(nextMode);
+  else setMode(nextMode);
+});
+$('newCurveBtn').addEventListener('click', beginLineCreation);
+$('finishCurveBtn').addEventListener('click', () => finishLineCreation(false));
+$('createEditBtn').addEventListener('click', () => finishLineCreation(true));
+$('cancelCurveBtn').addEventListener('click', cancelLineCreation);
+$('drawTarget').addEventListener('change', () => updateDrawTargetUI());
 $('drawCameraToggleBtn').addEventListener('click', toggleDrawCameraOverride);
 
 $('deletePointBtn').addEventListener('click', () => {
@@ -2082,11 +2202,12 @@ document.addEventListener('keydown', e => {
     setStatus(message || 'Redo할 작업이 없습니다.');
     return;
   }
+  if (e.key === 'Escape' && mode === 'draw') { e.preventDefault(); cancelLineCreation(); return; }
   if (e.code === 'CapsLock' && mode === 'draw') { e.preventDefault(); toggleDrawCameraOverride(); return; }
   if (isTypingTarget(e.target)) return;
-  if (e.key === 'Delete') { if (mode === 'edit' && selectedControl) $('deletePointBtn').click(); else if (selectedCurve) deleteSelectedCurve(); return; }
+  if (e.key === 'Delete') { if (mode === 'draw') cancelLineCreation(); else if (mode === 'edit' && selectedControl) $('deletePointBtn').click(); else if (selectedCurve) deleteSelectedCurve(); return; }
   if (e.key === 'i' || e.key === 'I') { if (selectedCurve?.points.length >= 2) setMode(mode === 'insert' ? 'edit' : 'insert'); return; }
-  if (e.key === 'q' || e.key === 'Q') { setMode('orbit'); return; }
+  if (e.key === 'q' || e.key === 'Q') { if (mode === 'draw') leaveLineCreationForMode('orbit'); else setMode('orbit'); return; }
   if (mode === 'edit') {
     if (e.key === 'w' || e.key === 'W') setPointTool('pointMove');
     else if (e.key === 'm' || e.key === 'M') setPointTool('sectionMove');
@@ -2104,7 +2225,7 @@ initNumericScrubbers(document, {
   onStart: ({ label }) => { history.begin(`${label} 수치 조정`); setStatus(`${label} · 좌우 드래그로 값 조정 · Shift 미세 · Ctrl/⌘ 정밀`); },
   onEnd: ({ label, value }) => { history.commit(); setStatus(`${label}: ${value}`); }
 });
-animate(); activateCommandTab('modify'); refreshCurveList(); refreshBrushUI(); updateControlVisibility(); updatePointPanel(); updateAverageAmountOutput(); updateObjectTransformButtons(); updateHint(); updateSelectionBadge(); updateMeshTypeUI(); applyModelDisplay(); setMode('orbit');
+animate(); activateCommandTab('modify'); refreshCurveList(); refreshBrushUI(); updateControlVisibility(); updatePointPanel(); updateAverageAmountOutput(); updateObjectTransformButtons(); updateHint(); updateSelectionBadge(); updateMeshTypeUI(); updateDrawTargetUI(); applyModelDisplay(); setMode('orbit');
 </script>
 </body>
 </html>
