@@ -76,6 +76,7 @@ input[type=checkbox]{accent-color:var(--accent)}
       <button id="objectRotateBtn" class="icon-btn" type="button" title="Spline Root Rotate (E)">Root Rotate</button>
       <button id="objectScaleBtn" class="icon-btn" type="button" title="Spline Root Scale (R)">Root Scale</button>
       <select id="transformSpace" title="변환 기즈모 좌표계 · Local은 현재 선택 대상 기준"><option value="world">World</option><option value="view">View</option><option value="local">Local</option></select>
+      <button id="axisGuidesToggleBtn" class="icon-btn active" type="button" title="Move 축 가이드 표시 (Shift+G)" aria-pressed="true">Axis Lines</button>
     </div>
     <div class="toolgroup">
       <button id="viewPerspectiveBtn" class="view-btn" type="button">Persp</button>
@@ -171,7 +172,7 @@ input[type=checkbox]{accent-color:var(--accent)}
             <div class="rollout-body">
               <button id="resetTransformBtn" class="wide" type="button">Reset Transform</button>
               <div class="mini-separator"></div>
-              <div class="section-label">Selected Point · 3ds Max Knot Type</div>
+              <div class="section-label">Selected Point(s) · 3ds Max Knot Type</div>
               <div class="row"><button id="bezierCornerBtn" type="button">Bezier Corner</button><button id="bezierBtn" type="button">Bezier</button></div>
               <div class="row" style="margin-top:4px"><button id="cornerBtn" type="button">Corner</button><button id="smoothBtn" type="button">Smooth</button></div>
               <button id="resetTangentsBtn" class="wide" type="button" style="margin-top:4px">Reset Tangents</button>
@@ -212,6 +213,7 @@ input[type=checkbox]{accent-color:var(--accent)}
           <div class="rollout">
             <button class="rollout-header" type="button">Point Cross-section</button>
             <div class="rollout-body">
+              <p class="muted">Spline 경로가 아니라, 선택 Point에서 Live Mesh의 단면 중심·회전·폭/깊이를 조절합니다. Offset은 경로를 움직이지 않고 단면만 이동하며 Scale / Taper의 0은 끝을 뾰족하게 만듭니다.</p>
               <div class="row3"><button id="sectionMoveBtn" type="button">Offset</button><button id="sectionRotateBtn" type="button">Rotate</button><button id="sectionScaleBtn" type="button">Scale / Taper</button></div>
               <div class="section-label">Point Position · Curve Local</div>
               <div class="coords"><label>X<input id="px" type="number" step="0.001" /></label><label>Y<input id="py" type="number" step="0.001" /></label><label>Z<input id="pz" type="number" step="0.001" /></label></div>
@@ -272,6 +274,7 @@ input[type=checkbox]{accent-color:var(--accent)}
 <script type="module">
 import { createHistory } from './src/state/history.js';
 import { canFinishLine, lineCreationExitAction, MIN_LINE_POINTS } from './src/state/line-creation-policy.js';
+import { allPointIndices, normalizePointSelection, selectedPointIndices as orderedPointSelection } from './src/state/point-selection.js';
 import { initNumericScrubbers } from './src/ui/numeric-scrubber.js';
 import {
   HANDLE_TYPE,
@@ -287,6 +290,7 @@ import {
 } from './src/geometry/bezier-handles.js';
 import { buildSweepFrames } from './src/geometry/sweep-frames.js';
 import { canPickVisibleControl, modeAfterControlPick } from './src/viewport/interaction-policy.js';
+import { axisDragScalar, axisVector, createAxisDragPlane } from './src/viewport/axis-guide-drag.js';
 import { runCoreSelfChecks } from './src/diagnostics/core-self-check.js';
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/+esm';
 import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/controls/OrbitControls.js/+esm';
@@ -339,12 +343,29 @@ const curvesRoot = new THREE.Group();
 scene.add(modelRoot, curvesRoot);
 
 const COLORS = { accent: 0x6da6ff, curve: 0x9bc1ff, tangent: 0xffb86b, selected: 0xffff8a, wire: 0xe8f1ff };
+const AXIS_COLORS = Object.freeze({ X:0xff5a5a, Y:0x65d66e, Z:0x5795ff });
+const axisGuideGroup = new THREE.Group();
+axisGuideGroup.name = 'MoveAxisGuides';
+axisGuideGroup.visible = false;
+scene.add(axisGuideGroup);
+const axisGuideLines = Object.entries(AXIS_COLORS).map(([axis, color]) => {
+  const direction = axis === 'X' ? new THREE.Vector3(1,0,0) : axis === 'Y' ? new THREE.Vector3(0,1,0) : new THREE.Vector3(0,0,1);
+  const geometry = new THREE.BufferGeometry().setFromPoints([direction.clone().multiplyScalar(-1), direction]);
+  const material = new THREE.LineBasicMaterial({ color, depthTest:false, depthWrite:false, transparent:true, opacity:.82 });
+  const line = new THREE.Line(geometry, material);
+  line.name = `MoveAxisGuide_${axis}`;
+  line.renderOrder = 32;
+  line.userData.axis = axis;
+  axisGuideGroup.add(line);
+  return line;
+});
 let surfaceMeshes = [];
 let modelDiagonal = 1;
 let handleRadius = .015;
 let curves = [];
 let selectedCurve = null;
 let selectedControl = null;
+let selectedPointIndices = new Set();
 let drawingCurve = null;
 let creationPreviousCurve = null;
 let nextCurveId = 1;
@@ -357,6 +378,8 @@ let suppressGizmo = false;
 let transformDragging = false;
 let gizmoContext = null;
 let gizmoDrag = null;
+let axisGuidesEnabled = true;
+let axisGuideDrag = null;
 let brushes = [];
 let nextBrushId = 1;
 let pointerDownState = null;
@@ -546,6 +569,7 @@ function makeCurveRecord(source = null) {
   curves.push(curve);
   selectedCurve = curve;
   selectedControl = null;
+  selectedPointIndices = new Set();
   rebuildControlVisuals(curve);
   updateCurveVisual(curve);
   if (curve.meshEnabled) rebuildCurveMesh(curve, false);
@@ -599,6 +623,7 @@ function captureAppState() {
     drawingCurveId: drawingCurve?.id ?? null,
     creationPreviousCurveId: creationPreviousCurve?.id ?? null,
     selectedControl: selectedControl ? { curveId:selectedControl.curve.id, pointIndex:selectedControl.pointIndex, kind:selectedControl.kind } : null,
+    selectedPointIndices: orderedPointSelection(selectedPointIndices, selectedCurve?.points.length || 0),
     mode,
     objectTransformMode,
     pointTool,
@@ -649,12 +674,15 @@ function curveFromState(state) {
 function restoreAppState(state) {
   transformDragging = false;
   gizmoDrag = null;
+  axisGuideDrag = null;
+  setAxisGuideHighlight();
   gizmoContext = null;
   transformControls.detach();
   curves.forEach(disposeCurve);
   curves = [];
   selectedCurve = null;
   selectedControl = null;
+  selectedPointIndices = new Set();
   drawingCurve = null;
   creationPreviousCurve = null;
   state.curves.forEach(curveFromState);
@@ -667,6 +695,11 @@ function restoreAppState(state) {
     selectedControl = { curve:selectedCurve, pointIndex, kind:state.selectedControl.kind };
     selectedCurve.lastControl = { pointIndex, kind:state.selectedControl.kind };
   }
+  selectedPointIndices = normalizePointSelection(
+    state.selectedPointIndices,
+    selectedCurve?.points.length || 0,
+    selectedControl?.pointIndex ?? null
+  );
   objectTransformMode = state.objectTransformMode;
   pointTool = state.pointTool;
   curves.forEach(curve => {
@@ -727,10 +760,11 @@ function updateControlVisuals(curve) {
     const arr = v.tangentLines.geometry.getAttribute('position').array;
     arr.set([p.position.x,p.position.y,p.position.z,inPos.x,inPos.y,inPos.z,p.position.x,p.position.y,p.position.z,outPos.x,outPos.y,outPos.z]);
     v.tangentLines.geometry.getAttribute('position').needsUpdate = true;
-    const selectedPoint = selectedControl?.curve === curve && selectedControl.pointIndex === i;
-    v.anchor.material.color.setHex(selectedPoint && selectedControl.kind === 'anchor' ? COLORS.selected : COLORS.accent);
-    v.inHandle.material.color.setHex(selectedPoint && selectedControl.kind === 'in' ? COLORS.selected : COLORS.tangent);
-    v.outHandle.material.color.setHex(selectedPoint && selectedControl.kind === 'out' ? COLORS.selected : COLORS.tangent);
+    const activePoint = selectedControl?.curve === curve && selectedControl.pointIndex === i;
+    const pointSelected = curve === selectedCurve && selectedPointIndices.has(i);
+    v.anchor.material.color.setHex(pointSelected ? COLORS.selected : COLORS.accent);
+    v.inHandle.material.color.setHex(activePoint && selectedControl.kind === 'in' ? COLORS.selected : COLORS.tangent);
+    v.outHandle.material.color.setHex(activePoint && selectedControl.kind === 'out' ? COLORS.selected : COLORS.tangent);
   });
 }
 
@@ -883,7 +917,7 @@ function finishPointTopologyChange(curve, selectedIndex, message) {
   if (curve.meshEnabled) rebuildCurveMesh(curve, false);
   const safeIndex = THREE.MathUtils.clamp(selectedIndex, 0, Math.max(0, curve.points.length - 1));
   if (curve.points.length) selectControl(curve, safeIndex, 'anchor');
-  else { selectedControl = null; updatePointPanel(); syncGizmo(); }
+  else { selectedControl = null; selectedPointIndices = new Set(); updatePointPanel(); syncGizmo(); }
   refreshCurveList();
   updateControlVisibility();
   if (message) setStatus(message);
@@ -963,8 +997,9 @@ function selectCurve(curve, options = {}) {
     const pointIndex = THREE.MathUtils.clamp(remembered.pointIndex ?? 0, 0, curve.points.length - 1);
     const kind = ['anchor', 'in', 'out'].includes(remembered.kind) ? remembered.kind : 'anchor';
     selectedControl = { curve, pointIndex, kind };
+    selectedPointIndices = new Set([pointIndex]);
     curve.lastControl = { pointIndex, kind };
-  } else selectedControl = null;
+  } else { selectedControl = null; selectedPointIndices = new Set(); }
   curves.forEach(c => updateControlVisuals(c));
   syncModifierUIFromCurve(curve);
   refreshCurveList();
@@ -982,6 +1017,7 @@ function selectControl(curve, pointIndex, kind) {
   if (!curve || curve.locked) { if (curve?.locked) setStatus(`${curve.name}은 잠겨 있습니다.`); return; }
   selectedCurve = curve;
   selectedControl = { curve, pointIndex, kind };
+  selectedPointIndices = new Set([pointIndex]);
   curve.lastControl = { pointIndex, kind };
   refreshCurveList();
   updateCurveSelectionStyles();
@@ -1489,6 +1525,26 @@ function refreshBrushUI() {
 }
 
 function selectedPoint() { return selectedControl?.curve?.points?.[selectedControl.pointIndex] || null; }
+function selectedPointTargetIndices() {
+  if (!selectedCurve) return [];
+  return orderedPointSelection(selectedPointIndices, selectedCurve.points.length, selectedControl?.pointIndex ?? null);
+}
+function selectAllCurvePoints() {
+  if (!selectedCurve?.points.length) return false;
+  selectedPointIndices = new Set(allPointIndices(selectedCurve.points.length));
+  if (!selectedControl || selectedControl.curve !== selectedCurve) {
+    selectedControl = { curve:selectedCurve, pointIndex:0, kind:'anchor' };
+  }
+  selectedControl.kind = 'anchor';
+  selectedCurve.lastControl = { pointIndex:selectedControl.pointIndex, kind:'anchor' };
+  if (!selectedCurve.locked && mode !== 'edit') setMode('edit');
+  curves.forEach(updateControlVisuals);
+  updateControlVisibility();
+  updatePointPanel();
+  syncGizmo();
+  setStatus(`${selectedCurve.name} · ${selectedCurve.points.length}개 Point 전체 선택 · Knot Type 명령은 전체에 적용`);
+  return true;
+}
 const KNOT_TYPE_BUTTONS = Object.freeze({
   bezierCorner: 'bezierCornerBtn',
   bezier: 'bezierBtn',
@@ -1497,18 +1553,21 @@ const KNOT_TYPE_BUTTONS = Object.freeze({
 });
 const KNOT_TYPE_LABELS = Object.freeze({ bezierCorner:'Bezier Corner', bezier:'Bezier', corner:'Corner', smooth:'Smooth' });
 function updateKnotTypeButtons() {
-  const point = selectedPoint();
-  const canEdit = !!point && !!selectedCurve && !selectedCurve.locked;
+  const indices = selectedPointTargetIndices();
+  const canEdit = !!indices.length && !!selectedCurve && !selectedCurve.locked;
   Object.entries(KNOT_TYPE_BUTTONS).forEach(([type, id]) => {
     $(id).disabled = !canEdit;
-    $(id).classList.toggle('active', canEdit && point.handleMode === type);
+    $(id).classList.toggle('active', canEdit && indices.every(index => selectedCurve.points[index].handleMode === type));
   });
   $('resetTangentsBtn').disabled = !canEdit;
 }
 function updatePointPanel() {
   const p = selectedPoint(), label = $('selectedControlLabel');
   const pointCount = selectedCurve?.points?.length || 0;
-  $('pointIndexLabel').textContent = p && selectedControl ? `${selectedControl.pointIndex + 1} / ${pointCount}` : `— / ${pointCount || '—'}`;
+  const selectionCount = selectedPointTargetIndices().length;
+  $('pointIndexLabel').textContent = p && selectedControl
+    ? selectionCount > 1 ? `All ${selectionCount} · Active ${selectedControl.pointIndex + 1} / ${pointCount}` : `${selectedControl.pointIndex + 1} / ${pointCount}`
+    : `— / ${pointCount || '—'}`;
   if (!p || !selectedCurve) {
     label.textContent = selectedCurve ? `${selectedCurve.name} · Point를 선택하세요` : '선택된 포인트 없음';
     ['px','py','pz','ox','oy','oz','sx','sz','rx','ry','rz'].forEach(id => $(id).value = '');
@@ -1519,7 +1578,9 @@ function updatePointPanel() {
     updateKnotTypeButtons(); updatePointToolButtons(); return;
   }
   const kind = selectedControl.kind === 'anchor' ? 'Anchor' : selectedControl.kind === 'in' ? 'Bezier In Handle' : 'Bezier Out Handle';
-  label.textContent = `${selectedCurve.name} · Point ${selectedControl.pointIndex + 1} · ${kind}`;
+  label.textContent = selectionCount > 1
+    ? `${selectedCurve.name} · ${selectionCount} Points 선택 · Active Point ${selectedControl.pointIndex + 1}`
+    : `${selectedCurve.name} · Point ${selectedControl.pointIndex + 1} · ${kind}`;
   $('averageAmount').disabled = false;
   ['averagePointBtn','averageHandlesBtn','averageBothBtn'].forEach(id => $(id).disabled = false);
   $('deletePointBtn').disabled = false;
@@ -1550,7 +1611,7 @@ function setPointTool(tool) {
   pointTool = tool; if (mode !== 'edit') setMode('edit'); updatePointToolButtons(); syncGizmo(); updateHint();
 }
 
-function finishKnotEdit(label) {
+function finishKnotEdit(label, indices) {
   selectedControl.kind = 'anchor';
   selectedCurve.lastControl = { pointIndex:selectedControl.pointIndex, kind:'anchor' };
   updateControlVisuals(selectedCurve);
@@ -1560,21 +1621,25 @@ function finishKnotEdit(label) {
   updateControlVisibility();
   syncGizmo();
   history.commit();
-  setStatus(`${selectedCurve.name} · Point ${selectedControl.pointIndex + 1} · ${label}`);
+  setStatus(indices.length > 1
+    ? `${selectedCurve.name} · ${indices.length}개 Point · ${label} 전체 적용`
+    : `${selectedCurve.name} · Point ${selectedControl.pointIndex + 1} · ${label}`);
 }
 
 function setSelectedKnotType(type) {
-  if (!selectedPoint() || !selectedCurve || selectedCurve.locked) return;
+  const indices = selectedPointTargetIndices();
+  if (!indices.length || !selectedCurve || selectedCurve.locked) return;
   history.begin(`Knot Type · ${KNOT_TYPE_LABELS[type]}`);
-  applyHandleMode(selectedCurve.points, selectedControl.pointIndex, type);
-  finishKnotEdit(KNOT_TYPE_LABELS[type]);
+  indices.forEach(index => applyHandleMode(selectedCurve.points, index, type));
+  finishKnotEdit(KNOT_TYPE_LABELS[type], indices);
 }
 
 function resetSelectedTangents() {
-  if (!selectedPoint() || !selectedCurve || selectedCurve.locked) return;
+  const indices = selectedPointTargetIndices();
+  if (!indices.length || !selectedCurve || selectedCurve.locked) return;
   history.begin('Reset Tangents');
-  recalculateHandles(selectedCurve.points, selectedControl.pointIndex);
-  finishKnotEdit('Tangents Reset');
+  indices.forEach(index => recalculateHandles(selectedCurve.points, index));
+  finishKnotEdit('Tangents Reset', indices);
 }
 
 function coordinateFrameQuaternion(space, curve, pointIndex = null) {
@@ -1600,14 +1665,116 @@ function setProxyTransform(position, quaternion) {
   suppressGizmo = true; gizmoProxy.position.copy(position); gizmoProxy.quaternion.copy(quaternion); gizmoProxy.scale.set(1,1,1); gizmoProxy.updateMatrixWorld(true); suppressGizmo = false;
 }
 
+function updateAxisGuideTransform() {
+  axisGuideGroup.position.copy(gizmoProxy.position);
+  axisGuideGroup.quaternion.copy(gizmoProxy.quaternion);
+  const cameraDistance = camera.position.distanceTo(gizmoProxy.position);
+  const length = Math.max(10, modelDiagonal * 20, cameraDistance * 30);
+  axisGuideLines.forEach(line => line.scale.setScalar(length));
+  axisGuideGroup.updateMatrixWorld(true);
+}
+
+function syncAxisGuides() {
+  const visible = axisGuidesEnabled && gizmoContext?.operation === 'translate' && transformControls.getHelper().visible;
+  axisGuideGroup.visible = !!visible;
+  if (visible) updateAxisGuideTransform();
+  const button = $('axisGuidesToggleBtn');
+  button.classList.toggle('active', axisGuidesEnabled);
+  button.setAttribute('aria-pressed', String(axisGuidesEnabled));
+}
+
+function setAxisGuideHighlight(axis = null) {
+  axisGuideLines.forEach(line => {
+    line.material.color.setHex(axis === line.userData.axis ? COLORS.selected : AXIS_COLORS[line.userData.axis]);
+    line.material.opacity = axis && axis !== line.userData.axis ? .32 : .82;
+  });
+}
+
+function toggleAxisGuides() {
+  axisGuidesEnabled = !axisGuidesEnabled;
+  if (!axisGuidesEnabled && axisGuideDrag) finishAxisGuideDrag();
+  syncAxisGuides();
+  setStatus(`Move 축 가이드 ${axisGuidesEnabled ? 'ON' : 'OFF'} · Shift+G`);
+}
+
+function findAxisGuide(event) {
+  if (!axisGuideGroup.visible || axisGuideDrag || gizmoContext?.operation !== 'translate') return null;
+  pointerNDC(event);
+  const previousThreshold = raycaster.params.Line.threshold;
+  raycaster.params.Line.threshold = Math.max(handleRadius * 1.5, camera.position.distanceTo(gizmoProxy.position) * .009);
+  const hit = raycaster.intersectObjects(axisGuideLines, false)[0] || null;
+  raycaster.params.Line.threshold = previousThreshold;
+  if (hit && hit.point.distanceTo(gizmoProxy.position) < camera.position.distanceTo(gizmoProxy.position) * .12) return null;
+  return hit;
+}
+
+function startAxisGuideDrag(event) {
+  const hit = findAxisGuide(event);
+  if (!hit || !gizmoContext) return false;
+  const axis = hit.object.userData.axis;
+  const axisWorld = axisVector(THREE, axis).applyQuaternion(gizmoProxy.quaternion).normalize();
+  const plane = createAxisDragPlane(THREE, camera, axisWorld, gizmoProxy.position);
+  pointerNDC(event);
+  const point = raycaster.ray.intersectPlane(plane, new THREE.Vector3());
+  if (!point) return false;
+  const origin = gizmoProxy.position.clone();
+  axisGuideDrag = {
+    pointerId:event.pointerId,
+    axis,
+    axisWorld,
+    plane,
+    origin,
+    startScalar:axisDragScalar(point, origin, axisWorld),
+    proxyStartPosition:origin.clone()
+  };
+  beginGizmoDrag();
+  if (!gizmoDrag) { axisGuideDrag = null; return false; }
+  orbit.enabled = false;
+  setAxisGuideHighlight(axis);
+  renderer.domElement.setPointerCapture?.(event.pointerId);
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  setStatus(`${axis}축 가이드 드래그 · ${axis} 방향으로 이동`);
+  return true;
+}
+
+function updateAxisGuideDrag(event) {
+  if (!axisGuideDrag || event.pointerId !== axisGuideDrag.pointerId) return false;
+  pointerNDC(event);
+  const point = raycaster.ray.intersectPlane(axisGuideDrag.plane, new THREE.Vector3());
+  if (point) {
+    const scalar = axisDragScalar(point, axisGuideDrag.origin, axisGuideDrag.axisWorld);
+    gizmoProxy.position.copy(axisGuideDrag.proxyStartPosition).addScaledVector(axisGuideDrag.axisWorld, scalar - axisGuideDrag.startScalar);
+    gizmoProxy.updateMatrixWorld(true);
+    handleGizmoChange();
+    updateAxisGuideTransform();
+  }
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  return true;
+}
+
+function finishAxisGuideDrag(event = null) {
+  if (!axisGuideDrag || (event && event.pointerId !== axisGuideDrag.pointerId)) return false;
+  const pointerId = axisGuideDrag.pointerId;
+  axisGuideDrag = null;
+  setAxisGuideHighlight();
+  if (renderer.domElement.hasPointerCapture?.(pointerId)) renderer.domElement.releasePointerCapture(pointerId);
+  orbit.enabled = mode !== 'draw' || drawCameraOverride;
+  endGizmoDrag();
+  if (event) { event.preventDefault(); event.stopImmediatePropagation(); }
+  return true;
+}
+
 function syncGizmo() {
   if (transformDragging) return;
   gizmoContext = null; transformControls.detach(); transformControls.getHelper().visible = false;
+  syncAxisGuides();
   if (mode === 'transform' && selectedCurve && !selectedCurve.locked) {
     const worldPos = curveRootWorldPosition(selectedCurve);
     const q = coordinateFrameQuaternion($('transformSpace').value, selectedCurve);
     setProxyTransform(worldPos, q); transformControls.attach(gizmoProxy); transformControls.setMode(objectTransformMode); transformControls.showX = transformControls.showY = transformControls.showZ = true;
-    transformControls.getHelper().visible = true; gizmoContext = { type:'object', curve:selectedCurve, operation:objectTransformMode }; return;
+    transformControls.getHelper().visible = true; gizmoContext = { type:'object', curve:selectedCurve, operation:objectTransformMode }; syncAxisGuides(); return;
   }
   if (mode === 'edit' && selectedControl && selectedCurve && !selectedCurve.locked) {
     const p = selectedPoint(); if (!p) return;
@@ -1624,6 +1791,7 @@ function syncGizmo() {
     transformControls.showX = true; transformControls.showY = pointTool !== 'sectionScale'; transformControls.showZ = true;
     transformControls.getHelper().visible = true;
     gizmoContext = { type:'point', curve:selectedCurve, pointIndex:selectedControl.pointIndex, kind:selectedControl.kind, tool:tangent ? 'tangentMove' : pointTool, operation };
+    syncAxisGuides();
   }
 }
 
@@ -1741,6 +1909,7 @@ function beginLineCreation() {
   creationPreviousCurve = selectedCurve;
   selectedCurve = null;
   selectedControl = null;
+  selectedPointIndices = new Set();
   syncModifierUIFromCurve(null);
   refreshCurveList();
   updateCurveSelectionStyles();
@@ -1785,6 +1954,7 @@ function cancelLineCreation() {
   }
   selectedCurve = null;
   selectedControl = null;
+  selectedPointIndices = new Set();
   if (previous) selectCurve(previous, { enterEdit:false });
   else {
     syncModifierUIFromCurve(null);
@@ -1833,8 +2003,8 @@ function updateHint() {
   else if (mode === 'insert') hintEl.textContent = '커브 위 클릭: Bezier Segment 정확히 분할 · 드래그: 카메라';
   else if (mode === 'edit') {
     const tool = selectedControl?.kind !== 'anchor' ? 'Bezier Handle Move' : pointTool === 'pointMove' ? 'Point + Handles Move' : pointTool === 'pointRotate' ? 'Point + Handles Rotate' : pointTool === 'pointScale' ? 'Point + Handles Scale' : pointTool === 'sectionMove' ? 'Section Offset' : pointTool === 'sectionRotate' ? 'Section Rotate' : 'Section Scale / Taper';
-    hintEl.textContent = `Point/주황색 Handle 선택 · XYZ Gizmo: ${tool} · 빈 공간 드래그: 카메라`;
-  } else if (mode === 'transform') hintEl.textContent = `Spline Root ${objectTransformMode === 'translate' ? 'Move' : objectTransformMode === 'rotate' ? 'Rotate' : 'Scale'} · Point 1 Pivot · World / View / Local`;
+    hintEl.textContent = `Point/주황색 Handle 선택 · XYZ Gizmo: ${tool} · Move 축선 드래그 · Shift+G 축선 토글`;
+  } else if (mode === 'transform') hintEl.textContent = `Spline Root ${objectTransformMode === 'translate' ? 'Move · 긴 축선 드래그 · Shift+G 토글' : objectTransformMode === 'rotate' ? 'Rotate' : 'Scale'} · Point 1 Pivot · World / View / Local`;
   else hintEl.textContent = 'Select · 커브 클릭 후 W/E/R: Root Move/Rotate/Scale · 드래그 회전 / 휠 줌';
 }
 
@@ -1930,7 +2100,9 @@ function handleViewportClick(event) {
 }
 
 renderer.domElement.addEventListener('pointerdown', event => {
-  if (event.button !== 0 || transformControls.axis) return;
+  if (event.button !== 0) return;
+  if (startAxisGuideDrag(event)) return;
+  if (transformControls.axis) return;
   pointerDownState = { x:event.clientX, y:event.clientY, controlHit:false };
   if (mode === 'draw') {
     if (drawCameraOverride) return;
@@ -1953,8 +2125,15 @@ renderer.domElement.addEventListener('pointerdown', event => {
     }
   }
 }, true);
-renderer.domElement.addEventListener('pointerup', handleViewportClick, true);
-renderer.domElement.addEventListener('pointercancel', () => { pointerDownState = null; }, true);
+renderer.domElement.addEventListener('pointermove', event => { updateAxisGuideDrag(event); }, true);
+renderer.domElement.addEventListener('pointerup', event => {
+  if (finishAxisGuideDrag(event)) { pointerDownState = null; return; }
+  handleViewportClick(event);
+}, true);
+renderer.domElement.addEventListener('pointercancel', event => {
+  finishAxisGuideDrag(event);
+  pointerDownState = null;
+}, true);
 
 $('modelFile').addEventListener('change', e => { const f = e.target.files?.[0]; if (f) loadModel(f); });
 $('modeSelect').addEventListener('change', e => {
@@ -1977,6 +2156,7 @@ $('deletePointBtn').addEventListener('click', () => {
   selectedCurve.points.splice(i,1);
   refreshDependentNeighborhood(selectedCurve.points, Math.min(i, selectedCurve.points.length - 1));
   selectedControl = null;
+  selectedPointIndices = new Set();
   finishPointTopologyChange(selectedCurve, Math.min(i, selectedCurve.points.length - 1), `${selectedCurve.name}: Point ${i + 1} 제거`);
   history.commit();
 });
@@ -2007,6 +2187,7 @@ function deleteSelectedCurve() {
 $('objectMoveBtn').addEventListener('click', () => setObjectTransformMode('translate'));
 $('objectRotateBtn').addEventListener('click', () => setObjectTransformMode('rotate'));
 $('objectScaleBtn').addEventListener('click', () => setObjectTransformMode('scale'));
+$('axisGuidesToggleBtn').addEventListener('click', toggleAxisGuides);
 $('transformSpace').addEventListener('change', syncGizmo);
 $('resetTransformBtn').addEventListener('click', () => {
   if (!selectedCurve || selectedCurve.locked) return;
@@ -2205,6 +2386,11 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && mode === 'draw') { e.preventDefault(); cancelLineCreation(); return; }
   if (e.code === 'CapsLock' && mode === 'draw') { e.preventDefault(); toggleDrawCameraOverride(); return; }
   if (isTypingTarget(e.target)) return;
+  if (commandKey && (e.key === 'a' || e.key === 'A')) {
+    if (selectedCurve?.points.length) { e.preventDefault(); selectAllCurvePoints(); }
+    return;
+  }
+  if (e.shiftKey && (e.key === 'g' || e.key === 'G')) { e.preventDefault(); toggleAxisGuides(); return; }
   if (e.key === 'Delete') { if (mode === 'draw') cancelLineCreation(); else if (mode === 'edit' && selectedControl) $('deletePointBtn').click(); else if (selectedCurve) deleteSelectedCurve(); return; }
   if (e.key === 'i' || e.key === 'I') { if (selectedCurve?.points.length >= 2) setMode(mode === 'insert' ? 'edit' : 'insert'); return; }
   if (e.key === 'q' || e.key === 'Q') { if (mode === 'draw') leaveLineCreationForMode('orbit'); else setMode('orbit'); return; }

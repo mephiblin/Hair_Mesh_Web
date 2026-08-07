@@ -11,6 +11,8 @@ import {
 import { buildSweepFrames } from '../geometry/sweep-frames.js';
 import { canPickVisibleControl, modeAfterControlPick } from '../viewport/interaction-policy.js';
 import { canFinishLine, lineCreationExitAction } from '../state/line-creation-policy.js';
+import { allPointIndices, normalizePointSelection, selectedPointIndices } from '../state/point-selection.js';
+import { axisDragScalar, axisVector, createAxisDragPlane } from '../viewport/axis-guide-drag.js';
 
 function finiteQuaternion(quaternion) {
   return [quaternion.x, quaternion.y, quaternion.z, quaternion.w].every(Number.isFinite);
@@ -48,6 +50,32 @@ export function runCoreSelfChecks(THREE) {
     canFinishLine(2)
       && lineCreationExitAction(2, 'orbit') === 'finish'
       && lineCreationExitAction(2, 'edit') === 'finish-edit'
+  );
+
+  const restoredSelection = normalizePointSelection([3, 1, 3, -1, 8], 4, 0);
+  check(
+    'Point multi-selection restore removes duplicates and invalid indices',
+    JSON.stringify(selectedPointIndices(restoredSelection, 4)) === JSON.stringify([1, 3])
+  );
+  check(
+    'Select All produces every point index exactly once',
+    JSON.stringify(allPointIndices(4)) === JSON.stringify([0, 1, 2, 3])
+  );
+
+  const axisCamera = {
+    up:new THREE.Vector3(0, 1, 0),
+    quaternion:new THREE.Quaternion(),
+    getWorldDirection:target => target.set(0, 0, -1)
+  };
+  const xAxis = axisVector(THREE, 'X');
+  const xDragPlane = createAxisDragPlane(THREE, axisCamera, xAxis, new THREE.Vector3());
+  check(
+    'Axis guide drag plane contains the constrained axis',
+    Math.abs(xDragPlane.normal.dot(xAxis)) < 1e-12
+  );
+  check(
+    'Axis guide scalar ignores off-axis pointer motion',
+    axisDragScalar(new THREE.Vector3(3, 9, -4), new THREE.Vector3(), xAxis) === 3
   );
 
   const points = [point(-1, 0, 0), point(0, 1, 0), point(2, 0, 1)];

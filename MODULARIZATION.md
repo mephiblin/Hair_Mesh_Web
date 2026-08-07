@@ -8,10 +8,12 @@
 - 모듈은 표준 `input`/`change` 이벤트만 발생시키며 메쉬나 커브 상태를 직접 알지 않습니다.
 - `src/state/history.js`: 앱 상태 캡처/복원을 주입받는 Undo/Redo 스택을 UI와 분리했습니다.
 - `src/state/line-creation-policy.js`: 빈 생성 세션 취소와 Finish/Finish & Edit 분기를 순수 상태 규칙으로 분리했습니다.
+- `src/state/point-selection.js`: 단일/전체 Point 선택의 정규화와 복원 규칙을 분리해 Ctrl+A 및 Undo/Redo가 같은 선택 불변 조건을 사용합니다.
 - `src/geometry/bezier-handles.js`: 3ds Max식 4개 Knot Type과 좌우별 Auto/Vector/Aligned/Free 타입 전이, Reset Tangents 계산을 분리했습니다.
 - `src/geometry/sweep-frames.js`: 회전 최소화 스윕 프레임과 0 접선·180도 반전 fallback을 분리했습니다.
 - `src/diagnostics/core-self-check.js`: `?selftest=1`에서만 핵심 핸들·프레임 불변 조건을 검사합니다.
 - `src/viewport/interaction-policy.js`: 선택/루트 변환 모드에서도 보이는 포인트를 선택할 수 있다는 상호작용 규칙을 DOM 및 Three.js 이벤트에서 분리했습니다.
+- `src/viewport/axis-guide-drag.js`: 긴 Move 축선의 축 벡터, 카메라 기준 드래그 평면, 축 방향 이동량 계산을 Three.js 장면 이벤트에서 분리했습니다.
 
 ## 다음 분리 경계
 
