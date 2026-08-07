@@ -1,0 +1,1802 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Curve Mesh Hair Tool v4</title>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#3a3a3a;--chrome:#4b4b4b;--chrome2:#555;--panel:#454545;--panel-dark:#333;
+  --field:#303030;--border:#666;--border-dark:#252525;--text:#ececec;--muted:#b8b8b8;
+  --accent:#8fc7c7;--accent-strong:#b6eded;--curve:#78b8ff;--tangent:#ffb56b;--select:#fff174;
+  --danger:#e98b8b;--ok:#9ed39e;--viewport:#101317;
+}
+*{box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden}
+body{margin:0;font-family:"Segoe UI",Arial,sans-serif;font-size:12px;background:var(--bg);color:var(--text)}
+button,input,select{font:inherit;color:inherit}
+button,select,input[type=number],input[type=text]{background:var(--field);border:1px solid var(--border);border-radius:2px;min-height:24px}
+button{padding:3px 7px;cursor:pointer}
+button:hover{background:#5d5d5d;border-color:#9a9a9a}
+button.active{background:#42666a;border-color:var(--accent-strong);box-shadow:inset 0 0 0 1px #1f3537}
+button:disabled,input:disabled,select:disabled{opacity:.42;cursor:not-allowed}
+input[type=number],input[type=text],select{width:100%;padding:3px 5px}
+input[type=file]{width:100%;font-size:11px;color:var(--muted)}
+input[type=checkbox]{accent-color:var(--accent)}
+.editor-shell{height:100vh;display:grid;grid-template-rows:42px minmax(0,1fr) 24px;background:var(--bg)}
+.topbar{display:flex;align-items:center;gap:6px;padding:5px 7px;background:linear-gradient(#5b5b5b,#454545);border-bottom:1px solid #1e1e1e;white-space:nowrap;overflow-x:auto}
+.brand{font-weight:700;padding:0 9px 0 3px;border-right:1px solid #2d2d2d}.brand small{font-weight:400;color:var(--accent-strong)}
+.toolgroup{display:flex;align-items:center;gap:3px;padding-right:6px;border-right:1px solid #2d2d2d}.toolgroup:last-child{border-right:0}
+.tool-label{color:var(--muted);margin:0 2px}.topbar select{width:auto;min-width:100px}.icon-btn{min-width:28px;height:27px;padding:2px 6px;font-weight:600}.view-btn{min-width:42px}
+.workspace{display:grid;grid-template-columns:232px minmax(320px,1fr) 342px;min-height:0}
+.scene-panel,.command-panel{min-height:0;background:var(--chrome);border-color:var(--border-dark);display:flex;flex-direction:column}
+.scene-panel{border-right:1px solid var(--border-dark)}.command-panel{border-left:1px solid var(--border-dark)}
+.panel-title{height:28px;display:flex;align-items:center;padding:0 8px;font-weight:600;background:#3c3c3c;border-bottom:1px solid #262626}
+.scene-section{padding:7px;border-bottom:1px solid #2c2c2c}.scene-section h3{font-size:11px;margin:0 0 5px;color:#ddd}
+.file-status,.muted{color:var(--muted);font-size:11px;line-height:1.4}.wide{width:100%}.row{display:grid;grid-template-columns:1fr 1fr;gap:4px}.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}.row4{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}.coords{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}.coords2{display:grid;grid-template-columns:repeat(2,1fr);gap:4px}
+.scene-list{flex:1;overflow:auto;padding:3px;background:#383838}.scene-row{display:grid;grid-template-columns:25px minmax(0,1fr) 25px;gap:2px;align-items:center;margin:1px 0}.scene-row-main{text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.scene-row.selected .scene-row-main{background:#557071;border-color:#9bcaca}.scene-row-meta{color:#bdbdbd;font-size:10px;margin-left:4px}.scene-eye,.scene-lock{padding:2px;min-width:24px}.scene-row.hidden-object{opacity:.55}.scene-row.locked-object .scene-row-main{font-style:italic}
+.viewport-wrap{position:relative;min-width:0;min-height:0;background:var(--viewport)}.viewport{position:absolute;inset:0;overflow:hidden;background:radial-gradient(circle at 50% 45%,#1b2027,#0d1014 72%)}.viewport canvas{display:block}
+.hint{position:absolute;left:8px;top:8px;z-index:5;background:rgba(42,42,42,.92);border:1px solid #707070;padding:5px 7px;font-size:11px;pointer-events:none;max-width:calc(100% - 16px)}
+.viewport-badge{position:absolute;right:8px;top:8px;z-index:5;background:rgba(42,42,42,.9);border:1px solid #666;padding:4px 7px;font-size:11px;pointer-events:none}
+.command-tabs{height:37px;display:grid;grid-template-columns:repeat(4,1fr);gap:1px;padding:3px;background:#383838;border-bottom:1px solid #222}.command-tab{font-size:15px;height:30px}.command-tab.active{background:#5c6f70;border-color:var(--accent)}
+.command-content{flex:1;min-height:0;overflow:hidden}.tab-panel{height:100%;overflow:auto;padding:4px}.hidden{display:none!important}
+.object-header{display:grid;grid-template-columns:minmax(0,1fr) 28px;gap:4px;padding:4px 2px 6px}.color-chip{background:var(--accent);border:1px solid #222}
+.modifier-stack{height:104px;background:#f2f2f2;color:#111;border:1px solid #1e1e1e;margin:0 2px 6px;overflow:auto;padding:2px}.modifier-entry{padding:3px 5px;border-bottom:1px solid #d0d0d0}.modifier-entry.top{font-weight:600;background:#dbe8e8}.modifier-entry.base:before{content:'▸ ';color:#333}
+.rollout{margin:0 0 4px;border:1px solid #2a2a2a;background:#494949}.rollout-header{width:100%;height:24px;text-align:left;border:0;border-radius:0;background:#3a3a3a;padding:3px 6px;font-weight:600}.rollout-header:before{content:'▾';display:inline-block;width:14px}.rollout.collapsed .rollout-header:before{content:'▸'}.rollout.collapsed .rollout-body{display:none}.rollout-body{padding:7px}.rollout-body label{display:block;margin:5px 0 2px;color:#ddd}.checkrow{display:flex!important;align-items:center;gap:5px;margin:4px 0!important;color:#eee!important}.checkrow input{margin:0}.section-label{font-size:10px;color:#c9c9c9;margin:6px 0 2px}.selected-label{min-height:19px;padding:4px 5px;background:#373737;border:1px solid #666;color:var(--accent-strong);margin-bottom:5px}.primary{background:#4d7377;border-color:#9ccfd0;font-weight:600}.danger:hover{border-color:var(--danger)}.ok{color:var(--ok)}.warning{color:#ffd08a}.stat{margin-top:6px;padding:5px;border:1px solid #666;background:#363636;color:#ccc;font-size:10px;line-height:1.4}.scroll-list{max-height:150px;overflow:auto;background:#3a3a3a;border:1px solid #616161;padding:3px}.brush-item{display:block;width:100%;text-align:left;margin:1px 0}.brush-item.selected{background:#557071;border-color:var(--accent)}
+.kbd{display:inline-block;min-width:20px;text-align:center;padding:0 3px;border:1px solid #777;background:#2e2e2e}.live{font-size:10px;color:var(--ok);margin-top:5px}.statusbar{display:flex;align-items:center;padding:0 8px;background:#343434;border-top:1px solid #1f1f1f;color:#ddd;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.status-mode{margin-left:auto;color:var(--accent-strong);padding-left:12px}.mini-separator{height:1px;background:#2a2a2a;margin:7px 0}.point-nav{display:grid;grid-template-columns:30px 1fr 30px;gap:3px;margin-bottom:5px}.point-nav .index{display:flex;align-items:center;justify-content:center;background:#373737;border:1px solid #666}
+@media(max-width:1080px){.workspace{grid-template-columns:200px minmax(300px,1fr) 320px}.brand{display:none}}
+@media(max-width:820px){html,body{overflow:auto}.editor-shell{height:auto;min-height:100vh;grid-template-rows:auto 1fr auto}.topbar{flex-wrap:wrap}.workspace{grid-template-columns:1fr;grid-template-rows:240px 62vh auto}.scene-panel{border-right:0}.command-panel{border-left:0}.viewport-wrap{grid-row:2}.command-panel{grid-row:3;height:650px}}
+</style>
+</head>
+<body>
+
+<div class="editor-shell">
+  <header class="topbar">
+    <div class="brand">Curve Mesh Hair Tool <small>v4</small></div>
+    <div class="toolgroup">
+      <button id="newCurveBtn" class="icon-btn" type="button" title="새 커브">＋ Line</button>
+      <span class="tool-label">Mode</span>
+      <select id="modeSelect" title="작업 모드">
+        <option value="orbit">Object / Camera</option>
+        <option value="draw">Create Points</option>
+        <option value="edit">Edit Points</option>
+        <option value="insert">Insert Point</option>
+        <option value="transform">Object Transform</option>
+      </select>
+      <button id="drawCameraToggleBtn" class="icon-btn" type="button" title="커브 생성 중 카메라 토글">Caps</button>
+    </div>
+    <div class="toolgroup">
+      <button id="duplicateCurveBtn" class="icon-btn" type="button" title="복제">Clone</button>
+      <button id="objectMoveBtn" class="icon-btn" type="button" title="Move (G)">Move</button>
+      <button id="objectRotateBtn" class="icon-btn" type="button" title="Rotate (R)">Rotate</button>
+      <button id="objectScaleBtn" class="icon-btn" type="button" title="Scale (S)">Scale</button>
+      <select id="objectSpace" title="오브젝트 기즈모 좌표계"><option value="world">World</option><option value="view">View</option><option value="local">Local</option></select>
+    </div>
+    <div class="toolgroup">
+      <button id="viewPerspectiveBtn" class="view-btn" type="button">Persp</button>
+      <button id="viewFrontBtn" class="view-btn" type="button">Front</button>
+      <button id="viewLeftBtn" class="view-btn" type="button">Left</button>
+      <button id="viewTopBtn" class="view-btn" type="button">Top</button>
+      <button id="fitSelectedBtn" class="view-btn" type="button">Frame</button>
+    </div>
+  </header>
+
+  <div class="workspace">
+    <aside class="scene-panel">
+      <div class="panel-title">Scene Explorer</div>
+      <section class="scene-section">
+        <h3>Reference Model</h3>
+        <input id="modelFile" type="file" accept=".obj,.fbx,.glb,.gltf" />
+        <div id="modelStatus" class="file-status">모델 없음</div>
+        <div class="row" style="margin-top:5px">
+          <button id="fitBtn" type="button">Frame Model</button>
+          <label class="checkrow"><input id="modelVisible" type="checkbox" checked /> Visible</label>
+        </div>
+      </section>
+      <section class="scene-section">
+        <h3>Curve Objects</h3>
+        <div class="muted">행 선택 시 해당 커브의 Point 편집으로 복귀합니다.</div>
+      </section>
+      <div id="curveList" class="scene-list">아직 커브가 없습니다.</div>
+    </aside>
+
+    <main class="viewport-wrap">
+      <div id="viewport" class="viewport">
+        <div id="viewportHint" class="hint">Object / Camera: 드래그 회전 · 휠 줌</div>
+        <div id="viewportBadge" class="viewport-badge">No Selection</div>
+      </div>
+    </main>
+
+    <aside class="command-panel">
+      <div class="command-tabs">
+        <button class="command-tab" data-command-tab="create" title="Create">＋</button>
+        <button class="command-tab active" data-command-tab="modify" title="Modify">⌁</button>
+        <button class="command-tab" data-command-tab="display" title="Display">◐</button>
+        <button class="command-tab" data-command-tab="export" title="Export">⇩</button>
+      </div>
+      <div class="command-content">
+        <section class="tab-panel hidden" data-command-panel="create">
+          <div class="rollout">
+            <button class="rollout-header" type="button">Line Creation</button>
+            <div class="rollout-body">
+              <label>포인트 배치<select id="drawTarget"><option value="surface">Reference Surface</option><option value="free">View Plane / Free</option></select></label>
+              <div class="row" style="margin-top:6px"><button id="finishCurveBtn" type="button">Finish Line</button><button id="createEditBtn" type="button">Finish & Edit</button></div>
+              <p class="muted">Create Points 중 <span class="kbd">Caps Lock</span>으로 생성과 카메라 조작을 전환합니다.</p>
+            </div>
+          </div>
+          <div class="rollout">
+            <button class="rollout-header" type="button">Mesh Brush Library</button>
+            <div class="rollout-body">
+              <label>OBJ / FBX / GLB 여러 개 추가<input id="brushFiles" type="file" accept=".obj,.fbx,.glb,.gltf" multiple /></label>
+              <button id="removeBrushBtn" class="wide danger" type="button" style="margin-top:5px">선택 브러시 제거</button>
+              <div id="brushList" class="scroll-list muted" style="margin-top:5px">추가된 브러시가 없습니다.</div>
+              <p class="muted">브러시 로컬 +Y축이 커브 길이 방향입니다. OBJ는 원래 Quad/N-gon을 보존합니다.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="tab-panel" data-command-panel="modify">
+          <div class="object-header"><input id="curveNameInput" type="text" value="" placeholder="No selection" /><div class="color-chip" title="Curve color"></div></div>
+          <div id="modifierStack" class="modifier-stack"><div class="modifier-entry base">No object selected</div></div>
+
+          <div class="rollout">
+            <button class="rollout-header" type="button">Selection / Spline Editing</button>
+            <div class="rollout-body">
+              <label class="checkrow"><input id="showPoints" type="checkbox" checked /> 선택 커브의 포인트 항상 표시</label>
+              <label class="checkrow"><input id="showTangents" type="checkbox" checked /> Bezier 핸들 표시</label>
+              <div id="selectedControlLabel" class="selected-label">선택된 포인트 없음</div>
+              <div class="point-nav"><button id="prevPointBtn" type="button">◀</button><div id="pointIndexLabel" class="index">— / —</div><button id="nextPointBtn" type="button">▶</button></div>
+              <div class="row3"><button id="pointMoveBtn" type="button">Point</button><button id="insertPointBtn" type="button">Insert</button><button id="deletePointBtn" class="danger" type="button">Remove</button></div>
+              <div class="row" style="margin-top:4px"><button id="insertBeforeBtn" type="button">Split Previous</button><button id="insertAfterBtn" type="button">Split Next</button></div>
+              <label>Bezier Handle Type<select id="handleMode"><option value="smooth">Smooth · same length</option><option value="aligned">Aligned</option><option value="broken">Broken</option><option value="corner">Corner</option></select></label>
+              <button id="autoHandleBtn" class="wide" type="button">Auto Tangents</button>
+              <p class="muted">Insert는 뷰포트의 커브를 클릭해 해당 Bezier 구간을 정확히 분할합니다.</p>
+            </div>
+          </div>
+
+          <div class="rollout">
+            <button class="rollout-header" type="button">Curve Object</button>
+            <div class="rollout-body">
+              <div class="row"><button id="resetTransformBtn" type="button">Reset Transform</button><button id="deleteCurveBtn" class="danger" type="button">Delete Object</button></div>
+              <label>Point Gizmo Axis<select id="pointSpace"><option value="world">World / Scene</option><option value="view">View / Camera</option><option value="local" selected>Local Section</option></select></label>
+              <p class="muted"><span class="kbd">G</span> Move · <span class="kbd">R</span> Rotate · <span class="kbd">S</span> Scale · Object 버튼은 상단 도구막대에 있습니다.</p>
+            </div>
+          </div>
+
+          <div class="rollout">
+            <button class="rollout-header" type="button">Live Curve → Mesh</button>
+            <div class="rollout-body">
+              <label class="checkrow"><input id="enableLiveMesh" type="checkbox" /> Enable in Viewport</label>
+              <label>Type<select id="meshType"><option value="ribbon">Rectangular / Ribbon</option><option value="tube">Radial / Ellipse</option><option value="brush">Imported Mesh Brush</option></select></label>
+              <div class="coords2">
+                <label>Width / Radius X<input id="widthInput" type="number" value="0.03" min="0" step="0.005" /></label>
+                <label>Depth / Radius Z<input id="depthInput" type="number" value="0.03" min="0" step="0.005" /></label>
+              </div>
+              <div class="coords2">
+                <label>Path Segments<input id="segmentsInput" type="number" value="32" min="2" max="512" step="1" /></label>
+                <label>Sides<input id="radialInput" type="number" value="8" min="3" max="64" step="1" /></label>
+              </div>
+              <div id="tubeCapControls">
+                <label class="checkrow"><input id="capStart" type="checkbox" /> Cap Start</label>
+                <label class="checkrow"><input id="capEnd" type="checkbox" /> Cap End</label>
+              </div>
+              <label class="checkrow"><input id="generateUV" type="checkbox" checked /> Generate Mapping Coordinates</label>
+              <label class="checkrow"><input id="smoothShading" type="checkbox" checked /> Smooth Shading</label>
+              <label class="checkrow"><input id="twistCorrection" type="checkbox" checked /> Twist Correction</label>
+              <div id="brushControls" class="hidden">
+                <label>Mesh Brush<select id="brushSelect"></select></label>
+                <label>Brush Cross-section Scale<input id="brushScale" type="number" value="1" min="0.0001" step="0.1" /></label>
+              </div>
+              <button id="generateBtn" class="wide primary" type="button" style="margin-top:6px">Apply / Rebuild Live Mesh</button>
+              <div class="live">Modifier 값은 커브별로 유지되며 Point·Tangent·Section 변경을 실시간 추종합니다.</div>
+              <div id="meshStats" class="stat">선택 메쉬 없음</div>
+            </div>
+          </div>
+
+          <div class="rollout">
+            <button class="rollout-header" type="button">Point Cross-section</button>
+            <div class="rollout-body">
+              <div class="row3"><button id="sectionMoveBtn" type="button">Offset</button><button id="sectionRotateBtn" type="button">Rotate</button><button id="sectionScaleBtn" type="button">Scale / Taper</button></div>
+              <div class="section-label">Point Position · Curve Local</div>
+              <div class="coords"><label>X<input id="px" type="number" step="0.001" /></label><label>Y<input id="py" type="number" step="0.001" /></label><label>Z<input id="pz" type="number" step="0.001" /></label></div>
+              <div class="section-label">Section Offset</div>
+              <div class="coords"><label>X<input id="ox" type="number" step="0.001" /></label><label>Y<input id="oy" type="number" step="0.001" /></label><label>Z<input id="oz" type="number" step="0.001" /></label></div>
+              <div class="section-label">Section Scale</div>
+              <div class="coords2"><label>X Width<input id="sx" type="number" min="0" step="0.05" /></label><label>Z Depth<input id="sz" type="number" min="0" step="0.05" /></label></div>
+              <div class="section-label">Section Rotation · degrees</div>
+              <div class="coords"><label>X<input id="rx" type="number" step="1" /></label><label>Y<input id="ry" type="number" step="1" /></label><label>Z<input id="rz" type="number" step="1" /></label></div>
+              <button id="applyPointValuesBtn" class="wide" type="button" style="margin-top:5px">Apply Numeric Values</button>
+              <div class="row" style="margin-top:4px"><button id="makeTipBtn" type="button">Set Tip · Scale 0</button><button id="resetSectionBtn" type="button">Reset Section</button></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="tab-panel hidden" data-command-panel="display">
+          <div class="rollout">
+            <button class="rollout-header" type="button">Curve Display</button>
+            <div class="rollout-body">
+              <label>Mesh View<select id="viewMode"><option value="solidwire">Solid + Polygon Edges</option><option value="solid">Solid</option><option value="wire">Polygon Edges Only</option></select></label>
+              <label class="checkrow"><input id="showCurveLines" type="checkbox" checked /> Curve Lines</label>
+              <label class="checkrow"><input id="xrayControls" type="checkbox" checked /> X-Ray Points / Tangents</label>
+              <p class="muted">Polygon Edge는 렌더링용 삼각 대각선이 아니라 저장되는 Quad/N-gon 경계입니다.</p>
+            </div>
+          </div>
+          <div class="rollout">
+            <button class="rollout-header" type="button">Reference / Grid</button>
+            <div class="rollout-body">
+              <label>Reference Opacity<input id="modelOpacity" type="number" min="0" max="1" step="0.05" value="1" /></label>
+              <label class="checkrow"><input id="modelWireframe" type="checkbox" /> Reference Wireframe</label>
+              <label class="checkrow"><input id="gridVisible" type="checkbox" checked /> Grid</label>
+            </div>
+          </div>
+        </section>
+
+        <section class="tab-panel hidden" data-command-panel="export">
+          <div class="rollout">
+            <button class="rollout-header" type="button">Mesh Export</button>
+            <div class="rollout-body">
+              <div class="coords2">
+                <label>Axis<select id="exportAxis"><option value="yup">Y-Up</option><option value="zup">Z-Up · 3ds Max</option></select></label>
+                <label>Scale<input id="exportScale" type="number" value="1" step="0.1" /></label>
+              </div>
+              <button id="exportQuadObjBtn" class="wide" type="button" style="margin-top:6px">Export Quad / N-gon OBJ</button>
+              <button id="exportFbxBtn" class="wide" type="button" style="margin-top:4px">Export FBX 7.4 ASCII · Experimental</button>
+              <button id="clearGeneratedBtn" class="wide danger" type="button" style="margin-top:8px">Disable All Live Mesh</button>
+              <p class="muted">출력은 현재 Curve Object Transform을 적용한 완성 메쉬입니다. 웹 도구의 Live 관계는 베이크됩니다.</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </aside>
+  </div>
+
+  <footer class="statusbar"><span id="status" aria-live="polite">Reference 모델을 불러오거나 새 Line을 생성하세요.</span><span id="statusMode" class="status-mode">OBJECT</span></footer>
+</div>
+
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/+esm';
+import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/controls/OrbitControls.js/+esm';
+import { TransformControls } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/controls/TransformControls.js/+esm';
+import { OBJLoader } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/OBJLoader.js/+esm';
+import { FBXLoader } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/FBXLoader.js/+esm';
+import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/GLTFLoader.js/+esm';
+
+const $ = id => document.getElementById(id);
+const viewport = $('viewport'), statusEl = $('status'), hintEl = $('viewportHint'), viewportBadge = $('viewportBadge');
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, 1, .001, 100000);
+camera.position.set(2, 1.4, 2.5);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+viewport.appendChild(renderer.domElement);
+
+const orbit = new OrbitControls(camera, renderer.domElement);
+orbit.enableDamping = true;
+orbit.dampingFactor = .08;
+
+const gizmoProxy = new THREE.Object3D();
+scene.add(gizmoProxy);
+const transformControls = new TransformControls(camera, renderer.domElement);
+transformControls.setSize(.82);
+transformControls.setSpace('local');
+scene.add(transformControls.getHelper());
+transformControls.getHelper().visible = false;
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 2.2));
+const keyLight = new THREE.DirectionalLight(0xffffff, 2.2);
+keyLight.position.set(3, 5, 4);
+scene.add(keyLight);
+
+let grid = new THREE.GridHelper(10, 20, 0x777777, 0x555555);
+grid.material.transparent = true;
+grid.material.opacity = .22;
+scene.add(grid);
+
+const modelRoot = new THREE.Group();
+const curvesRoot = new THREE.Group();
+scene.add(modelRoot, curvesRoot);
+
+const COLORS = { accent: 0x6da6ff, curve: 0x9bc1ff, tangent: 0xffb86b, selected: 0xffff8a, wire: 0xe8f1ff };
+let surfaceMeshes = [];
+let modelDiagonal = 1;
+let handleRadius = .015;
+let curves = [];
+let selectedCurve = null;
+let selectedControl = null;
+let nextCurveId = 1;
+let mode = 'orbit';
+let objectTransformMode = 'translate';
+let pointTool = 'pointMove';
+let drawCameraOverride = false;
+let suppressModifierEvents = false;
+let suppressGizmo = false;
+let transformDragging = false;
+let gizmoContext = null;
+let gizmoDrag = null;
+let brushes = [];
+let nextBrushId = 1;
+let pointerDownState = null;
+let activeCommandTab = 'modify';
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+class BezierChainCurve extends THREE.Curve {
+  constructor(points) { super(); this.points = points; }
+  segmentInfo(t) {
+    const count = Math.max(1, this.points.length - 1);
+    const scaled = THREE.MathUtils.clamp(t, 0, 1) * count;
+    const index = Math.min(count - 1, Math.floor(scaled));
+    return { index, u: index === count - 1 && t >= 1 ? 1 : scaled - index };
+  }
+  getPoint(t, target = new THREE.Vector3()) {
+    if (!this.points.length) return target.set(0, 0, 0);
+    if (this.points.length === 1) return target.copy(this.points[0].position);
+    const { index, u } = this.segmentInfo(t);
+    const a = this.points[index], b = this.points[index + 1];
+    const p0 = a.position, p1 = a.position.clone().add(a.outTangent), p2 = b.position.clone().add(b.inTangent), p3 = b.position;
+    const om = 1 - u, om2 = om * om, u2 = u * u;
+    return target.set(
+      om2 * om * p0.x + 3 * om2 * u * p1.x + 3 * om * u2 * p2.x + u2 * u * p3.x,
+      om2 * om * p0.y + 3 * om2 * u * p1.y + 3 * om * u2 * p2.y + u2 * u * p3.y,
+      om2 * om * p0.z + 3 * om2 * u * p1.z + 3 * om * u2 * p2.z + u2 * u * p3.z
+    );
+  }
+  getTangent(t, target = new THREE.Vector3()) {
+    if (this.points.length < 2) return target.set(0, 1, 0);
+    const { index, u } = this.segmentInfo(t);
+    const a = this.points[index], b = this.points[index + 1];
+    const p0 = a.position, p1 = a.position.clone().add(a.outTangent), p2 = b.position.clone().add(b.inTangent), p3 = b.position;
+    const om = 1 - u;
+    target.set(
+      3 * om * om * (p1.x - p0.x) + 6 * om * u * (p2.x - p1.x) + 3 * u * u * (p3.x - p2.x),
+      3 * om * om * (p1.y - p0.y) + 6 * om * u * (p2.y - p1.y) + 3 * u * u * (p3.y - p2.y),
+      3 * om * om * (p1.z - p0.z) + 6 * om * u * (p2.z - p1.z) + 3 * u * u * (p3.z - p2.z)
+    );
+    if (target.lengthSq() < 1e-12) {
+      target.copy(p3).sub(p0);
+      if (target.lengthSq() < 1e-12) target.set(0, 1, 0);
+    }
+    return target.normalize();
+  }
+}
+
+function resize() {
+  const r = viewport.getBoundingClientRect();
+  renderer.setSize(r.width, r.height, false);
+  camera.aspect = r.width / Math.max(r.height, 1);
+  camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(viewport);
+resize();
+
+function setStatus(text) { statusEl.textContent = text; }
+function isTypingTarget(el) { return el && ['INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName); }
+function disposeMaterial(m) { if (Array.isArray(m)) m.forEach(x => x?.dispose?.()); else m?.dispose?.(); }
+function disposeTree(obj) { obj?.traverse?.(c => { c.geometry?.dispose?.(); disposeMaterial(c.material); }); }
+function clearGroup(group) { while (group.children.length) { const c = group.children[group.children.length - 1]; group.remove(c); disposeTree(c); } }
+function cloneVectorArray(arr) { return arr.map(v => v.clone()); }
+function safeNumber(v, fallback = 0) { return Number.isFinite(v) ? v : fallback; }
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
+function fitObject(object) {
+  const box = new THREE.Box3().setFromObject(object);
+  if (box.isEmpty()) return;
+  const size = box.getSize(new THREE.Vector3()), center = box.getCenter(new THREE.Vector3());
+  const maxDim = Math.max(size.x, size.y, size.z, .001);
+  modelDiagonal = size.length() || maxDim;
+  handleRadius = Math.max(modelDiagonal * .005, .001);
+  const distance = maxDim / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) * 1.6;
+  camera.position.copy(center).add(new THREE.Vector3(distance * .75, distance * .45, distance));
+  camera.near = Math.max(maxDim / 10000, .0001);
+  camera.far = Math.max(maxDim * 1000, 100);
+  camera.updateProjectionMatrix();
+  orbit.target.copy(center); orbit.update();
+  scene.remove(grid); grid.geometry.dispose(); grid.material.dispose();
+  grid = new THREE.GridHelper(maxDim * 4, 20, 0x777777, 0x555555);
+  grid.position.y = box.min.y; grid.material.transparent = true; grid.material.opacity = .22; grid.visible = $('gridVisible')?.checked ?? true; scene.add(grid);
+  curves.forEach(c => rebuildControlVisuals(c));
+  updateControlVisibility();
+  syncGizmo();
+}
+
+
+function normalizeMaterials(root) {
+  root.traverse(child => {
+    if (!child.isMesh) return;
+    surfaceMeshes.push(child);
+    if (!child.material) child.material = new THREE.MeshStandardMaterial({ color: 0xaaaaaa, roughness: .7 });
+  });
+}
+
+async function loadModel(file) {
+  clearGroup(modelRoot); surfaceMeshes = [];
+  const ext = file.name.split('.').pop().toLowerCase(), url = URL.createObjectURL(file);
+  try {
+    let object;
+    if (ext === 'obj') object = await new Promise((res, rej) => new OBJLoader().load(url, res, undefined, rej));
+    else if (ext === 'fbx') object = await new Promise((res, rej) => new FBXLoader().load(url, res, undefined, rej));
+    else if (ext === 'glb' || ext === 'gltf') {
+      const gltf = await new Promise((res, rej) => new GLTFLoader().load(url, res, undefined, rej)); object = gltf.scene;
+    } else throw new Error('지원하지 않는 형식입니다.');
+    normalizeMaterials(object); modelRoot.add(object); fitObject(modelRoot); applyModelDisplay();
+    $('modelStatus').textContent = `${file.name} · Mesh ${surfaceMeshes.length}개`;
+    setStatus('기준 모델 로드 완료. 새 커브를 만든 뒤 표면을 클릭하세요.');
+  } catch (err) {
+    console.error(err); $('modelStatus').textContent = '로드 실패'; setStatus(`모델 로드 실패: ${err.message}`);
+  } finally { URL.revokeObjectURL(url); }
+}
+
+function makePointRecord(position) {
+  return {
+    position: position.clone(),
+    inTangent: new THREE.Vector3(),
+    outTangent: new THREE.Vector3(),
+    handleMode: 'aligned',
+    offset: new THREE.Vector3(),
+    rotation: new THREE.Quaternion(),
+    scaleX: 1,
+    scaleZ: 1
+  };
+}
+function clonePointRecord(p) {
+  return {
+    position: p.position.clone(), inTangent: p.inTangent.clone(), outTangent: p.outTangent.clone(), handleMode: p.handleMode,
+    offset: p.offset.clone(), rotation: p.rotation.clone(), scaleX: p.scaleX, scaleZ: p.scaleZ
+  };
+}
+function defaultSettings() {
+  return {
+    type: 'ribbon', width: .03, depth: .03, segments: 32, radial: 8,
+    brushScale: 1, brushId: brushes[0]?.id ?? null,
+    generateUV: true, smooth: true, twistCorrection: true, capStart: false, capEnd: false
+  };
+}
+
+function makeCurveRecord(source = null) {
+  const id = nextCurveId++;
+  const group = new THREE.Group();
+  group.name = `CurveObject_${id}`;
+  curvesRoot.add(group);
+  const curve = {
+    id,
+    name: `Line${String(id).padStart(3, '0')}`,
+    group,
+    visible: source ? source.visible !== false : true,
+    locked: false,
+    points: source ? source.points.map(clonePointRecord) : [],
+    // 각 커브가 마지막으로 편집하던 Point/Handle을 기억합니다.
+    // 다른 커브나 생성 메쉬를 선택한 뒤 돌아와도 같은 편집 위치를 복원합니다.
+    lastControl: source?.lastControl ? { ...source.lastControl } : null,
+    visualGroup: null, controlObjects: [], line: null,
+    meshGroup: null, solidMesh: null, wireMesh: null, topology: null,
+    meshEnabled: source ? source.meshEnabled : false,
+    settings: { ...defaultSettings(), ...(source ? source.settings : {}) }
+  };
+  curve.group.visible = curve.visible;
+  if (source) {
+    curve.group.position.copy(source.group.position);
+    curve.group.quaternion.copy(source.group.quaternion);
+    curve.group.scale.copy(source.group.scale);
+  }
+  curves.push(curve);
+  selectedCurve = curve;
+  selectedControl = null;
+  rebuildControlVisuals(curve);
+  updateCurveVisual(curve);
+  if (curve.meshEnabled) rebuildCurveMesh(curve, false);
+  syncModifierUIFromCurve(curve);
+  refreshCurveList();
+  updatePointPanel();
+  syncGizmo();
+  updateSelectionBadge();
+  return curve;
+}
+function ensureCurve() { return selectedCurve || makeCurveRecord(); }
+function curveObject(curve) { return curve?.points?.length >= 2 ? new BezierChainCurve(curve.points) : null; }
+
+function createControlMesh(radius, color, shape = 'sphere') {
+  const geo = shape === 'box' ? new THREE.BoxGeometry(radius * 1.35, radius * 1.35, radius * 1.35) : new THREE.SphereGeometry(radius, 14, 9);
+  const mat = new THREE.MeshBasicMaterial({ color, depthTest: false, transparent: true, opacity: .95 });
+  const mesh = new THREE.Mesh(geo, mat); mesh.renderOrder = 40; return mesh;
+}
+
+function rebuildControlVisuals(curve) {
+  if (curve.visualGroup) { curve.group.remove(curve.visualGroup); disposeTree(curve.visualGroup); }
+  curve.visualGroup = new THREE.Group(); curve.visualGroup.name = `CurveControls_${curve.id}`; curve.group.add(curve.visualGroup); curve.controlObjects = [];
+  curve.points.forEach((p, i) => {
+    const anchor = createControlMesh(handleRadius, COLORS.accent, 'sphere');
+    anchor.userData = { curveId: curve.id, pointIndex: i, kind: 'anchor' };
+    const inHandle = createControlMesh(handleRadius * .7, COLORS.tangent, 'box');
+    inHandle.userData = { curveId: curve.id, pointIndex: i, kind: 'in' };
+    const outHandle = createControlMesh(handleRadius * .7, COLORS.tangent, 'box');
+    outHandle.userData = { curveId: curve.id, pointIndex: i, kind: 'out' };
+    const lineGeo = new THREE.BufferGeometry();
+    lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(12), 3));
+    const lineMat = new THREE.LineBasicMaterial({ color: COLORS.tangent, depthTest: false, transparent: true, opacity: .72 });
+    const tangentLines = new THREE.LineSegments(lineGeo, lineMat); tangentLines.renderOrder = 35;
+    p._visual = { anchor, inHandle, outHandle, tangentLines };
+    curve.visualGroup.add(tangentLines, anchor, inHandle, outHandle);
+    curve.controlObjects.push(anchor, inHandle, outHandle);
+  });
+  updateControlVisuals(curve); updateControlVisibility();
+}
+
+function updateControlVisuals(curve) {
+  curve.points.forEach((p, i) => {
+    const v = p._visual; if (!v) return;
+    const inPos = p.position.clone().add(p.inTangent), outPos = p.position.clone().add(p.outTangent);
+    v.anchor.position.copy(p.position); v.inHandle.position.copy(inPos); v.outHandle.position.copy(outPos);
+    const arr = v.tangentLines.geometry.getAttribute('position').array;
+    arr.set([p.position.x,p.position.y,p.position.z,inPos.x,inPos.y,inPos.z,p.position.x,p.position.y,p.position.z,outPos.x,outPos.y,outPos.z]);
+    v.tangentLines.geometry.getAttribute('position').needsUpdate = true;
+    const selectedPoint = selectedControl?.curve === curve && selectedControl.pointIndex === i;
+    v.anchor.material.color.setHex(selectedPoint && selectedControl.kind === 'anchor' ? COLORS.selected : COLORS.accent);
+    v.inHandle.material.color.setHex(selectedPoint && selectedControl.kind === 'in' ? COLORS.selected : COLORS.tangent);
+    v.outHandle.material.color.setHex(selectedPoint && selectedControl.kind === 'out' ? COLORS.selected : COLORS.tangent);
+  });
+}
+
+function applyControlAppearance(curve) {
+  const xray = $('xrayControls')?.checked ?? true;
+  curve.points.forEach(p => {
+    const v = p._visual; if (!v) return;
+    [v.anchor, v.inHandle, v.outHandle].forEach(o => {
+      o.material.depthTest = !xray;
+      o.material.needsUpdate = true;
+    });
+    v.tangentLines.material.depthTest = !xray;
+    v.tangentLines.material.needsUpdate = true;
+  });
+}
+
+function updateControlVisibility() {
+  const showPoints = $('showPoints')?.checked ?? true;
+  const showTangents = $('showTangents')?.checked ?? true;
+  curves.forEach(curve => {
+    const selected = curve === selectedCurve && curve.visible;
+    const tangentEditing = selected && !curve.locked && (mode === 'edit' || mode === 'insert');
+    if (curve.visualGroup) curve.visualGroup.visible = selected && (showPoints || showTangents);
+    curve.points.forEach(p => {
+      const v = p._visual; if (!v) return;
+      v.anchor.visible = selected && showPoints;
+      v.inHandle.visible = tangentEditing && showTangents;
+      v.outHandle.visible = tangentEditing && showTangents;
+      v.tangentLines.visible = tangentEditing && showTangents;
+    });
+    applyControlAppearance(curve);
+  });
+}
+
+function updateCurveVisual(curve) {
+  if (curve.line) { curve.group.remove(curve.line); disposeTree(curve.line); curve.line = null; }
+  const path = curveObject(curve); if (!path) { updateCurveSelectionStyles(); return; }
+  const samples = path.getPoints(Math.max(48, curve.points.length * 40));
+  const geo = new THREE.BufferGeometry().setFromPoints(samples);
+  const mat = new THREE.LineBasicMaterial({ color: curve === selectedCurve ? COLORS.selected : COLORS.curve, depthTest: false });
+  curve.line = new THREE.Line(geo, mat);
+  curve.line.renderOrder = 25;
+  curve.line.userData.curveId = curve.id;
+  curve.line.visible = $('showCurveLines')?.checked ?? true;
+  curve.group.add(curve.line);
+  updateCurveSelectionStyles();
+}
+
+function updateCurveSelectionStyles() {
+  const showLines = $('showCurveLines')?.checked ?? true;
+  curves.forEach(curve => {
+    if (curve.line) {
+      curve.line.visible = showLines;
+      curve.line.material.color.setHex(curve === selectedCurve ? COLORS.selected : COLORS.curve);
+    }
+  });
+}
+
+function autoHandlesForPoint(curve, index) {
+  const p = curve.points[index]; if (!p) return;
+  const prev = curve.points[index - 1]?.position ?? null, next = curve.points[index + 1]?.position ?? null;
+  let dir = new THREE.Vector3(), inLen = 0, outLen = 0;
+  if (prev && next) { dir.copy(next).sub(prev).normalize(); inLen = p.position.distanceTo(prev) / 3; outLen = p.position.distanceTo(next) / 3; }
+  else if (next) { dir.copy(next).sub(p.position).normalize(); outLen = p.position.distanceTo(next) / 3; inLen = outLen; }
+  else if (prev) { dir.copy(p.position).sub(prev).normalize(); inLen = p.position.distanceTo(prev) / 3; outLen = inLen; }
+  else dir.set(0, 1, 0);
+  p.inTangent.copy(dir).multiplyScalar(-inLen);
+  p.outTangent.copy(dir).multiplyScalar(outLen);
+  if (p.handleMode === 'corner') { p.inTangent.set(0,0,0); p.outTangent.set(0,0,0); }
+}
+
+function constrainTangents(point, movedKind) {
+  if (point.handleMode === 'broken') return;
+  if (point.handleMode === 'corner') { point.inTangent.set(0,0,0); point.outTangent.set(0,0,0); return; }
+  const moved = movedKind === 'in' ? point.inTangent : point.outTangent;
+  const opposite = movedKind === 'in' ? point.outTangent : point.inTangent;
+  if (moved.lengthSq() < 1e-12) { if (point.handleMode === 'smooth') opposite.set(0,0,0); return; }
+  const direction = moved.clone().normalize().multiplyScalar(-1);
+  const length = point.handleMode === 'smooth' ? moved.length() : opposite.length();
+  opposite.copy(direction.multiplyScalar(length));
+}
+
+function addPoint(worldPosition) {
+  const curve = ensureCurve();
+  if (curve.locked) { setStatus(`${curve.name}은 잠겨 있습니다.`); return; }
+  curve.group.updateMatrixWorld(true);
+  const local = curve.group.worldToLocal(worldPosition.clone());
+  const point = makePointRecord(local);
+  if (curve.points.length) {
+    const prev = curve.points[curve.points.length - 1];
+    const delta = local.clone().sub(prev.position), len = delta.length();
+    if (len > 1e-8) {
+      const dir = delta.clone().normalize();
+      prev.outTangent.copy(dir).multiplyScalar(len / 3);
+      if (prev.handleMode === 'aligned' && prev.inTangent.lengthSq() > 1e-12) prev.inTangent.copy(dir).multiplyScalar(-prev.inTangent.length());
+      else if (prev.handleMode === 'smooth') prev.inTangent.copy(prev.outTangent).multiplyScalar(-1);
+      point.inTangent.copy(dir).multiplyScalar(-len / 3);
+      point.outTangent.copy(dir).multiplyScalar(len / 3);
+    }
+  }
+  curve.points.push(point);
+  rebuildControlVisuals(curve);
+  updateCurveVisual(curve);
+  selectControl(curve, curve.points.length - 1, 'anchor');
+  if (curve.meshEnabled) rebuildCurveMesh(curve, false);
+  refreshCurveList();
+  updateModifierStack();
+  setStatus(`${curve.name}: Point ${curve.points.length} 생성`);
+}
+
+function finishPointTopologyChange(curve, selectedIndex, message) {
+  rebuildControlVisuals(curve);
+  updateCurveVisual(curve);
+  if (curve.meshEnabled) rebuildCurveMesh(curve, false);
+  const safeIndex = THREE.MathUtils.clamp(selectedIndex, 0, Math.max(0, curve.points.length - 1));
+  if (curve.points.length) selectControl(curve, safeIndex, 'anchor');
+  else { selectedControl = null; updatePointPanel(); syncGizmo(); }
+  refreshCurveList();
+  updateModifierStack();
+  updateControlVisibility();
+  if (message) setStatus(message);
+}
+
+function splitCurveSegment(curve, segmentIndex, u = .5) {
+  if (!curve || curve.locked || curve.points.length < 2) return null;
+  const i = THREE.MathUtils.clamp(segmentIndex, 0, curve.points.length - 2);
+  const t = THREE.MathUtils.clamp(u, .0001, .9999);
+  const a = curve.points[i], b = curve.points[i + 1];
+  const p0 = a.position.clone();
+  const p1 = a.position.clone().add(a.outTangent);
+  const p2 = b.position.clone().add(b.inTangent);
+  const p3 = b.position.clone();
+  const A = p0.clone().lerp(p1, t);
+  const B = p1.clone().lerp(p2, t);
+  const C = p2.clone().lerp(p3, t);
+  const D = A.clone().lerp(B, t);
+  const E = B.clone().lerp(C, t);
+  const F = D.clone().lerp(E, t);
+
+  a.outTangent.copy(A).sub(p0);
+  b.inTangent.copy(C).sub(p3);
+
+  const inserted = makePointRecord(F);
+  inserted.inTangent.copy(D).sub(F);
+  inserted.outTangent.copy(E).sub(F);
+  inserted.handleMode = 'aligned';
+  inserted.offset.copy(a.offset).lerp(b.offset, t);
+  inserted.rotation.copy(a.rotation).slerp(b.rotation, t);
+  inserted.scaleX = THREE.MathUtils.lerp(a.scaleX, b.scaleX, t);
+  inserted.scaleZ = THREE.MathUtils.lerp(a.scaleZ, b.scaleZ, t);
+  curve.points.splice(i + 1, 0, inserted);
+  finishPointTopologyChange(curve, i + 1, `${curve.name}: Point ${i + 2} 삽입 · 기존 Bezier 형상 유지`);
+  return inserted;
+}
+
+function insertPointAtRawParameter(curve, rawT) {
+  const path = curveObject(curve); if (!path) return null;
+  const info = path.segmentInfo(THREE.MathUtils.clamp(rawT, .000001, .999999));
+  return splitCurveSegment(curve, info.index, info.u);
+}
+
+function insertRelativeToSelected(direction) {
+  if (!selectedCurve || !selectedControl) { setStatus('기준 Point를 먼저 선택하세요.'); return; }
+  const i = selectedControl.pointIndex;
+  if (direction < 0) {
+    if (i <= 0) { setStatus('첫 Point 앞에는 분할할 이전 Segment가 없습니다.'); return; }
+    splitCurveSegment(selectedCurve, i - 1, .5);
+  } else {
+    if (i >= selectedCurve.points.length - 1) { setStatus('마지막 Point 뒤에는 분할할 다음 Segment가 없습니다.'); return; }
+    splitCurveSegment(selectedCurve, i, .5);
+  }
+}
+
+function activateCommandTab(name) {
+  activeCommandTab = name;
+  document.querySelectorAll('[data-command-tab]').forEach(btn => btn.classList.toggle('active', btn.dataset.commandTab === name));
+  document.querySelectorAll('[data-command-panel]').forEach(panel => panel.classList.toggle('hidden', panel.dataset.commandPanel !== name));
+}
+
+function updateSelectionBadge() {
+  if (!selectedCurve) { viewportBadge.textContent = 'No Selection'; return; }
+  const live = selectedCurve.meshEnabled ? ` · LIVE ${selectedCurve.settings.type.toUpperCase()}` : '';
+  viewportBadge.textContent = `${selectedCurve.name} · ${selectedCurve.points.length} Points${live}${selectedCurve.locked ? ' · LOCKED' : ''}`;
+}
+
+function updateModifierStack() {
+  const root = $('modifierStack');
+  if (!root) return;
+  root.innerHTML = '';
+  if (!selectedCurve) {
+    root.innerHTML = '<div class="modifier-entry base">No object selected</div>';
+    return;
+  }
+  if (selectedCurve.meshEnabled) {
+    const live = document.createElement('div');
+    live.className = 'modifier-entry top';
+    const type = selectedCurve.settings.type === 'brush' ? 'Mesh Brush Sweep' : selectedCurve.settings.type === 'tube' ? 'Radial Sweep' : 'Rectangular Sweep';
+    live.textContent = `▾ ${type}  [LIVE]`;
+    root.appendChild(live);
+  }
+  const base = document.createElement('div');
+  base.className = 'modifier-entry base';
+  base.textContent = `Bezier Line · ${selectedCurve.points.length} Points`;
+  root.appendChild(base);
+}
+
+function selectCurve(curve, options = {}) {
+  const { enterEdit = true } = options;
+  selectedCurve = curve;
+  if (curve?.points?.length) {
+    const remembered = curve.lastControl || { pointIndex: 0, kind: 'anchor' };
+    const pointIndex = THREE.MathUtils.clamp(remembered.pointIndex ?? 0, 0, curve.points.length - 1);
+    const kind = ['anchor', 'in', 'out'].includes(remembered.kind) ? remembered.kind : 'anchor';
+    selectedControl = { curve, pointIndex, kind };
+    curve.lastControl = { pointIndex, kind };
+  } else selectedControl = null;
+  curves.forEach(c => updateControlVisuals(c));
+  syncModifierUIFromCurve(curve);
+  refreshCurveList();
+  updateCurveSelectionStyles();
+  updatePointPanel();
+  updateSelectionBadge();
+  updateModifierStack();
+  activateCommandTab('modify');
+  if (curve && enterEdit && !curve.locked) setMode('edit');
+  else { updateControlVisibility(); syncGizmo(); }
+  updateMeshStats();
+  if (curve) setStatus(`${curve.name} 선택${curve.locked ? ' · 잠김' : ' · Point 편집 준비'}`);
+}
+
+function selectControl(curve, pointIndex, kind) {
+  if (!curve || curve.locked) { if (curve?.locked) setStatus(`${curve.name}은 잠겨 있습니다.`); return; }
+  selectedCurve = curve;
+  selectedControl = { curve, pointIndex, kind };
+  curve.lastControl = { pointIndex, kind };
+  refreshCurveList();
+  updateCurveSelectionStyles();
+  updateControlVisuals(curve);
+  updateControlVisibility();
+  updatePointPanel();
+  updateSelectionBadge();
+  syncGizmo();
+  const label = kind === 'anchor' ? 'Anchor' : kind === 'in' ? 'Bezier In' : 'Bezier Out';
+  setStatus(`${curve.name} · Point ${pointIndex + 1} · ${label}`);
+}
+
+function setCurveVisible(curve, visible) {
+  curve.visible = visible;
+  curve.group.visible = visible;
+  refreshCurveList();
+  updateControlVisibility();
+  updateSelectionBadge();
+  setStatus(`${curve.name}: ${visible ? '표시' : '숨김'}`);
+}
+
+function setCurveLocked(curve, locked) {
+  curve.locked = locked;
+  if (curve === selectedCurve && locked && (mode === 'edit' || mode === 'insert' || mode === 'transform')) setMode('orbit');
+  refreshCurveList();
+  updateControlVisibility();
+  syncGizmo();
+  updateSelectionBadge();
+  setStatus(`${curve.name}: ${locked ? '편집 잠금' : '잠금 해제'}`);
+}
+
+function refreshCurveList() {
+  const root = $('curveList');
+  root.innerHTML = '';
+  if (!curves.length) { root.textContent = '아직 커브가 없습니다.'; return; }
+  curves.forEach(curve => {
+    const row = document.createElement('div');
+    row.className = `scene-row${curve === selectedCurve ? ' selected' : ''}${curve.visible ? '' : ' hidden-object'}${curve.locked ? ' locked-object' : ''}`;
+
+    const eye = document.createElement('button');
+    eye.type = 'button'; eye.className = 'scene-eye'; eye.textContent = curve.visible ? '●' : '○'; eye.title = '표시 / 숨김';
+    eye.addEventListener('click', e => { e.stopPropagation(); setCurveVisible(curve, !curve.visible); });
+
+    const main = document.createElement('button');
+    main.type = 'button'; main.className = 'scene-row-main';
+    const nameText = document.createTextNode(curve.name);
+    const meta = document.createElement('span'); meta.className = 'scene-row-meta'; meta.textContent = `${curve.points.length} pts${curve.meshEnabled ? ' · LIVE' : ''}`;
+    main.append(nameText, meta);
+    main.addEventListener('click', () => selectCurve(curve, { enterEdit: true }));
+
+    const lock = document.createElement('button');
+    lock.type = 'button'; lock.className = 'scene-lock'; lock.textContent = curve.locked ? 'L' : 'U'; lock.title = '편집 잠금';
+    lock.addEventListener('click', e => { e.stopPropagation(); setCurveLocked(curve, !curve.locked); });
+
+    row.append(eye, main, lock);
+    root.appendChild(row);
+  });
+}
+
+function pointerNDC(event) {
+  const r = renderer.domElement.getBoundingClientRect();
+  mouse.x = ((event.clientX - r.left) / r.width) * 2 - 1; mouse.y = -((event.clientY - r.top) / r.height) * 2 + 1;
+  raycaster.setFromCamera(mouse, camera);
+}
+function pointOnSurface(event) {
+  if (!surfaceMeshes.length) return null; pointerNDC(event);
+  return raycaster.intersectObjects(surfaceMeshes, false)[0]?.point?.clone() || null;
+}
+function pointInFreePlane(event) {
+  pointerNDC(event); const curve = selectedCurve;
+  let origin;
+  if (curve && curve.points.length) {
+    curve.group.updateMatrixWorld(true);
+    origin = curve.group.localToWorld(curve.points[curve.points.length - 1].position.clone());
+  } else origin = orbit.target.clone();
+  const normal = new THREE.Vector3(); camera.getWorldDirection(normal);
+  const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(normal, origin), out = new THREE.Vector3();
+  return raycaster.ray.intersectPlane(plane, out) ? out : null;
+}
+function findControl(event) {
+  if (!selectedCurve || selectedCurve.locked) return null;
+  pointerNDC(event);
+  return raycaster.intersectObjects(selectedCurve.controlObjects.filter(o => o.visible), false)[0]?.object || null;
+}
+
+function pointToSegmentDistance2D(px, py, ax, ay, bx, by) {
+  const vx = bx - ax, vy = by - ay, wx = px - ax, wy = py - ay;
+  const len2 = vx * vx + vy * vy;
+  const t = len2 > 1e-12 ? THREE.MathUtils.clamp((wx * vx + wy * vy) / len2, 0, 1) : 0;
+  const dx = px - (ax + vx * t), dy = py - (ay + vy * t);
+  return { distance: Math.hypot(dx, dy), t };
+}
+
+function findNearestCurveParameter(event, curve) {
+  const path = curveObject(curve); if (!path) return null;
+  const rect = renderer.domElement.getBoundingClientRect();
+  const clickX = event.clientX - rect.left, clickY = event.clientY - rect.top;
+  const samples = Math.max(160, curve.points.length * 96);
+  curve.group.updateMatrixWorld(true);
+  let best = null, previous = null;
+  for (let i = 0; i <= samples; i++) {
+    const rawT = i / samples;
+    const world = path.getPoint(rawT).applyMatrix4(curve.group.matrixWorld);
+    const projected = world.clone().project(camera);
+    const current = {
+      x: (projected.x * .5 + .5) * rect.width,
+      y: (-projected.y * .5 + .5) * rect.height,
+      z: projected.z,
+      rawT
+    };
+    if (previous && previous.z >= -1.2 && previous.z <= 1.2 && current.z >= -1.2 && current.z <= 1.2) {
+      const d = pointToSegmentDistance2D(clickX, clickY, previous.x, previous.y, current.x, current.y);
+      if (!best || d.distance < best.distance) best = { distance: d.distance, rawT: THREE.MathUtils.lerp(previous.rawT, current.rawT, d.t) };
+    }
+    previous = current;
+  }
+  return best && best.distance <= 18 ? best : null;
+}
+
+function findCurveAtEvent(event) {
+  pointerNDC(event);
+  raycaster.params.Line.threshold = Math.max(modelDiagonal * .008, .004);
+  const pickables = [];
+  curves.forEach(curve => {
+    if (!curve.visible) return;
+    if (curve.solidMesh?.visible) pickables.push(curve.solidMesh);
+    if (curve.wireMesh?.visible) pickables.push(curve.wireMesh);
+    if (curve.line?.visible) pickables.push(curve.line);
+  });
+  const hit = raycaster.intersectObjects(pickables, false)[0]?.object;
+  if (!hit) return null;
+  let obj = hit;
+  while (obj && obj !== curvesRoot) {
+    const id = obj.userData?.curveId ?? Number((obj.name || '').match(/_(\d+)$/)?.[1]);
+    if (id) return curves.find(c => c.id === id) || null;
+    obj = obj.parent;
+  }
+  return null;
+}
+
+function rawToArc(path, rawU) {
+  let lo = 0, hi = 1;
+  for (let i = 0; i < 14; i++) { const mid = (lo + hi) * .5; if (path.getUtoTmapping(mid) < rawU) lo = mid; else hi = mid; }
+  return (lo + hi) * .5;
+}
+function quatFromAxes(x, y, z) { return new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, y, z)); }
+function interpolatePointData(curve, rawU) {
+  const count = curve.points.length;
+  if (!count) return { offset: new THREE.Vector3(), rotation: new THREE.Quaternion(), scaleX: 1, scaleZ: 1 };
+  if (count === 1) { const p = curve.points[0]; return { offset: p.offset.clone(), rotation: p.rotation.clone(), scaleX: p.scaleX, scaleZ: p.scaleZ }; }
+  const scaled = THREE.MathUtils.clamp(rawU, 0, 1) * (count - 1), i = Math.min(count - 2, Math.floor(scaled)), a = scaled - i;
+  const p0 = curve.points[i], p1 = curve.points[i + 1];
+  return {
+    offset: p0.offset.clone().lerp(p1.offset, a),
+    rotation: p0.rotation.clone().slerp(p1.rotation, a),
+    scaleX: THREE.MathUtils.lerp(p0.scaleX, p1.scaleX, a),
+    scaleZ: THREE.MathUtils.lerp(p0.scaleZ, p1.scaleZ, a)
+  };
+}
+function buildSweepContext(curve, segments) {
+  const path = curveObject(curve); if (!path) return null;
+  const frameQuats = [];
+  if (curve.settings?.twistCorrection !== false) {
+    const frames = path.computeFrenetFrames(segments, false);
+    for (let i = 0; i <= segments; i++) {
+      const y = frames.tangents[i].clone().normalize();
+      let x = frames.normals[i].clone().normalize();
+      let z = x.clone().cross(y).normalize();
+      x = y.clone().cross(z).normalize();
+      frameQuats.push(quatFromAxes(x, y, z));
+    }
+  } else {
+    for (let i = 0; i <= segments; i++) {
+      const y = path.getTangentAt(i / segments).normalize();
+      const reference = Math.abs(y.y) > .98 ? new THREE.Vector3(1,0,0) : new THREE.Vector3(0,1,0);
+      let x = reference.clone().cross(y).normalize();
+      let z = x.clone().cross(y).normalize();
+      x = y.clone().cross(z).normalize();
+      frameQuats.push(quatFromAxes(x, y, z));
+    }
+  }
+  return { path, segments, frameQuats };
+}
+function evaluateSweep(curve, ctx, arcT) {
+  const t = THREE.MathUtils.clamp(arcT, 0, 1), f = t * ctx.segments, i = Math.min(ctx.segments - 1, Math.floor(f)), a = f - i;
+  const baseQuat = ctx.frameQuats[i].clone().slerp(ctx.frameQuats[Math.min(i + 1, ctx.segments)], a);
+  const rawU = ctx.path.getUtoTmapping(t), data = interpolatePointData(curve, rawU);
+  const orientation = baseQuat.clone().multiply(data.rotation);
+  const baseX = new THREE.Vector3(1,0,0).applyQuaternion(baseQuat), baseY = new THREE.Vector3(0,1,0).applyQuaternion(baseQuat), baseZ = new THREE.Vector3(0,0,1).applyQuaternion(baseQuat);
+  const xAxis = new THREE.Vector3(1,0,0).applyQuaternion(orientation), yAxis = new THREE.Vector3(0,1,0).applyQuaternion(orientation), zAxis = new THREE.Vector3(0,0,1).applyQuaternion(orientation);
+  const center = ctx.path.getPointAt(t).addScaledVector(baseX, data.offset.x).addScaledVector(baseY, data.offset.y).addScaledVector(baseZ, data.offset.z);
+  return { center, baseQuat, orientation, xAxis, yAxis, zAxis, scaleX: data.scaleX, scaleZ: data.scaleZ, rawU };
+}
+function evaluateControlPoint(curve, index) {
+  const path = curveObject(curve); if (!path) return null;
+  const raw = curve.points.length <= 1 ? 0 : index / (curve.points.length - 1), arc = rawToArc(path, raw);
+  const ctx = buildSweepContext(curve, Math.max(64, curve.settings?.segments || 32));
+  return evaluateSweep(curve, ctx, arc);
+}
+
+function makeRibbonTopology(curve, width, segments, generateUV = true) {
+  const ctx = buildSweepContext(curve, segments); if (!ctx) return null;
+  const positions = [], faces = [], uvs = [], faceUvs = [];
+  for (let i = 0; i <= segments; i++) {
+    const t = i / segments, e = evaluateSweep(curve, ctx, t), half = width * e.scaleX * .5;
+    positions.push(e.center.clone().addScaledVector(e.xAxis, -half), e.center.clone().addScaledVector(e.xAxis, half));
+    if (generateUV) uvs.push(new THREE.Vector2(0,t), new THREE.Vector2(1,t));
+  }
+  for (let i = 0; i < segments; i++) {
+    const a = i * 2, b = (i + 1) * 2, c = b + 1, d = a + 1;
+    faces.push([a,b,c,d]); faceUvs.push(generateUV ? [a,b,c,d] : null);
+  }
+  return { positions, faces, uvs, faceUvs, source: 'ribbon' };
+}
+
+function makeTubeTopology(curve, radiusX, radiusZ, segments, radial, generateUV = true, capStart = false, capEnd = false) {
+  const ctx = buildSweepContext(curve, segments); if (!ctx) return null;
+  const positions = [], faces = [], uvs = [], faceUvs = [];
+  for (let i = 0; i <= segments; i++) {
+    const t = i / segments, e = evaluateSweep(curve, ctx, t);
+    for (let j = 0; j < radial; j++) {
+      const ang = j / radial * Math.PI * 2;
+      positions.push(e.center.clone().addScaledVector(e.xAxis, Math.cos(ang) * radiusX * e.scaleX).addScaledVector(e.zAxis, Math.sin(ang) * radiusZ * e.scaleZ));
+    }
+  }
+  if (generateUV) for (let i = 0; i <= segments; i++) for (let j = 0; j <= radial; j++) uvs.push(new THREE.Vector2(j / radial, i / segments));
+  for (let i = 0; i < segments; i++) {
+    for (let j = 0; j < radial; j++) {
+      const j1 = (j + 1) % radial, a = i * radial + j, b = (i + 1) * radial + j, c = (i + 1) * radial + j1, d = i * radial + j1;
+      faces.push([a,b,c,d]);
+      if (generateUV) {
+        const uvRow = radial + 1, ua = i * uvRow + j, ub = (i + 1) * uvRow + j, uc = (i + 1) * uvRow + j + 1, ud = i * uvRow + j + 1;
+        faceUvs.push([ua,ub,uc,ud]);
+      } else faceUvs.push(null);
+    }
+  }
+  if (capStart) {
+    const face = Array.from({length:radial}, (_,j) => radial - 1 - j); faces.push(face);
+    if (generateUV) {
+      const baseUv = uvs.length;
+      for (let j = 0; j < radial; j++) { const ang = j / radial * Math.PI * 2; uvs.push(new THREE.Vector2(.5 + Math.cos(ang) * .5, .5 + Math.sin(ang) * .5)); }
+      faceUvs.push(face.map(vi => baseUv + vi));
+    } else faceUvs.push(null);
+  }
+  if (capEnd) {
+    const base = segments * radial, face = Array.from({length:radial}, (_,j) => base + j); faces.push(face);
+    if (generateUV) {
+      const baseUv = uvs.length;
+      for (let j = 0; j < radial; j++) { const ang = j / radial * Math.PI * 2; uvs.push(new THREE.Vector2(.5 + Math.cos(ang) * .5, .5 + Math.sin(ang) * .5)); }
+      faceUvs.push(Array.from({length:radial}, (_,j) => baseUv + j));
+    } else faceUvs.push(null);
+  }
+  return { positions, faces, uvs, faceUvs, source: 'tube' };
+}
+
+function makeBrushTopology(curve, brush, brushScale, segments, generateUV = true) {
+  if (!brush) return null;
+  const ctx = buildSweepContext(curve, segments); if (!ctx) return null;
+  const minY = brush.bounds.min.y, length = Math.max(brush.bounds.max.y - minY, 1e-9), positions = [];
+  brush.positions.forEach(v => {
+    const t = THREE.MathUtils.clamp((v.y - minY) / length, 0, 1), e = evaluateSweep(curve, ctx, t);
+    positions.push(e.center.clone().addScaledVector(e.xAxis, v.x * brushScale * e.scaleX).addScaledVector(e.zAxis, v.z * brushScale * e.scaleZ));
+  });
+  return {
+    positions,
+    faces: brush.faces.map(f => [...f]),
+    uvs: generateUV ? cloneVectorArray(brush.uvs) : [],
+    faceUvs: generateUV ? brush.faceUvs.map(f => f ? [...f] : null) : brush.faces.map(() => null),
+    source: `brush:${brush.id}`,
+    sourceTopology: brush.topologyType
+  };
+}
+
+function topologyFaceNormal(topology, face) {
+  const normal = new THREE.Vector3();
+  if (face.length < 3) return normal.set(0,1,0);
+  const p0 = topology.positions[face[0]];
+  for (let i = 1; i < face.length - 1; i++) {
+    normal.add(new THREE.Vector3().crossVectors(topology.positions[face[i]].clone().sub(p0), topology.positions[face[i + 1]].clone().sub(p0)));
+  }
+  return normal.lengthSq() > 1e-12 ? normal.normalize() : normal.set(0,1,0);
+}
+
+function topologyToGeometry(topology, smooth = true) {
+  const pos = [], uv = [], normals = [];
+  const smoothNormals = smooth ? computeVertexNormals(topology) : null;
+  topology.faces.forEach((face, fi) => {
+    if (face.length < 3) return;
+    const fuv = topology.faceUvs?.[fi];
+    const faceNormal = smooth ? null : topologyFaceNormal(topology, face);
+    for (let k = 1; k < face.length - 1; k++) {
+      const corners = [0,k,k+1];
+      corners.forEach(ci => {
+        const vi = face[ci], p = topology.positions[vi];
+        pos.push(p.x,p.y,p.z);
+        const uvIndex = fuv?.[ci], t = Number.isInteger(uvIndex) ? topology.uvs[uvIndex] : null;
+        uv.push(t?.x ?? 0, t?.y ?? 0);
+        const n = smooth ? smoothNormals[vi] : faceNormal;
+        normals.push(n.x,n.y,n.z);
+      });
+    }
+  });
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
+  return g;
+}
+
+function topologyToWireGeometry(topology) {
+  const edges = new Map(), out = [];
+  topology.faces.forEach(face => {
+    for (let i = 0; i < face.length; i++) {
+      const a = face[i], b = face[(i + 1) % face.length], key = a < b ? `${a}:${b}` : `${b}:${a}`;
+      if (!edges.has(key)) edges.set(key, [a,b]);
+    }
+  });
+  edges.forEach(([a,b]) => { const p = topology.positions[a], q = topology.positions[b]; out.push(p.x,p.y,p.z,q.x,q.y,q.z); });
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(out, 3)); return g;
+}
+
+function getCurrentSettings() {
+  return {
+    type: $('meshType').value,
+    width: Math.max(parseFloat($('widthInput').value) || 0, 0),
+    depth: Math.max(parseFloat($('depthInput').value) || 0, 0),
+    segments: Math.max(2, parseInt($('segmentsInput').value) || 32),
+    radial: Math.max(3, parseInt($('radialInput').value) || 8),
+    brushScale: Math.max(parseFloat($('brushScale').value) || 1, .000001),
+    brushId: Number($('brushSelect').value) || null,
+    generateUV: $('generateUV').checked,
+    smooth: $('smoothShading').checked,
+    twistCorrection: $('twistCorrection').checked,
+    capStart: $('capStart').checked,
+    capEnd: $('capEnd').checked
+  };
+}
+
+function updateMeshTypeUI() {
+  const type = $('meshType').value;
+  $('brushControls').classList.toggle('hidden', type !== 'brush');
+  $('tubeCapControls').classList.toggle('hidden', type !== 'tube');
+  $('radialInput').disabled = type !== 'tube';
+  $('depthInput').disabled = type !== 'tube';
+  $('widthInput').disabled = type === 'brush';
+}
+
+function syncModifierUIFromCurve(curve) {
+  suppressModifierEvents = true;
+  if (!curve) {
+    $('curveNameInput').value = '';
+    $('curveNameInput').disabled = true;
+    $('enableLiveMesh').checked = false;
+    updateModifierStack();
+    updateSelectionBadge();
+    suppressModifierEvents = false;
+    updateMeshStats();
+    return;
+  }
+  curve.settings = { ...defaultSettings(), ...curve.settings };
+  const s = curve.settings;
+  $('curveNameInput').disabled = false;
+  $('curveNameInput').value = curve.name;
+  $('meshType').value = s.type;
+  $('widthInput').value = s.width;
+  $('depthInput').value = s.depth;
+  $('segmentsInput').value = s.segments;
+  $('radialInput').value = s.radial;
+  $('brushScale').value = s.brushScale;
+  $('generateUV').checked = s.generateUV !== false;
+  $('smoothShading').checked = s.smooth !== false;
+  $('twistCorrection').checked = s.twistCorrection !== false;
+  $('capStart').checked = !!s.capStart;
+  $('capEnd').checked = !!s.capEnd;
+  $('enableLiveMesh').checked = !!curve.meshEnabled;
+  refreshBrushUI();
+  if (s.brushId != null) $('brushSelect').value = String(s.brushId);
+  updateMeshTypeUI();
+  $('generateBtn').textContent = curve.meshEnabled ? 'Apply / Rebuild Live Mesh' : 'Enable & Build Live Mesh';
+  suppressModifierEvents = false;
+  updateModifierStack();
+  updateSelectionBadge();
+  updateMeshStats();
+}
+
+function makeTopologyForCurve(curve) {
+  const s = curve.settings;
+  if (s.type === 'ribbon') return makeRibbonTopology(curve, s.width, s.segments, s.generateUV);
+  if (s.type === 'tube') return makeTubeTopology(curve, s.width, s.depth, s.segments, s.radial, s.generateUV, s.capStart, s.capEnd);
+  if (s.type === 'brush') {
+    const brush = brushes.find(b => b.id === s.brushId);
+    if (!brush) { setStatus('Mesh Brush를 먼저 추가하고 선택하세요.'); return null; }
+    return makeBrushTopology(curve, brush, s.brushScale, s.segments, s.generateUV);
+  }
+  return null;
+}
+function removeCurveMesh(curve) {
+  if (!curve) return;
+  if (!curve.meshGroup) { curve.topology = null; return; }
+  curve.group.remove(curve.meshGroup); disposeTree(curve.meshGroup);
+  curve.meshGroup = curve.solidMesh = curve.wireMesh = curve.topology = null;
+}
+function rebuildCurveMesh(curve, announce = false) {
+  if (!curve?.meshEnabled || curve.points.length < 2) { if (curve?.points.length < 2) removeCurveMesh(curve); updateMeshStats(); return false; }
+  const topology = makeTopologyForCurve(curve); if (!topology) { removeCurveMesh(curve); updateMeshStats(); return false; }
+  removeCurveMesh(curve);
+  const meshGroup = new THREE.Group(); meshGroup.name = `CurveMeshModifier_${curve.id}`; meshGroup.userData.curveId = curve.id;
+  const solidMat = new THREE.MeshStandardMaterial({ color: COLORS.accent, roughness: .55, metalness: 0, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
+  const solid = new THREE.Mesh(topologyToGeometry(topology, curve.settings.smooth), solidMat); solid.name = `CurveMesh_${curve.id}`; solid.userData.curveId = curve.id;
+  const wireMat = new THREE.LineBasicMaterial({ color: COLORS.wire, transparent: true, opacity: .92, depthTest: true });
+  const wire = new THREE.LineSegments(topologyToWireGeometry(topology), wireMat); wire.name = `CurveQuadEdges_${curve.id}`; wire.userData.curveId = curve.id; wire.renderOrder = 15;
+  meshGroup.add(solid, wire); curve.group.add(meshGroup);
+  curve.meshGroup = meshGroup; curve.solidMesh = solid; curve.wireMesh = wire; curve.topology = topology;
+  applyViewModeToCurve(curve); updateMeshStats(); updateControlVisibility(); updateModifierStack(); updateSelectionBadge();
+  if (announce) setStatus(`${curve.name}: Live Mesh 활성화/갱신 완료`); return true;
+}
+function applyViewModeToCurve(curve) {
+  if (!curve?.solidMesh || !curve?.wireMesh) return;
+  const vm = $('viewMode').value; curve.solidMesh.visible = vm !== 'wire'; curve.wireMesh.visible = vm !== 'solid';
+}
+function applyViewModeAll() { curves.forEach(applyViewModeToCurve); }
+function topologyStats(topology) {
+  const faces = topology?.faces?.length || 0, quads = topology?.faces?.filter(f => f.length === 4).length || 0, tris = topology?.faces?.filter(f => f.length === 3).length || 0;
+  const ngons = faces - quads - tris, renderTris = topology?.faces?.reduce((sum,f) => sum + Math.max(0, f.length - 2), 0) || 0;
+  return { vertices: topology?.positions?.length || 0, faces, quads, tris, ngons, renderTris };
+}
+function updateMeshStats() {
+  if (!selectedCurve?.topology) { $('meshStats').textContent = selectedCurve?.meshEnabled ? '메쉬를 생성할 수 없는 상태' : '선택 메쉬 없음'; return; }
+  const s = topologyStats(selectedCurve.topology);
+  $('meshStats').textContent = `Logical Vertices ${s.vertices.toLocaleString()} · Faces ${s.faces.toLocaleString()} · Quads ${s.quads.toLocaleString()} · Tris ${s.tris.toLocaleString()}${s.ngons ? ` · N-gons ${s.ngons.toLocaleString()}` : ''} · Render triangles ${s.renderTris.toLocaleString()}`;
+}
+
+function parseOBJTopology(text, name) {
+  const positions = [], uvs = [], faces = [], faceUvs = [];
+  const lines = text.replace(/\r/g, '').split('\n');
+  const resolveIndex = (raw, count) => { const n = parseInt(raw, 10); return n > 0 ? n - 1 : count + n; };
+  for (let rawLine of lines) {
+    const line = rawLine.trim(); if (!line || line.startsWith('#')) continue;
+    const parts = line.split(/\s+/), key = parts.shift();
+    if (key === 'v' && parts.length >= 3) positions.push(new THREE.Vector3(parseFloat(parts[0]), parseFloat(parts[1]), parseFloat(parts[2])));
+    else if (key === 'vt' && parts.length >= 2) uvs.push(new THREE.Vector2(parseFloat(parts[0]), parseFloat(parts[1])));
+    else if (key === 'f' && parts.length >= 3) {
+      const face = [], fuv = []; let hasUv = true;
+      parts.forEach(token => {
+        const seg = token.split('/'); face.push(resolveIndex(seg[0], positions.length));
+        if (seg[1]) fuv.push(resolveIndex(seg[1], uvs.length)); else { fuv.push(null); hasUv = false; }
+      });
+      faces.push(face); faceUvs.push(hasUv ? fuv : null);
+    }
+  }
+  if (!positions.length || !faces.length) throw new Error(`${name}: 유효한 OBJ face를 찾지 못했습니다.`);
+  const bounds = new THREE.Box3().setFromPoints(positions);
+  return { positions, uvs, faces, faceUvs, bounds, topologyType: 'Original Quad/N-gon OBJ' };
+}
+function topologyFromObject3D(root) {
+  const positions = [], uvs = [], faces = [], faceUvs = [];
+  root.updateMatrixWorld(true);
+  root.traverse(child => {
+    if (!child.isMesh || !child.geometry?.getAttribute('position')) return;
+    const g = child.geometry, p = g.getAttribute('position'), t = g.getAttribute('uv'), baseV = positions.length, baseUv = uvs.length;
+    for (let i = 0; i < p.count; i++) positions.push(new THREE.Vector3(p.getX(i),p.getY(i),p.getZ(i)).applyMatrix4(child.matrixWorld));
+    if (t) for (let i = 0; i < t.count; i++) uvs.push(new THREE.Vector2(t.getX(i),t.getY(i)));
+    const index = g.index;
+    const count = index ? index.count : p.count;
+    for (let i = 0; i + 2 < count; i += 3) {
+      const a = index ? index.getX(i) : i, b = index ? index.getX(i + 1) : i + 1, c = index ? index.getX(i + 2) : i + 2;
+      faces.push([baseV + a, baseV + b, baseV + c]);
+      faceUvs.push(t ? [baseUv + a, baseUv + b, baseUv + c] : null);
+    }
+  });
+  if (!positions.length || !faces.length) throw new Error('메쉬를 찾지 못했습니다.');
+  return { positions, uvs, faces, faceUvs, bounds: new THREE.Box3().setFromPoints(positions), topologyType: 'Triangulated loader mesh' };
+}
+async function loadBrushFile(file) {
+  const ext = file.name.split('.').pop().toLowerCase(); let data;
+  if (ext === 'obj') data = parseOBJTopology(await file.text(), file.name);
+  else {
+    const url = URL.createObjectURL(file);
+    try {
+      let root;
+      if (ext === 'fbx') root = await new Promise((res,rej) => new FBXLoader().load(url,res,undefined,rej));
+      else if (ext === 'glb' || ext === 'gltf') { const gltf = await new Promise((res,rej) => new GLTFLoader().load(url,res,undefined,rej)); root = gltf.scene; }
+      else throw new Error('지원하지 않는 브러시 형식입니다.');
+      data = topologyFromObject3D(root);
+    } finally { URL.revokeObjectURL(url); }
+  }
+  const brush = { id: nextBrushId++, name: file.name.replace(/\.[^.]+$/, ''), ...data };
+  brushes.push(brush); return brush;
+}
+async function loadBrushFiles(fileList) {
+  let last = null, loaded = 0;
+  for (const file of [...fileList]) {
+    try { last = await loadBrushFile(file); loaded++; }
+    catch (err) { console.error(err); setStatus(`브러시 ${file.name} 로드 실패: ${err.message}`); }
+  }
+  if (last && selectedCurve) { selectedCurve.settings.brushId = last.id; if (selectedCurve.settings.type === 'brush' && selectedCurve.meshEnabled) rebuildCurveMesh(selectedCurve, false); }
+  refreshBrushUI(); syncModifierUIFromCurve(selectedCurve);
+  if (loaded) setStatus(`Mesh Brush ${loaded}개 추가 완료. OBJ는 원래 polygon topology를 유지합니다.`);
+}
+function refreshBrushUI() {
+  const select = $('brushSelect'), list = $('brushList');
+  const desired = selectedCurve?.settings?.brushId ?? (brushes[0]?.id ?? null);
+  select.innerHTML = ''; list.innerHTML = '';
+  if (!brushes.length) {
+    const opt = document.createElement('option'); opt.value = ''; opt.textContent = '브러시 없음'; select.appendChild(opt); list.textContent = '추가된 브러시가 없습니다.'; return;
+  }
+  brushes.forEach(brush => {
+    const opt = document.createElement('option'); opt.value = String(brush.id); opt.textContent = brush.name; select.appendChild(opt);
+    const st = topologyStats(brush);
+    const btn = document.createElement('button'); btn.type = 'button'; btn.className = `brush-item${brush.id === desired ? ' selected' : ''}`;
+    btn.textContent = `${brush.name} · ${st.faces} faces · ${brush.topologyType}`;
+    btn.addEventListener('click', () => { select.value = String(brush.id); select.dispatchEvent(new Event('change')); }); list.appendChild(btn);
+  });
+  if (desired != null && brushes.some(b => b.id === desired)) select.value = String(desired); else select.value = String(brushes[0].id);
+}
+
+function selectedPoint() { return selectedControl?.curve?.points?.[selectedControl.pointIndex] || null; }
+function updatePointPanel() {
+  const p = selectedPoint(), label = $('selectedControlLabel');
+  const pointCount = selectedCurve?.points?.length || 0;
+  $('pointIndexLabel').textContent = p && selectedControl ? `${selectedControl.pointIndex + 1} / ${pointCount}` : `— / ${pointCount || '—'}`;
+  if (!p || !selectedCurve) {
+    label.textContent = selectedCurve ? `${selectedCurve.name} · Point를 선택하세요` : '선택된 포인트 없음';
+    ['px','py','pz','ox','oy','oz','sx','sz','rx','ry','rz'].forEach(id => $(id).value = '');
+    $('handleMode').disabled = true; $('autoHandleBtn').disabled = true;
+    $('deletePointBtn').disabled = true; $('insertBeforeBtn').disabled = true; $('insertAfterBtn').disabled = true;
+    $('prevPointBtn').disabled = pointCount < 1; $('nextPointBtn').disabled = pointCount < 1;
+    updatePointToolButtons(); return;
+  }
+  const kind = selectedControl.kind === 'anchor' ? 'Anchor' : selectedControl.kind === 'in' ? 'Bezier In Handle' : 'Bezier Out Handle';
+  label.textContent = `${selectedCurve.name} · Point ${selectedControl.pointIndex + 1} · ${kind}`;
+  $('handleMode').disabled = false; $('autoHandleBtn').disabled = false; $('handleMode').value = p.handleMode;
+  $('deletePointBtn').disabled = false;
+  $('insertBeforeBtn').disabled = selectedControl.pointIndex <= 0;
+  $('insertAfterBtn').disabled = selectedControl.pointIndex >= pointCount - 1;
+  $('prevPointBtn').disabled = pointCount < 2;
+  $('nextPointBtn').disabled = pointCount < 2;
+  $('px').value = p.position.x.toFixed(5); $('py').value = p.position.y.toFixed(5); $('pz').value = p.position.z.toFixed(5);
+  $('ox').value = p.offset.x.toFixed(5); $('oy').value = p.offset.y.toFixed(5); $('oz').value = p.offset.z.toFixed(5);
+  $('sx').value = p.scaleX.toFixed(5); $('sz').value = p.scaleZ.toFixed(5);
+  const e = new THREE.Euler().setFromQuaternion(p.rotation, 'XYZ');
+  $('rx').value = THREE.MathUtils.radToDeg(e.x).toFixed(3); $('ry').value = THREE.MathUtils.radToDeg(e.y).toFixed(3); $('rz').value = THREE.MathUtils.radToDeg(e.z).toFixed(3);
+  updatePointToolButtons();
+}
+
+function updatePointToolButtons() {
+  const tangent = selectedControl && selectedControl.kind !== 'anchor';
+  const canSection = !!selectedControl && !tangent && (selectedCurve?.points.length || 0) >= 2;
+  const map = { pointMove:'pointMoveBtn', sectionMove:'sectionMoveBtn', sectionRotate:'sectionRotateBtn', sectionScale:'sectionScaleBtn' };
+  Object.entries(map).forEach(([tool,id]) => {
+    $(id).classList.toggle('active', !tangent && pointTool === tool && mode === 'edit');
+    $(id).disabled = !selectedControl || tangent || (tool !== 'pointMove' && !canSection);
+  });
+}
+function setPointTool(tool) {
+  if (tool !== 'pointMove' && (selectedCurve?.points.length || 0) < 2) { setStatus('Section 편집에는 Point가 2개 이상 필요합니다.'); return; }
+  pointTool = tool; if (mode !== 'edit') setMode('edit'); updatePointToolButtons(); syncGizmo(); updateHint();
+}
+
+function coordinateFrameQuaternion(space, curve, pointIndex = null) {
+  if (space === 'world') return new THREE.Quaternion();
+  if (space === 'view') return camera.quaternion.clone();
+  if (pointIndex == null) { const q = new THREE.Quaternion(); curve.group.getWorldQuaternion(q); return q; }
+  const evalPoint = evaluateControlPoint(curve, pointIndex); if (!evalPoint) { const q = new THREE.Quaternion(); curve.group.getWorldQuaternion(q); return q; }
+  const groupQ = new THREE.Quaternion(); curve.group.getWorldQuaternion(groupQ);
+  return groupQ.multiply(evalPoint.orientation);
+}
+function pointWorldPosition(curve, point) { return curve.group.localToWorld(point.position.clone()); }
+function sectionLocalMatrix(curve, pointIndex) {
+  const p = curve.points[pointIndex], e = evaluateControlPoint(curve, pointIndex);
+  if (!p || !e) return new THREE.Matrix4();
+  return new THREE.Matrix4().compose(e.center, e.orientation, new THREE.Vector3(Math.max(p.scaleX, 1e-8),1,Math.max(p.scaleZ, 1e-8)));
+}
+function sectionWorldMatrix(curve, pointIndex) { curve.group.updateMatrixWorld(true); return curve.group.matrixWorld.clone().multiply(sectionLocalMatrix(curve, pointIndex)); }
+function setProxyTransform(position, quaternion) {
+  suppressGizmo = true; gizmoProxy.position.copy(position); gizmoProxy.quaternion.copy(quaternion); gizmoProxy.scale.set(1,1,1); gizmoProxy.updateMatrixWorld(true); suppressGizmo = false;
+}
+
+function syncGizmo() {
+  if (transformDragging) return;
+  gizmoContext = null; transformControls.detach(); transformControls.getHelper().visible = false;
+  if (mode === 'transform' && selectedCurve && !selectedCurve.locked) {
+    const worldPos = new THREE.Vector3(); selectedCurve.group.getWorldPosition(worldPos);
+    const q = coordinateFrameQuaternion($('objectSpace').value, selectedCurve);
+    setProxyTransform(worldPos, q); transformControls.attach(gizmoProxy); transformControls.setMode(objectTransformMode); transformControls.showX = transformControls.showY = transformControls.showZ = true;
+    transformControls.getHelper().visible = true; gizmoContext = { type:'object', curve:selectedCurve, operation:objectTransformMode }; return;
+  }
+  if (mode === 'edit' && selectedControl && selectedCurve && !selectedCurve.locked) {
+    const p = selectedPoint(); if (!p) return;
+    const tangent = selectedControl.kind !== 'anchor';
+    const operation = tangent ? 'translate' : pointTool === 'sectionRotate' ? 'rotate' : pointTool === 'sectionScale' ? 'scale' : 'translate';
+    let position;
+    if (tangent) {
+      const local = p.position.clone().add(selectedControl.kind === 'in' ? p.inTangent : p.outTangent); position = selectedCurve.group.localToWorld(local);
+    } else if (pointTool === 'sectionMove' || pointTool === 'sectionRotate' || pointTool === 'sectionScale') {
+      const e = evaluateControlPoint(selectedCurve, selectedControl.pointIndex); if (!e) return; position = selectedCurve.group.localToWorld(e.center.clone());
+    } else position = pointWorldPosition(selectedCurve, p);
+    const q = coordinateFrameQuaternion($('pointSpace').value, selectedCurve, selectedControl.pointIndex);
+    setProxyTransform(position, q); transformControls.attach(gizmoProxy); transformControls.setMode(operation);
+    transformControls.showX = true; transformControls.showY = operation !== 'scale'; transformControls.showZ = true;
+    transformControls.getHelper().visible = true;
+    gizmoContext = { type:'point', curve:selectedCurve, pointIndex:selectedControl.pointIndex, kind:selectedControl.kind, tool:tangent ? 'tangentMove' : pointTool, operation };
+  }
+}
+
+function beginGizmoDrag() {
+  if (!gizmoContext) return;
+  transformDragging = true; gizmoProxy.updateMatrixWorld(true);
+  gizmoDrag = { context:{...gizmoContext}, proxyStart:gizmoProxy.matrixWorld.clone(), proxyStartInv:gizmoProxy.matrixWorld.clone().invert() };
+  const ctx = gizmoDrag.context;
+  if (ctx.type === 'object') { ctx.curve.group.updateMatrixWorld(true); gizmoDrag.targetStart = ctx.curve.group.matrixWorld.clone(); }
+  else if (ctx.tool === 'sectionRotate' || ctx.tool === 'sectionScale') gizmoDrag.targetStart = sectionWorldMatrix(ctx.curve, ctx.pointIndex);
+}
+function endGizmoDrag() { transformDragging = false; gizmoDrag = null; updatePointPanel(); syncGizmo(); updateMeshStats(); }
+function worldMatrixToLocalObject(object, worldMatrix) {
+  const parentInv = object.parent ? object.parent.matrixWorld.clone().invert() : new THREE.Matrix4();
+  const local = parentInv.multiply(worldMatrix); local.decompose(object.position, object.quaternion, object.scale); object.updateMatrixWorld(true);
+}
+function currentDeltaMatrix() { gizmoProxy.updateMatrixWorld(true); return gizmoProxy.matrixWorld.clone().multiply(gizmoDrag.proxyStartInv); }
+
+function handleGizmoChange() {
+  if (suppressGizmo || !gizmoDrag) return;
+  const ctx = gizmoDrag.context, curve = ctx.curve;
+  if (ctx.type === 'object') {
+    const nextWorld = currentDeltaMatrix().multiply(gizmoDrag.targetStart); worldMatrixToLocalObject(curve.group, nextWorld); updateMeshStats(); return;
+  }
+  const p = curve.points[ctx.pointIndex]; if (!p) return;
+  if (ctx.tool === 'tangentMove') {
+    const local = curve.group.worldToLocal(gizmoProxy.position.clone()), vec = local.sub(p.position);
+    if (ctx.kind === 'in') p.inTangent.copy(vec); else p.outTangent.copy(vec);
+    constrainTangents(p, ctx.kind); updateControlVisuals(curve); updateCurveVisual(curve); if (curve.meshEnabled) rebuildCurveMesh(curve, false);
+  } else if (ctx.tool === 'pointMove') {
+    p.position.copy(curve.group.worldToLocal(gizmoProxy.position.clone())); updateControlVisuals(curve); updateCurveVisual(curve); if (curve.meshEnabled) rebuildCurveMesh(curve, false);
+  } else if (ctx.tool === 'sectionMove') {
+    const local = curve.group.worldToLocal(gizmoProxy.position.clone()), path = curveObject(curve), raw = ctx.pointIndex / Math.max(1, curve.points.length - 1), arc = rawToArc(path, raw), sweep = evaluateSweep(curve, buildSweepContext(curve, Math.max(64, curve.settings.segments)), arc);
+    const baseCenter = path.getPoint(raw), diff = local.sub(baseCenter);
+    const bx = new THREE.Vector3(1,0,0).applyQuaternion(sweep.baseQuat), by = new THREE.Vector3(0,1,0).applyQuaternion(sweep.baseQuat), bz = new THREE.Vector3(0,0,1).applyQuaternion(sweep.baseQuat);
+    p.offset.set(diff.dot(bx), diff.dot(by), diff.dot(bz)); if (curve.meshEnabled) rebuildCurveMesh(curve, false);
+  } else if (ctx.tool === 'sectionRotate' || ctx.tool === 'sectionScale') {
+    const nextWorld = currentDeltaMatrix().multiply(gizmoDrag.targetStart), parentInv = curve.group.matrixWorld.clone().invert(), localMatrix = parentInv.multiply(nextWorld);
+    const pos = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3(); localMatrix.decompose(pos,q,s);
+    const evalPoint = evaluateControlPoint(curve, ctx.pointIndex), relative = evalPoint.baseQuat.clone().invert().multiply(q).normalize();
+    if (ctx.tool === 'sectionRotate') p.rotation.copy(relative);
+    else { p.scaleX = Math.max(Math.abs(s.x), 0); p.scaleZ = Math.max(Math.abs(s.z), 0); }
+    if (curve.meshEnabled) rebuildCurveMesh(curve, false);
+  }
+  updatePointPanel();
+}
+
+transformControls.addEventListener('dragging-changed', e => { orbit.enabled = !e.value && (mode !== 'draw' || drawCameraOverride); });
+transformControls.addEventListener('mouseDown', beginGizmoDrag);
+transformControls.addEventListener('objectChange', handleGizmoChange);
+transformControls.addEventListener('mouseUp', endGizmoDrag);
+orbit.addEventListener('change', () => { const space = mode === 'transform' ? $('objectSpace').value : $('pointSpace').value; if (!transformDragging && space === 'view') syncGizmo(); });
+
+function setMode(next) {
+  if (selectedCurve?.locked && ['edit','insert','transform'].includes(next)) next = 'orbit';
+  mode = next;
+  $('modeSelect').value = next;
+  if (mode !== 'draw') drawCameraOverride = false;
+  orbit.enabled = mode !== 'draw' || drawCameraOverride;
+  updateControlVisibility();
+  syncGizmo();
+  updateObjectTransformButtons();
+  updatePointToolButtons();
+  updateHint();
+  $('statusMode').textContent = mode === 'draw' ? (drawCameraOverride ? 'CREATE · CAMERA' : 'CREATE POINTS') : mode === 'edit' ? 'EDIT POINTS' : mode === 'insert' ? 'INSERT POINT' : mode === 'transform' ? 'OBJECT TRANSFORM' : 'OBJECT / CAMERA';
+  $('insertPointBtn').classList.toggle('active', mode === 'insert');
+  $('drawCameraToggleBtn').classList.toggle('active', mode === 'draw' && drawCameraOverride);
+}
+
+function updateHint() {
+  if (mode === 'draw') hintEl.textContent = drawCameraOverride ? 'CREATE 일시 정지 · 카메라 조작 ON · Caps Lock으로 Point 생성 복귀' : '클릭: 새 Point · Caps Lock: 카메라 조작 토글';
+  else if (mode === 'insert') hintEl.textContent = '커브 위 클릭: Bezier Segment 정확히 분할 · 드래그: 카메라';
+  else if (mode === 'edit') {
+    const tool = selectedControl?.kind !== 'anchor' ? 'Bezier Handle Move' : pointTool === 'pointMove' ? 'Curve Point Move' : pointTool === 'sectionMove' ? 'Section Offset' : pointTool === 'sectionRotate' ? 'Section Rotate' : 'Section Scale / Taper';
+    hintEl.textContent = `Point/주황색 Handle 선택 · XYZ Gizmo: ${tool} · 빈 공간 드래그: 카메라`;
+  } else if (mode === 'transform') hintEl.textContent = `Curve Object ${objectTransformMode === 'translate' ? 'Move' : objectTransformMode === 'rotate' ? 'Rotate' : 'Scale'} · World / View / Local`;
+  else hintEl.textContent = 'Object / Camera · 커브 또는 메쉬 클릭: 선택 · 드래그 회전 / 휠 줌';
+}
+
+function setObjectTransformMode(next) { if (!selectedCurve || selectedCurve.locked) { setStatus(selectedCurve?.locked ? `${selectedCurve.name}은 잠겨 있습니다.` : '커브를 먼저 선택하세요.'); return; } objectTransformMode = next; setMode('transform'); updateObjectTransformButtons(); syncGizmo(); updateHint(); }
+function updateObjectTransformButtons() {
+  $('objectMoveBtn').classList.toggle('active', mode === 'transform' && objectTransformMode === 'translate');
+  $('objectRotateBtn').classList.toggle('active', mode === 'transform' && objectTransformMode === 'rotate');
+  $('objectScaleBtn').classList.toggle('active', mode === 'transform' && objectTransformMode === 'scale');
+}
+function disposeCurve(curve) { if (!curve) return; transformControls.detach(); curvesRoot.remove(curve.group); disposeTree(curve.group); }
+
+
+function applyModelDisplay() {
+  modelRoot.visible = $('modelVisible').checked;
+  const opacity = THREE.MathUtils.clamp(parseFloat($('modelOpacity').value) || 0, 0, 1);
+  const wireframe = $('modelWireframe').checked;
+  modelRoot.traverse(child => {
+    if (!child.isMesh) return;
+    const mats = Array.isArray(child.material) ? child.material : [child.material];
+    mats.forEach(mat => {
+      if (!mat) return;
+      mat.opacity = opacity;
+      mat.transparent = opacity < .999;
+      mat.depthWrite = opacity >= .999;
+      if ('wireframe' in mat) mat.wireframe = wireframe;
+      mat.needsUpdate = true;
+    });
+  });
+}
+
+function frameSelected() {
+  if (selectedCurve?.visible && selectedCurve.points.length) fitObject(selectedCurve.group);
+  else if (surfaceMeshes.length) fitObject(modelRoot);
+  else if (curves.length) fitObject(curvesRoot);
+}
+
+function setStandardView(kind) {
+  let target = orbit.target.clone();
+  if (selectedCurve?.visible && selectedCurve.points.length) {
+    const box = new THREE.Box3().setFromObject(selectedCurve.group);
+    if (!box.isEmpty()) target = box.getCenter(new THREE.Vector3());
+  }
+  const distance = Math.max(camera.position.distanceTo(orbit.target), modelDiagonal * 1.2, 1);
+  let direction = new THREE.Vector3(1, .65, 1).normalize();
+  camera.up.set(0,1,0);
+  if (kind === 'front') direction.set(0,0,1);
+  else if (kind === 'left') direction.set(-1,0,0);
+  else if (kind === 'top') { direction.set(0,1,0); camera.up.set(0,0,-1); }
+  camera.position.copy(target).addScaledVector(direction, distance);
+  orbit.target.copy(target);
+  camera.lookAt(target);
+  orbit.update();
+  syncGizmo();
+  setStatus(`${kind === 'perspective' ? 'Perspective' : kind[0].toUpperCase() + kind.slice(1)} View`);
+}
+
+function cyclePoint(step) {
+  if (!selectedCurve?.points.length || selectedCurve.locked) return;
+  const current = selectedControl?.pointIndex ?? (step > 0 ? -1 : 0);
+  const next = (current + step + selectedCurve.points.length) % selectedCurve.points.length;
+  setMode('edit');
+  selectControl(selectedCurve, next, 'anchor');
+}
+
+function toggleDrawCameraOverride() {
+  if (mode !== 'draw') { setMode('draw'); drawCameraOverride = false; }
+  else drawCameraOverride = !drawCameraOverride;
+  orbit.enabled = drawCameraOverride;
+  updateHint();
+  $('drawCameraToggleBtn').classList.toggle('active', drawCameraOverride);
+  $('statusMode').textContent = drawCameraOverride ? 'CREATE · CAMERA' : 'CREATE POINTS';
+  setStatus(drawCameraOverride ? 'Create Points 일시 정지 · 카메라 조작 ON' : '카메라 조작 OFF · Point 생성 재개');
+}
+
+function handleViewportClick(event) {
+  if (!pointerDownState) return;
+  const moved = Math.hypot(event.clientX - pointerDownState.x, event.clientY - pointerDownState.y);
+  const wasControl = pointerDownState.controlHit;
+  pointerDownState = null;
+  if (moved > 5 || wasControl || transformControls.axis) return;
+  if (mode === 'insert') {
+    if (!selectedCurve || selectedCurve.locked) { setStatus('삽입할 편집 가능 커브를 선택하세요.'); return; }
+    const nearest = findNearestCurveParameter(event, selectedCurve);
+    if (!nearest) { setStatus('커브에서 18px 이내를 클릭하세요.'); return; }
+    insertPointAtRawParameter(selectedCurve, nearest.rawT);
+    setMode('edit');
+    return;
+  }
+  if (mode !== 'draw') {
+    const curve = findCurveAtEvent(event);
+    if (curve && (curve !== selectedCurve || mode === 'orbit')) selectCurve(curve, { enterEdit: true });
+  }
+}
+
+renderer.domElement.addEventListener('pointerdown', event => {
+  if (event.button !== 0 || transformControls.axis) return;
+  pointerDownState = { x:event.clientX, y:event.clientY, controlHit:false };
+  if (mode === 'draw') {
+    if (drawCameraOverride) return;
+    event.preventDefault();
+    const p = $('drawTarget').value === 'surface' ? pointOnSurface(event) : pointInFreePlane(event);
+    if (p) addPoint(p); else setStatus('클릭 위치에서 Point를 만들 수 없습니다.');
+    return;
+  }
+  if (mode === 'edit') {
+    const control = findControl(event);
+    if (!control) return;
+    pointerDownState.controlHit = true;
+    event.preventDefault(); event.stopPropagation();
+    const curve = curves.find(c => c.id === control.userData.curveId);
+    if (curve) selectControl(curve, control.userData.pointIndex, control.userData.kind);
+  }
+}, true);
+renderer.domElement.addEventListener('pointerup', handleViewportClick, true);
+renderer.domElement.addEventListener('pointercancel', () => { pointerDownState = null; }, true);
+
+$('modelFile').addEventListener('change', e => { const f = e.target.files?.[0]; if (f) loadModel(f); });
+$('modeSelect').addEventListener('change', e => setMode(e.target.value));
+$('newCurveBtn').addEventListener('click', () => { const curve = makeCurveRecord(); activateCommandTab('create'); setMode('draw'); setStatus(`${curve.name} 생성 시작.`); });
+const finishCurrentCurve = () => {
+  if (!selectedCurve || selectedCurve.points.length < 2) { setStatus('Point를 최소 2개 생성하세요.'); return; }
+  setMode('edit'); activateCommandTab('modify'); setStatus(`${selectedCurve.name} 완료 · Point/Tangent/Section 편집 가능`);
+};
+$('finishCurveBtn').addEventListener('click', finishCurrentCurve);
+$('createEditBtn').addEventListener('click', finishCurrentCurve);
+$('drawCameraToggleBtn').addEventListener('click', toggleDrawCameraOverride);
+
+$('deletePointBtn').addEventListener('click', () => {
+  if (!selectedCurve || !selectedControl || selectedCurve.locked) return;
+  const i = selectedControl.pointIndex;
+  selectedCurve.points.splice(i,1);
+  selectedControl = null;
+  finishPointTopologyChange(selectedCurve, Math.min(i, selectedCurve.points.length - 1), `${selectedCurve.name}: Point ${i + 1} 제거`);
+});
+$('insertPointBtn').addEventListener('click', () => { if (!selectedCurve || selectedCurve.points.length < 2) { setStatus('Point가 2개 이상인 커브를 선택하세요.'); return; } setMode(mode === 'insert' ? 'edit' : 'insert'); });
+$('insertBeforeBtn').addEventListener('click', () => insertRelativeToSelected(-1));
+$('insertAfterBtn').addEventListener('click', () => insertRelativeToSelected(1));
+$('prevPointBtn').addEventListener('click', () => cyclePoint(-1));
+$('nextPointBtn').addEventListener('click', () => cyclePoint(1));
+
+$('duplicateCurveBtn').addEventListener('click', () => {
+  if (!selectedCurve) { setStatus('복제할 커브를 먼저 선택하세요.'); return; }
+  const source = selectedCurve, copy = makeCurveRecord(source);
+  setObjectTransformMode('translate');
+  setStatus(`${source.name} → ${copy.name} 복제 · 같은 위치에 겹쳐 있음`);
+});
+$('deleteCurveBtn').addEventListener('click', () => {
+  if (!selectedCurve) return;
+  const c = selectedCurve;
+  curves = curves.filter(x => x !== c);
+  disposeCurve(c);
+  selectCurve(curves[0] || null, { enterEdit:true });
+  setStatus(`${c.name} 삭제`);
+});
+$('objectMoveBtn').addEventListener('click', () => setObjectTransformMode('translate'));
+$('objectRotateBtn').addEventListener('click', () => setObjectTransformMode('rotate'));
+$('objectScaleBtn').addEventListener('click', () => setObjectTransformMode('scale'));
+$('objectSpace').addEventListener('change', syncGizmo);
+$('resetTransformBtn').addEventListener('click', () => {
+  if (!selectedCurve || selectedCurve.locked) return;
+  selectedCurve.group.position.set(0,0,0); selectedCurve.group.quaternion.identity(); selectedCurve.group.scale.set(1,1,1); selectedCurve.group.updateMatrixWorld(true);
+  syncGizmo(); setStatus(`${selectedCurve.name}: Object Transform 초기화`);
+});
+$('curveNameInput').addEventListener('input', e => {
+  if (!selectedCurve || suppressModifierEvents) return;
+  const next = e.target.value.trimStart();
+  selectedCurve.name = next || `Line${String(selectedCurve.id).padStart(3,'0')}`;
+  selectedCurve.group.name = selectedCurve.name;
+  refreshCurveList(); updateSelectionBadge();
+});
+$('curveNameInput').addEventListener('blur', e => { if (selectedCurve) e.target.value = selectedCurve.name; });
+
+$('pointMoveBtn').addEventListener('click', () => setPointTool('pointMove'));
+$('sectionMoveBtn').addEventListener('click', () => setPointTool('sectionMove'));
+$('sectionRotateBtn').addEventListener('click', () => setPointTool('sectionRotate'));
+$('sectionScaleBtn').addEventListener('click', () => setPointTool('sectionScale'));
+$('pointSpace').addEventListener('change', syncGizmo);
+$('handleMode').addEventListener('change', e => {
+  const p = selectedPoint(); if (!p || selectedCurve.locked) return; p.handleMode = e.target.value;
+  if (p.handleMode === 'corner') { p.inTangent.set(0,0,0); p.outTangent.set(0,0,0); }
+  else if (p.inTangent.lengthSq() < 1e-12 && p.outTangent.lengthSq() < 1e-12) autoHandlesForPoint(selectedCurve, selectedControl.pointIndex);
+  else if (p.handleMode === 'smooth') { const source = p.outTangent.lengthSq() > 1e-12 ? p.outTangent : p.inTangent.clone().multiplyScalar(-1); p.outTangent.copy(source); p.inTangent.copy(source).multiplyScalar(-1); }
+  else if (p.handleMode === 'aligned') constrainTangents(p, p.outTangent.lengthSq() > 1e-12 ? 'out' : 'in');
+  updateControlVisuals(selectedCurve); updateCurveVisual(selectedCurve); if (selectedCurve.meshEnabled) rebuildCurveMesh(selectedCurve,false); syncGizmo();
+});
+$('autoHandleBtn').addEventListener('click', () => { if (!selectedControl || selectedCurve.locked) return; autoHandlesForPoint(selectedCurve, selectedControl.pointIndex); updateControlVisuals(selectedCurve); updateCurveVisual(selectedCurve); if (selectedCurve.meshEnabled) rebuildCurveMesh(selectedCurve,false); syncGizmo(); });
+$('applyPointValuesBtn').addEventListener('click', () => {
+  const p = selectedPoint(); if (!p || selectedCurve.locked) return;
+  const nums = ['px','py','pz','ox','oy','oz','sx','sz','rx','ry','rz'].map(id => parseFloat($(id).value));
+  if (!nums.every(Number.isFinite)) { setStatus('Point 수치 입력에 유효하지 않은 값이 있습니다.'); return; }
+  p.position.set(nums[0],nums[1],nums[2]); p.offset.set(nums[3],nums[4],nums[5]); p.scaleX = Math.max(nums[6],0); p.scaleZ = Math.max(nums[7],0);
+  p.rotation.setFromEuler(new THREE.Euler(THREE.MathUtils.degToRad(nums[8]),THREE.MathUtils.degToRad(nums[9]),THREE.MathUtils.degToRad(nums[10]),'XYZ'));
+  updateControlVisuals(selectedCurve); updateCurveVisual(selectedCurve); if (selectedCurve.meshEnabled) rebuildCurveMesh(selectedCurve,false); updatePointPanel(); syncGizmo();
+});
+$('makeTipBtn').addEventListener('click', () => { const p = selectedPoint(); if (!p || selectedCurve.locked) return; p.scaleX = 0; p.scaleZ = 0; if (selectedCurve.meshEnabled) rebuildCurveMesh(selectedCurve,false); updatePointPanel(); syncGizmo(); setStatus('현재 Point의 단면 Scale X/Z를 0으로 설정'); });
+$('resetSectionBtn').addEventListener('click', () => { const p = selectedPoint(); if (!p || selectedCurve.locked) return; p.offset.set(0,0,0); p.rotation.identity(); p.scaleX = p.scaleZ = 1; if (selectedCurve.meshEnabled) rebuildCurveMesh(selectedCurve,false); updatePointPanel(); syncGizmo(); });
+
+$('enableLiveMesh').addEventListener('change', () => {
+  if (!selectedCurve || suppressModifierEvents) return;
+  selectedCurve.settings = getCurrentSettings();
+  selectedCurve.meshEnabled = $('enableLiveMesh').checked;
+  if (selectedCurve.meshEnabled) rebuildCurveMesh(selectedCurve, true); else removeCurveMesh(selectedCurve);
+  refreshCurveList(); syncModifierUIFromCurve(selectedCurve); updateControlVisibility();
+});
+$('generateBtn').addEventListener('click', () => {
+  if (!selectedCurve || selectedCurve.points.length < 2) { setStatus('Point가 2개 이상인 커브를 먼저 선택하세요.'); return; }
+  selectedCurve.settings = getCurrentSettings(); selectedCurve.meshEnabled = true; $('enableLiveMesh').checked = true;
+  rebuildCurveMesh(selectedCurve,true); syncModifierUIFromCurve(selectedCurve); refreshCurveList(); updateControlVisibility(); setMode('edit');
+});
+['meshType','widthInput','depthInput','segmentsInput','radialInput','brushScale','generateUV','smoothShading','twistCorrection','capStart','capEnd'].forEach(id => {
+  const el = $(id); const eventName = ['meshType','generateUV','smoothShading','twistCorrection','capStart','capEnd'].includes(id) ? 'change' : 'input';
+  el.addEventListener(eventName, () => {
+    if (suppressModifierEvents) return;
+    updateMeshTypeUI();
+    if (!selectedCurve) return;
+    selectedCurve.settings = getCurrentSettings();
+    if (selectedCurve.meshEnabled) rebuildCurveMesh(selectedCurve,false); else updateMeshStats();
+    refreshCurveList(); updateModifierStack(); updateSelectionBadge();
+  });
+});
+$('brushFiles').addEventListener('change', e => { if (e.target.files?.length) loadBrushFiles(e.target.files); e.target.value = ''; });
+$('brushSelect').addEventListener('change', () => { if (!selectedCurve || suppressModifierEvents) return; selectedCurve.settings.brushId = Number($('brushSelect').value) || null; refreshBrushUI(); if (selectedCurve.meshEnabled && selectedCurve.settings.type === 'brush') rebuildCurveMesh(selectedCurve,false); });
+$('removeBrushBtn').addEventListener('click', () => {
+  const id = Number($('brushSelect').value); if (!id) return;
+  const brush = brushes.find(b => b.id === id); brushes = brushes.filter(b => b.id !== id);
+  curves.forEach(c => { if (c.settings.brushId === id) { c.settings.brushId = brushes[0]?.id ?? null; if (c.meshEnabled && c.settings.type === 'brush') rebuildCurveMesh(c,false); } });
+  refreshBrushUI(); syncModifierUIFromCurve(selectedCurve); setStatus(`Mesh Brush ${brush?.name || id} 제거`);
+});
+
+$('viewMode').addEventListener('change', applyViewModeAll);
+$('showPoints').addEventListener('change', updateControlVisibility);
+$('showTangents').addEventListener('change', updateControlVisibility);
+$('showCurveLines').addEventListener('change', updateCurveSelectionStyles);
+$('xrayControls').addEventListener('change', updateControlVisibility);
+$('modelVisible').addEventListener('change', applyModelDisplay);
+$('modelOpacity').addEventListener('input', applyModelDisplay);
+$('modelWireframe').addEventListener('change', applyModelDisplay);
+$('gridVisible').addEventListener('change', () => { grid.visible = $('gridVisible').checked; });
+$('clearGeneratedBtn').addEventListener('click', () => { curves.forEach(c => { c.meshEnabled = false; removeCurveMesh(c); }); refreshCurveList(); syncModifierUIFromCurve(selectedCurve); updateControlVisibility(); setStatus('모든 Live Mesh 비활성화 · 커브와 Modifier 값은 유지'); });
+$('fitBtn').addEventListener('click', () => { if (surfaceMeshes.length) fitObject(modelRoot); else if (curves.length) fitObject(curvesRoot); });
+$('fitSelectedBtn').addEventListener('click', frameSelected);
+$('viewPerspectiveBtn').addEventListener('click', () => setStandardView('perspective'));
+$('viewFrontBtn').addEventListener('click', () => setStandardView('front'));
+$('viewLeftBtn').addEventListener('click', () => setStandardView('left'));
+$('viewTopBtn').addEventListener('click', () => setStandardView('top'));
+
+document.querySelectorAll('[data-command-tab]').forEach(btn => btn.addEventListener('click', () => activateCommandTab(btn.dataset.commandTab)));
+document.querySelectorAll('.rollout-header').forEach(btn => btn.addEventListener('click', () => btn.closest('.rollout').classList.toggle('collapsed')));
+
+function activeExportMeshes() { return curves.filter(c => c.meshEnabled && c.topology); }
+function exportPoint(point) {
+  const scale = parseFloat($('exportScale').value) || 1;
+  const p = point.clone().multiplyScalar(scale);
+  return $('exportAxis').value === 'zup' ? new THREE.Vector3(p.x, -p.z, p.y) : p;
+}
+function worldTopology(curve) {
+  curve.group.updateMatrixWorld(true);
+  return { positions: curve.topology.positions.map(p => exportPoint(p.clone().applyMatrix4(curve.group.matrixWorld))), faces: curve.topology.faces.map(f => [...f]), uvs: cloneVectorArray(curve.topology.uvs || []), faceUvs: (curve.topology.faceUvs || []).map(f => f ? [...f] : null) };
+}
+function fmt(n) { const v = Math.abs(n) < 1e-10 ? 0 : n; return Number(v.toFixed(8)).toString(); }
+function exportQuadOBJ(active) {
+  let text = '# Curve Mesh Hair Tool v4\n# Logical Quad/N-gon topology export\n'; let vOffset = 0, vtOffset = 0;
+  active.forEach(curve => {
+    const t = worldTopology(curve); text += `\no CurveMesh_${curve.id}\n`;
+    t.positions.forEach(p => { text += `v ${fmt(p.x)} ${fmt(p.y)} ${fmt(p.z)}\n`; });
+    t.uvs.forEach(uv => { text += `vt ${fmt(uv.x)} ${fmt(uv.y)}\n`; });
+    t.faces.forEach((face, fi) => {
+      const fuv = t.faceUvs[fi];
+      const refs = face.map((vi, ci) => { const v = vi + 1 + vOffset; const u = fuv?.[ci]; return Number.isInteger(u) ? `${v}/${u + 1 + vtOffset}` : `${v}`; });
+      text += `f ${refs.join(' ')}\n`;
+    });
+    vOffset += t.positions.length; vtOffset += t.uvs.length;
+  });
+  return text;
+}
+function computeVertexNormals(topology) {
+  const normals = topology.positions.map(() => new THREE.Vector3());
+  topology.faces.forEach(face => {
+    if (face.length < 3) return; const p0 = topology.positions[face[0]], fn = new THREE.Vector3();
+    for (let i = 1; i < face.length - 1; i++) fn.add(new THREE.Vector3().crossVectors(topology.positions[face[i]].clone().sub(p0), topology.positions[face[i + 1]].clone().sub(p0)));
+    if (fn.lengthSq() > 1e-12) fn.normalize(); face.forEach(vi => normals[vi].add(fn));
+  });
+  normals.forEach(n => { if (n.lengthSq() < 1e-12) n.set(0,1,0); else n.normalize(); }); return normals;
+}
+function wrapFbxArray(values, indent = '\t\t') {
+  const chunks = []; for (let i = 0; i < values.length; i += 64) chunks.push(values.slice(i,i+64).join(','));
+  return chunks.map((c,i) => `${indent}${i ? '' : 'a: '}${c}${i < chunks.length - 1 ? ',' : ''}`).join('\n');
+}
+function exportAsciiFBX(active) {
+  const now = new Date(), meshes = active.map(c => ({ curve:c, topology:worldTopology(c) }));
+  const zUp = $('exportAxis').value === 'zup', upAxis = zUp ? 2 : 1, frontAxis = zUp ? 1 : 2;
+  let objects = '', connections = '';
+  meshes.forEach((entry, i) => {
+    const idBase = 100000 + i * 10, geometryId = idBase + 1, modelId = idBase + 2, name = `CurveMesh_${entry.curve.id}`, t = entry.topology;
+    const verts = t.positions.flatMap(p => [fmt(p.x),fmt(p.y),fmt(p.z)]);
+    const poly = [], uvIndex = [], normalValues = [], normals = computeVertexNormals(t);
+    let hasUv = t.uvs.length > 0;
+    t.faces.forEach((face, fi) => {
+      face.forEach((vi, ci) => {
+        poly.push(ci === face.length - 1 ? -(vi + 1) : vi);
+        normalValues.push(fmt(normals[vi].x),fmt(normals[vi].y),fmt(normals[vi].z));
+        const ui = t.faceUvs[fi]?.[ci]; uvIndex.push(Number.isInteger(ui) ? ui : 0); if (!Number.isInteger(ui)) hasUv = false;
+      });
+    });
+    const uvValues = t.uvs.flatMap(uv => [fmt(uv.x),fmt(uv.y)]);
+    objects += `\tGeometry: ${geometryId}, "Geometry::${name}", "Mesh" {\n\t\tGeometryVersion: 124\n\t\tVertices: *${verts.length} {\n${wrapFbxArray(verts,'\t\t\t')}\n\t\t}\n\t\tPolygonVertexIndex: *${poly.length} {\n${wrapFbxArray(poly,'\t\t\t')}\n\t\t}\n\t\tLayerElementNormal: 0 {\n\t\t\tVersion: 101\n\t\t\tName: ""\n\t\t\tMappingInformationType: "ByPolygonVertex"\n\t\t\tReferenceInformationType: "Direct"\n\t\t\tNormals: *${normalValues.length} {\n${wrapFbxArray(normalValues,'\t\t\t\t')}\n\t\t\t}\n\t\t}\n`;
+    if (hasUv) objects += `\t\tLayerElementUV: 0 {\n\t\t\tVersion: 101\n\t\t\tName: "UVChannel_1"\n\t\t\tMappingInformationType: "ByPolygonVertex"\n\t\t\tReferenceInformationType: "IndexToDirect"\n\t\t\tUV: *${uvValues.length} {\n${wrapFbxArray(uvValues,'\t\t\t\t')}\n\t\t\t}\n\t\t\tUVIndex: *${uvIndex.length} {\n${wrapFbxArray(uvIndex,'\t\t\t\t')}\n\t\t\t}\n\t\t}\n`;
+    objects += `\t\tLayer: 0 {\n\t\t\tVersion: 100\n\t\t\tLayerElement: {\n\t\t\t\tType: "LayerElementNormal"\n\t\t\t\tTypedIndex: 0\n\t\t\t}\n${hasUv ? '\t\t\tLayerElement: {\n\t\t\t\tType: "LayerElementUV"\n\t\t\t\tTypedIndex: 0\n\t\t\t}\n' : ''}\t\t}\n\t}\n`;
+    objects += `\tModel: ${modelId}, "Model::${name}", "Mesh" {\n\t\tVersion: 232\n\t\tProperties70: {\n\t\t\tP: "InheritType", "enum", "", "",1\n\t\t\tP: "Lcl Translation", "Lcl Translation", "", "A",0,0,0\n\t\t\tP: "Lcl Rotation", "Lcl Rotation", "", "A",0,0,0\n\t\t\tP: "Lcl Scaling", "Lcl Scaling", "", "A",1,1,1\n\t\t}\n\t\tShading: T\n\t\tCulling: "CullingOff"\n\t}\n`;
+    connections += `\tC: "OO",${geometryId},${modelId}\n\tC: "OO",${modelId},0\n`;
+  });
+  return `; FBX 7.4.0 project file\n; Created by Curve Mesh Hair Tool v4\nFBXHeaderExtension:  {\n\tFBXHeaderVersion: 1003\n\tFBXVersion: 7400\n\tEncryptionType: 0\n\tCreationTimeStamp:  {\n\t\tVersion: 1000\n\t\tYear: ${now.getFullYear()}\n\t\tMonth: ${now.getMonth()+1}\n\t\tDay: ${now.getDate()}\n\t\tHour: ${now.getHours()}\n\t\tMinute: ${now.getMinutes()}\n\t\tSecond: ${now.getSeconds()}\n\t\tMillisecond: ${now.getMilliseconds()}\n\t}\n\tCreator: "Curve Mesh Hair Tool v4"\n}\nGlobalSettings:  {\n\tVersion: 1000\n\tProperties70:  {\n\t\tP: "UpAxis", "int", "Integer", "",${upAxis}\n\t\tP: "UpAxisSign", "int", "Integer", "",1\n\t\tP: "FrontAxis", "int", "Integer", "",${frontAxis}\n\t\tP: "FrontAxisSign", "int", "Integer", "",-1\n\t\tP: "CoordAxis", "int", "Integer", "",0\n\t\tP: "CoordAxisSign", "int", "Integer", "",1\n\t\tP: "UnitScaleFactor", "double", "Number", "",1\n\t\tP: "OriginalUnitScaleFactor", "double", "Number", "",1\n\t}\n}\nDocuments:  {\n\tCount: 1\n\tDocument: 1, "Scene", "Scene" {\n\t\tProperties70:  {\n\t\t\tP: "SourceObject", "object", "", ""\n\t\t\tP: "ActiveAnimStackName", "KString", "", "", ""\n\t\t}\n\t\tRootNode: 0\n\t}\n}\nReferences:  {\n}\nDefinitions:  {\n\tVersion: 100\n\tCount: ${meshes.length * 2}\n\tObjectType: "Model" {\n\t\tCount: ${meshes.length}\n\t}\n\tObjectType: "Geometry" {\n\t\tCount: ${meshes.length}\n\t}\n}\nObjects:  {\n${objects}}\nConnections:  {\n${connections}}\nTakes:  {\n\tCurrent: ""\n}\n`;
+}
+
+$('exportQuadObjBtn').addEventListener('click', () => {
+  const active = activeExportMeshes(); if (!active.length) { setStatus('출력할 활성 Live Mesh가 없습니다.'); return; }
+  downloadBlob(new Blob([exportQuadOBJ(active)], { type:'text/plain;charset=utf-8' }), 'curve_mesh_quad_export.obj');
+  setStatus(`Quad/N-gon OBJ 저장 완료: ${active.length}개 커브 메쉬 · ${$('exportAxis').value.toUpperCase()} · Scale ${$('exportScale').value}.`);
+});
+$('exportFbxBtn').addEventListener('click', () => {
+  const active = activeExportMeshes(); if (!active.length) { setStatus('출력할 활성 Live Mesh가 없습니다.'); return; }
+  downloadBlob(new Blob([exportAsciiFBX(active)], { type:'application/octet-stream' }), 'curve_mesh_quad_export_ascii.fbx');
+  setStatus(`FBX 7.4 ASCII 저장 완료: ${active.length}개 커브 메쉬 · ${$('exportAxis').value.toUpperCase()} · Scale ${$('exportScale').value}. 3ds Max에서 Import로 검증하세요.`);
+});
+
+document.addEventListener('keydown', e => {
+  if (e.code === 'CapsLock' && mode === 'draw') { e.preventDefault(); toggleDrawCameraOverride(); return; }
+  if (isTypingTarget(e.target)) return;
+  if (e.key === 'Delete') { if (mode === 'edit' && selectedControl) $('deletePointBtn').click(); else if (selectedCurve) $('deleteCurveBtn').click(); return; }
+  if (e.key === 'i' || e.key === 'I') { if (selectedCurve?.points.length >= 2) setMode(mode === 'insert' ? 'edit' : 'insert'); return; }
+  if (mode === 'edit') {
+    if (e.key === 'g' || e.key === 'G') setPointTool('pointMove');
+    else if (e.key === 'm' || e.key === 'M') setPointTool('sectionMove');
+    else if (e.key === 'r' || e.key === 'R') setPointTool('sectionRotate');
+    else if (e.key === 's' || e.key === 'S') setPointTool('sectionScale');
+  } else {
+    if (e.key === 'g' || e.key === 'G') setObjectTransformMode('translate');
+    else if (e.key === 'r' || e.key === 'R') setObjectTransformMode('rotate');
+    else if (e.key === 's' || e.key === 'S') setObjectTransformMode('scale');
+  }
+});
+
+function animate() { requestAnimationFrame(animate); orbit.update(); renderer.render(scene, camera); }
+animate(); activateCommandTab('modify'); refreshCurveList(); refreshBrushUI(); updateControlVisibility(); updatePointPanel(); updateObjectTransformButtons(); updateHint(); updateModifierStack(); updateSelectionBadge(); updateMeshTypeUI(); applyModelDisplay(); setMode('orbit');
+</script>
+</body>
+</html>
