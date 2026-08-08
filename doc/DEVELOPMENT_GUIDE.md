@@ -62,6 +62,7 @@ Reference 파일 자체와 Mesh별 표시/재질/수동 텍스처는 Import 세�
 - 숨김 또는 잠긴 Proxy는 파라미터·이름·Transform·복제/삭제로 편집할 수 없습니다.
 - 활성 root object는 Curve 또는 Proxy 중 하나이며 `syncModifyContext()`가 해당 Modify UI만 표시합니다.
 - Proxy FFD는 Base부터 Top까지 순서대로 평가하며 control offset을 원본 vertex에 bake하지 않습니다. 최종 bake는 Export 경계에서만 수행합니다.
+- Viewport는 3ds Max식 `MMB Pan`, `Alt+MMB Orbit`, `Ctrl+Alt+MMB Zoom`을 유지합니다. Control 영역 선택은 좌→우 Window(완전 포함), 우→좌 Crossing(교차 포함)이며 Ctrl/⌘은 추가, Alt는 제외입니다.
 - Live Mesh는 `meshEnabled`, `meshStatus === 'ready'`, 유효한 `topology`가 모두 충족되어야 Ready입니다.
 - Path Segments는 2–512, Tube Sides는 3–64 범위입니다.
 - Point/Brush의 Vector와 Quaternion은 배열로 변환한 뒤 저장합니다.
@@ -176,7 +177,7 @@ globalThis.__CURVE_TOOL_SELF_TEST__
    - Scene Explorer Curve 행을 Ctrl/⌘ 클릭해 다중 선택/활성 전환/전체 해제
 3. Ribbon과 Tube 생성, Segment/Sides 경계값 확인
 4. Brush fixture Import 후 Brush Mesh 생성
-5. Proxy 4종 생성, 크기/Segments/Sides/Rings 변경, Curve↔Proxy Modify 전환과 W/E/R/Frame/Clone/Delete 확인. FFD 관련 변경이면 2/4/8 추가, Point Move, stack reorder/ON/OFF/reset/remove, Proxy Surface Line도 확인
+5. Proxy 4종 생성, 크기/Segments/Sides/Rings 변경, Curve↔Proxy Modify 전환과 W/E/R/Frame/Clone/Delete 확인. FFD 관련 변경이면 2/4/8 추가, Window/Crossing·Ctrl/Alt 다중 선택, 직접/기즈모 다중 Move, 한 단계 Undo/Redo, stack reorder/ON/OFF/reset/remove, Proxy Surface Line도 확인
 6. 숨김/잠금 Curve/Proxy가 수정되지 않는지 확인
 7. `.hairmesh.json` 저장 후 다시 열어 Curve/Brush/Proxy/활성 Modify 문맥/Live Mesh 확인
    - 참조 이미지 정렬값과 파일명 힌트는 복원되고 JSON에 image payload가 없는지 확인
@@ -184,8 +185,9 @@ globalThis.__CURVE_TOOL_SELF_TEST__
 9. Curve+Proxy OBJ/FBX Export 후 대상 DCC Import 확인
 10. Front/Left/Back Plane이 Perspective에서도 보이고 Move/Rotate/Scale, Back-face Cull, Flip Horizontal이 동작하는지 확인
 11. Ortho Views ON의 Front/Left/Back/Top에서 FOV 왜곡이 없고 FOV 입력이 비활성화되는지, OFF/Persp에서 원근 카메라가 복원되는지 확인
-12. 카메라 전환 후 Orbit 줌, Plane/Curve/Proxy picking, gizmo drag, 프로젝트 설정 왕복 확인
-13. 좁은 뷰포트에서 Toolbar와 패널 접근 확인
+12. 카메라 전환 후 MMB Pan, Alt+MMB Orbit, Ctrl+Alt+MMB Zoom, Wheel Zoom, Plane/Curve/Proxy picking, gizmo drag, 프로젝트 설정 왕복 확인
+13. 선택 Control Set이 프로젝트 저장/열기와 자동 복구에서 복원되는지 확인
+14. 좁은 뷰포트에서 Toolbar와 패널 접근 확인
 
 ## 11. 알려진 기술 부채와 확장 방향
 

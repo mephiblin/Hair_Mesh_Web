@@ -31,7 +31,7 @@ launch_server.py
 | Proxy 4종 생성 | `#create*ProxyBtn`, `createProxyPrimitive()` | Orbit target에 Box/Sphere/Quad Sphere/Cylinder 생성 | `src/geometry/proxy-primitives.js`, Node topology 테스트 |
 | Proxy 파라미터 | `#proxy*`, `readProxySettingsFromUI()`, `rebuildProxyMesh()` | 크기·축별 segment·Smooth·Edges를 비파괴 재생성 | `normalizeProxySettings()`, 브라우저 QA |
 | Proxy FFD Stack | `#proxyModifierList`, `addFfdModifierToSelected()`, `moveActiveProxyModifier()` | FFD 2/4/8 추가, ON/OFF, 순서, Reset/Remove | `src/geometry/ffd-lattice.js`, Node stack 테스트 |
-| FFD Control 편집 | `findFfdControl()`, `selectFfdControl()`, `rebuildProxyLatticeVisual()`, `syncGizmo()` | 선택 lattice Point의 Move와 최종 Proxy 재평가 | `ffdControlPointPositions()`, `setFfdControlPointPosition()` |
+| FFD Control 편집 | `findFfdControl()`, `setFfdControlSelection()`, `rebuildProxyLatticeVisual()`, `syncGizmo()` | 단일/영역 다중 선택, 선택 중심 직접/기즈모 Move와 최종 Proxy 재평가 | `control-selection.js`, `region-selection.js`, FFD 좌표 함수 |
 | 객체별 Modify 문맥 | `syncModifyContext()`, `#curveModifyContext`, `#proxyModifyContext` | 활성 Curve/Proxy에 해당하는 rollout만 표시 | `features/proxy-mesh.md` |
 | Proxy 선택/표시/잠금 | `selectProxy()`, `refreshProxyList()`, `setProxyVisible()`, `setProxyLocked()` | Scene Explorer와 viewport pick, edit policy 동기화 | 브라우저 QA + Project restore |
 | Proxy 복제/삭제 | `#duplicateCurveBtn`, `deleteSelectedProxy()` | 파라미터/transform 복제와 GPU 자원 폐기 | History + 브라우저 QA |
@@ -42,6 +42,7 @@ launch_server.py
 | Curve/Proxy Object Transform | `setObjectTransformMode()`, `activeSceneObject()`, `handleGizmoChange()` | 활성 `group`의 Position/Quaternion/Scale 변경 | TransformControls, History |
 | Point Transform | `setPointTool()`, `applyPointUnitTransform()`, `handleGizmoChange()` | Point, Handle, 단면 Transform을 선택 문맥에 맞게 적용 | `coordinateFrameQuaternion()` |
 | 축 가이드 이동 | `toggleAxisGuides()`, `startAxisGuideDrag()`, `updateAxisGuideDrag()` | 화면 Pick → 제약 평면 → 축 Scalar 적용, OFF 시 Translate gizmo/pick 차단 | `src/viewport/axis-guide-drag.js`, `interaction-policy.js`, Self-test |
+| 3ds Max Viewport 입력 | `beginMaxViewportNavigation()`, `beginSelectionRegion()`, `beginDirectControlMove()` | MMB Pan, Alt+MMB Orbit, Ctrl+Alt+MMB Zoom, Window/Crossing Control 선택 | `src/state/control-selection.js`, `src/viewport/region-selection.js` |
 | 단면 수치 편집 | `#applyPointValuesBtn`, `updatePointPanel()` | Position/Offset/Scale/Rotation 입력과 Live rebuild | `src/ui/numeric-scrubber.js` |
 | Tip/단면 초기화 | `#makeTipBtn`, `#resetSectionBtn` | Point의 `scaleX/scaleZ` 또는 단면 Transform 초기화 | History + 브라우저 QA |
 | Sweep 좌표계 | `buildSweepContext()`, `evaluateSweep()` | Curve상의 Point/Tangent/Normal/Binormal 생성 | `src/geometry/sweep-frames.js`, Self-test |
@@ -81,7 +82,7 @@ launch_server.py
 | `selectedProxy` | 현재 UI/Transform 대상 Proxy, `selectedCurve`와 상호 배타 | `selectProxy()`, `restoreAppState()` |
 | `nextProxyId` | 저장·복원되는 Proxy ID counter | `makeProxyRecord()`, `captureAppState()` |
 | `nextProxyModifierId` | Proxy 사이에서도 고유한 FFD ID counter | `createFfdModifier()`, clone, `captureAppState()` |
-| `selectedFfdControlIndex` | 선택 Proxy의 활성 FFD Control Point | `selectFfdControl()`, `syncGizmo()`, `restoreAppState()` |
+| `selectedFfdControlIndex` / `selectedFfdControlIndices` | 선택 Proxy의 active FFD Point / 다중 선택 Set | `setFfdControlSelection()`, `syncGizmo()`, `restoreAppState()` |
 | `selectedCurveIds` | Scene Explorer 다중 선택 Curve ID Set | `toggleCurveSelection()`, `captureAppState()` |
 | `selectedControl` | Point 또는 in/out Handle 선택 | `selectControl()`, `captureAppState()` |
 | `selectedPointIndices` | 다중 Point 선택 Set | `src/state/point-selection.js`로 정규화 |

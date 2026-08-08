@@ -1,6 +1,6 @@
 # Proxy Mesh · Object-aware Modify 구현 계획
 
-> 구현 상태: 2026-08-08 기준 primitive 1–7단계와 FFD stack 8–12단계 완료. 현재 동작 계약과 코드 지도는 [`features/proxy-mesh.md`](features/proxy-mesh.md)를 우선한다. 이 문서는 도입 당시 IA와 단계별 의사결정 기록이다.
+> 구현 상태: 2026-08-08 기준 primitive 1–7단계, FFD stack 8–12단계, 다중 Control 선택·이동과 3ds Max식 Viewport 조작 13–15단계 완료. 현재 동작 계약과 코드 지도는 [`features/proxy-mesh.md`](features/proxy-mesh.md)를 우선한다. 이 문서는 도입 당시 IA와 단계별 의사결정 기록이다.
 
 ## IA thesis
 
@@ -61,6 +61,7 @@ proxy:
   modifiers: ordered FFD[]
   activeModifierId: integer | null
   lastFfdControlIndex: integer | null
+  lastFfdControlIndices: integer[]
   position: [x, y, z]
   quaternion: [x, y, z, w]
   scale: [x, y, z]
@@ -98,6 +99,9 @@ FFD modifier는 `resolution`, `enabled`, 정규화된 control `offsets`만 저�
 10. Modify UI: stack 추가·선택·ON/OFF·Move Up/Down·Reset·Remove와 object-aware availability.
 11. Viewport: lattice line/control, control picking, translate-only gizmo, 한 drag당 한 Undo step.
 12. Workflow integration: 보이는 Proxy를 Surface Point placement에 포함하고 final stack topology를 OBJ/FBX에 bake, 1600/1024 Playwright 검증.
+13. Selection policy: Curve Point와 FFD Control의 좌→우 Window·우→좌 Crossing 영역 선택, Ctrl/⌘ 추가·클릭 토글, Alt 제외를 순수 모듈과 Node 테스트로 고정.
+14. Multi-control move: 선택 집합 중심 gizmo와 View Plane 직접 drag로 같은 local delta를 적용하고 한 drag를 한 History 단계로 처리. FFD 선택 집합은 Proxy snapshot에 저장.
+15. Viewport navigation: 3ds Max식 MMB Pan, Alt+MMB Orbit, Ctrl+Alt+MMB Zoom, wheel zoom을 Control/Object picking과 충돌하지 않게 연결.
 
 ## Acceptance gates
 
@@ -109,11 +113,13 @@ FFD modifier는 `resolution`, `enabled`, 정규화된 control `offsets`만 저�
 - Export에서 Quad Sphere와 subdivided Box의 logical quad face가 유지된다.
 - FFD 2/4/8을 여러 개 쌓고 순서와 ON/OFF를 바꿀 수 있으며 Base primitive와 modifier 값이 계속 편집 가능하다.
 - FFD Control drag가 실시간 최종 topology를 바꾸고 한 번의 Undo/Redo로 왕복한다.
+- Window/Crossing, Ctrl/Alt로 여러 Control을 선택하고 직접 drag 또는 선택 중심 gizmo로 함께 이동하며 선택 집합이 프로젝트에서 왕복한다.
+- MMB Pan, Alt+MMB Orbit, Ctrl+Alt+MMB Zoom, Wheel Zoom이 Object/Control 선택과 충돌 없이 동작한다.
 - Reference가 없어도 보이는 Proxy 표면에 Line Point를 배치하고, Export에는 최종 FFD 결과를 bake한다.
 
 ## 완료 검증 기록
 
-- Node `npm run check`: 24/24 계약 통과. 4종 parameter clamp/topology/winding과 FFD resolution/identity/Bernstein/stack/order/project round-trip 포함.
+- Node `npm run check`: 26/26 계약 통과. 4종 parameter clamp/topology/winding, FFD resolution/identity/Bernstein/stack/order/project round-trip, Control 선택 연산과 Window/Crossing 판정 포함.
 - Browser self-test: 24/24 통과.
 - 1600×900: Box 생성 → 축별 Segments 변경 → Quad Sphere 변환 → Clone → Undo/Redo → Project Save → OBJ 2-object 출력 확인.
 - 실제 canvas 입력으로 Proxy X축 gizmo drag 후 OBJ world vertex 평균 X 이동, Curve↔Proxy 선택에 따른 Modify 문맥 전환, Show Edges/Smooth 왕복과 Frame을 확인.
@@ -121,4 +127,6 @@ FFD modifier는 `resolution`, `enabled`, 정규화된 control `offsets`만 저�
 - FFD: 실제 canvas X축 drag로 control offset `0 → 0.293896...`, Undo `0`, Redo `0.293896...` 왕복. 3단 stack, active OFF 시 Object/Camera 이탈, Reset/Remove, FFD mode Delete 안전장치, Clone modifier ID 분리를 확인.
 - Proxy Surface: Reference가 없는 장면에서 Surface option 활성화, Proxy 위 2 Point Line 완료. OBJ 2-object 출력에서 변형 vertex bake를 확인.
 - FFD 8×8×8: 512 Control Point/lattice 표시와 브라우저 오류 없음 확인. 1600×900 및 1024×768에서 패널·viewport clipping 없음.
+- 3ds Max식 입력: Window 영역으로 FFD 4/8 선택, Ctrl 영역으로 8/8 추가, Alt 영역으로 4/8 제외. 선택 4개 직접 drag에서 동일 local delta, Undo에서 네 offset이 0으로 복원되고 선택 집합 프로젝트 왕복 확인.
+- Viewport navigation: 실제 canvas MMB Pan, Alt+MMB Orbit, Ctrl+Alt+MMB Zoom 전후 프레임 변화와 오류 없음 확인.
 - 남은 외부 검증: FBX는 실험 기능이므로 최종 호환 판정 전에 3ds Max/Blender Import가 필요하다.

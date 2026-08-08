@@ -43,6 +43,7 @@ input[type=checkbox]{accent-color:var(--accent)}
 .viewport-wrap{position:relative;min-width:0;min-height:0;background:var(--viewport)}.viewport{position:absolute;inset:0;overflow:hidden;background:radial-gradient(circle at 50% 45%,#1b2027,#0d1014 72%)}.viewport canvas{display:block}
 .hint{position:absolute;left:8px;top:8px;z-index:5;background:rgba(42,42,42,.92);border:1px solid #707070;padding:5px 7px;font-size:11px;pointer-events:none;max-width:calc(100% - 16px)}
 .viewport-badge{position:absolute;right:8px;top:8px;z-index:5;background:rgba(42,42,42,.9);border:1px solid #666;padding:4px 7px;font-size:11px;pointer-events:none}
+.selection-marquee{position:fixed;z-index:50;display:none;pointer-events:none;border:1px solid #8fc7c7;background:rgba(92,174,182,.12);box-shadow:0 0 0 1px rgba(0,0,0,.3)}.selection-marquee.crossing{border-style:dashed;border-color:#fff174;background:rgba(255,241,116,.09)}
 .command-tabs{height:37px;display:grid;grid-template-columns:repeat(4,1fr);gap:1px;padding:3px;background:#383838;border-bottom:1px solid #222}.command-tab{font-size:15px;height:30px}.command-tab.active{background:#5c6f70;border-color:var(--accent)}
 .command-content{flex:1;min-height:0;overflow:hidden}.tab-panel{height:100%;overflow:auto;padding:4px}.hidden{display:none!important}
 .object-header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px;padding:4px 2px 6px}.object-type{display:flex;align-items:center;justify-content:center;min-width:62px;padding:0 6px;border:1px solid #222;background:#42666a;color:var(--accent-strong);font-size:10px;font-weight:700;letter-spacing:.04em}.proxy-parameter-group{padding-top:2px}.proxy-buttons{display:grid;grid-template-columns:1fr 1fr;gap:4px}.proxy-buttons button{min-height:34px}.proxy-empty{padding:18px 10px;text-align:center;color:var(--muted);border:1px dashed #707070;background:#3c3c3c}
@@ -126,6 +127,7 @@ input[type=checkbox]{accent-color:var(--accent)}
       <div id="viewport" class="viewport">
         <div id="viewportHint" class="hint">Object / Camera: 드래그 회전 · 휠 줌</div>
         <div id="viewportBadge" class="viewport-badge">No Selection</div>
+        <div id="selectionMarquee" class="selection-marquee" aria-hidden="true"></div>
       </div>
     </main>
 
@@ -476,6 +478,8 @@ import { cloneFfdModifier, createFfdModifier, evaluateFfdStack, ffdControlPointP
 import { canFinishLine, lineCreationExitAction, MIN_LINE_POINTS } from './src/state/line-creation-policy.js';
 import { allPointIndices, normalizePointSelection, selectedPointIndices as orderedPointSelection, togglePointSelection } from './src/state/point-selection.js';
 import { activeCurveId, normalizeCurveSelection, selectedCurveIds as orderedCurveSelection, toggleCurveSelection as toggleCurveSelectionIds } from './src/state/curve-selection.js';
+import { applyControlSelection, controlSelectionOperation, normalizeControlSelection, orderedControlSelection } from './src/state/control-selection.js';
+import { controlsInSelectionRectangle, selectionRectangle } from './src/viewport/region-selection.js';
 import { initNumericScrubbers } from './src/ui/numeric-scrubber.js';
 import {
   HANDLE_TYPE,
@@ -557,6 +561,9 @@ viewport.appendChild(renderer.domElement);
 const orbit = new OrbitControls(camera, renderer.domElement);
 orbit.enableDamping = true;
 orbit.dampingFactor = .08;
+orbit.screenSpacePanning = true;
+orbit.mouseButtons.LEFT = null;
+orbit.mouseButtons.RIGHT = null;
 
 const gizmoProxy = new THREE.Object3D();
 scene.add(gizmoProxy);
@@ -645,6 +652,7 @@ let selectedProxy = null;
 let nextProxyId = 1;
 let nextProxyModifierId = 1;
 let selectedFfdControlIndex = null;
+let selectedFfdControlIndices = new Set();
 let selectedCurveIds = new Set();
 let selectedControl = null;
 let selectedPointIndices = new Set();
@@ -665,6 +673,9 @@ let axisGuideDrag = null;
 let brushes = [];
 let nextBrushId = 1;
 let pointerDownState = null;
+let selectionDrag = null;
+let directControlDrag = null;
+let maxNavigationPointerId = null;
 let activeCommandTab = 'modify';
 let projectLifecycleReady = false;
 let projectOperation = false;
@@ -1661,6 +1672,7 @@ function proxyState(proxy) {
     modifiers:proxy.modifiers.map(modifier => cloneFfdModifier(modifier)),
     activeModifierId:proxy.activeModifierId ?? null,
     lastFfdControlIndex:proxy.lastFfdControlIndex ?? null,
+    lastFfdControlIndices:orderedControlSelection(proxy.lastFfdControlIndices || [], activeProxyModifier(proxy)?.offsets.length || 0),
     position:proxy.group.position.toArray(),
     quaternion:proxy.group.quaternion.toArray(),
     scale:proxy.group.scale.toArray()
@@ -1684,6 +1696,7 @@ function makeProxyRecord(type = 'box', source = null) {
     modifiers:(source?.modifiers || []).map((modifier, index) => normalizeFfdModifier(modifier, nextProxyModifierId + index)),
     activeModifierId:source?.activeModifierId ?? null,
     lastFfdControlIndex:Number.isInteger(source?.lastFfdControlIndex) ? source.lastFfdControlIndex : null,
+    lastFfdControlIndices:normalizeControlSelection(source?.lastFfdControlIndices || [], (source?.modifiers || []).find(modifier => modifier.id === source?.activeModifierId)?.offsets?.length || 0),
     baseTopology:null,
     meshGroup:null,
     solidMesh:null,
@@ -1711,6 +1724,16 @@ function disposeProxy(proxy) {
   disposeTree(proxy.group);
 }
 function activeProxyModifier(proxy = selectedProxy) { return proxy?.modifiers.find(modifier => modifier.id === proxy.activeModifierId) || null; }
+function ffdSelectionIndices(proxy = selectedProxy, modifier = activeProxyModifier(proxy)) {
+  return modifier ? orderedControlSelection(proxy === selectedProxy ? selectedFfdControlIndices : proxy?.lastFfdControlIndices || [], modifier.offsets.length) : [];
+}
+function syncProxyFfdSelectionMemory(proxy = selectedProxy) {
+  const modifier = activeProxyModifier(proxy);
+  if (!proxy || !modifier) return;
+  const ordered = ffdSelectionIndices(proxy, modifier);
+  proxy.lastFfdControlIndices = new Set(ordered);
+  proxy.lastFfdControlIndex = ordered.includes(selectedFfdControlIndex) ? selectedFfdControlIndex : ordered.at(-1) ?? null;
+}
 function proxyModifierInputTopology(proxy, modifierId = proxy?.activeModifierId) {
   if (!proxy) return null;
   const base = buildProxyTopology(proxy.type, proxy.settings);
@@ -1733,7 +1756,7 @@ function syncFfdLatticePositions(proxy) {
   const positions = ffdControlPointPositions(input, modifier);
   proxy.latticeControlObjects.forEach((control, index) => {
     control.position.fromArray(positions[index]);
-    control.material.color.setHex(index === selectedFfdControlIndex ? COLORS.selected : COLORS.accent);
+    control.material.color.setHex(index === selectedFfdControlIndex ? COLORS.selected : selectedFfdControlIndices.has(index) ? COLORS.multiSelected : COLORS.accent);
   });
   const attribute = proxy.latticeLine?.geometry?.getAttribute('position');
   if (attribute) {
@@ -1760,7 +1783,7 @@ function rebuildProxyLatticeVisual(proxy) {
   const line = new THREE.LineSegments(geometry, material); line.renderOrder = 36; line.userData.proxyId = proxy.id; line.userData.modifierId = modifier.id;
   group.add(line); proxy.latticeLine = line;
   positions.forEach((position, index) => {
-    const control = createControlMesh(Math.max(handleRadius * .65, .008), index === selectedFfdControlIndex ? COLORS.selected : COLORS.accent, 'sphere');
+    const control = createControlMesh(Math.max(handleRadius * .65, .008), index === selectedFfdControlIndex ? COLORS.selected : selectedFfdControlIndices.has(index) ? COLORS.multiSelected : COLORS.accent, 'sphere');
     control.position.fromArray(position); control.renderOrder = 37;
     control.material.depthTest = false;
     control.userData = { proxyId:proxy.id, modifierId:modifier.id, ffdPointIndex:index };
@@ -1976,6 +1999,7 @@ function restoreAppState(state) {
   selectedControl = null;
   selectedPointIndices = new Set();
   selectedFfdControlIndex = null;
+  selectedFfdControlIndices = new Set();
   drawingCurve = null;
   creationPreviousCurve = null;
   brushes = (state.brushes || []).map(brushFromState);
@@ -1993,7 +2017,10 @@ function restoreAppState(state) {
   if (selectedProxy) {
     selectedCurve = null;
     selectedCurveIds = new Set();
-    selectedFfdControlIndex = Number.isInteger(selectedProxy.lastFfdControlIndex) ? selectedProxy.lastFfdControlIndex : null;
+    const modifier = activeProxyModifier(selectedProxy);
+    selectedFfdControlIndices = normalizeControlSelection(selectedProxy.lastFfdControlIndices || [], modifier?.offsets.length || 0);
+    if (!selectedFfdControlIndices.size && Number.isInteger(selectedProxy.lastFfdControlIndex) && selectedProxy.lastFfdControlIndex < (modifier?.offsets.length || 0)) selectedFfdControlIndices.add(selectedProxy.lastFfdControlIndex);
+    selectedFfdControlIndex = selectedFfdControlIndices.has(selectedProxy.lastFfdControlIndex) ? selectedProxy.lastFfdControlIndex : orderedControlSelection(selectedFfdControlIndices, modifier?.offsets.length || 0).at(-1) ?? null;
   }
   drawingCurve = curves.find(curve => curve.id === state.drawingCurveId) || null;
   creationPreviousCurve = curves.find(curve => curve.id === state.creationPreviousCurveId) || null;
@@ -2458,7 +2485,8 @@ function updateCommandAvailability() {
 function updateSelectionBadge() {
   if (selectedProxy) {
     const stats = proxyTopologyStats(selectedProxy.topology);
-    viewportBadge.textContent = `${selectedProxy.name} · ${proxyTypeLabel(selectedProxy.type)} · ${stats.faces.toLocaleString()} Faces${selectedProxy.visible ? '' : ' · HIDDEN'}${selectedProxy.locked ? ' · LOCKED' : ''}`;
+    const ffdState = mode === 'ffd' ? ` · ${ffdSelectionIndices().length} FFD Controls` : '';
+    viewportBadge.textContent = `${selectedProxy.name} · ${proxyTypeLabel(selectedProxy.type)} · ${stats.faces.toLocaleString()} Faces${ffdState}${selectedProxy.visible ? '' : ' · HIDDEN'}${selectedProxy.locked ? ' · LOCKED' : ''}`;
     return;
   }
   if (!selectedCurve) { viewportBadge.textContent = 'No Selection'; return; }
@@ -2478,6 +2506,7 @@ function selectCurve(curve, options = {}) {
   } else selectedCurveIds = curve ? new Set([curve.id]) : new Set();
   selectedProxy = null;
   selectedFfdControlIndex = null;
+  selectedFfdControlIndices = new Set();
   selectedCurve = curve;
   if (curve?.points?.length) {
     const remembered = curve.lastControl || { pointIndex: 0, kind: 'anchor' };
@@ -2515,7 +2544,10 @@ function selectProxy(proxy, options = {}) {
   selectedCurveIds = new Set();
   selectedControl = null;
   selectedPointIndices = new Set();
-  selectedFfdControlIndex = proxy && Number.isInteger(proxy.lastFfdControlIndex) ? proxy.lastFfdControlIndex : activeProxyModifier(proxy) ? 0 : null;
+  const modifier = activeProxyModifier(proxy);
+  selectedFfdControlIndices = normalizeControlSelection(proxy?.lastFfdControlIndices || [], modifier?.offsets.length || 0);
+  if (!selectedFfdControlIndices.size && modifier) selectedFfdControlIndices.add(Number.isInteger(proxy.lastFfdControlIndex) ? proxy.lastFfdControlIndex : 0);
+  selectedFfdControlIndex = selectedFfdControlIndices.has(proxy?.lastFfdControlIndex) ? proxy.lastFfdControlIndex : orderedControlSelection(selectedFfdControlIndices, modifier?.offsets.length || 0).at(-1) ?? null;
   curves.forEach(updateControlVisuals);
   updateCurveSelectionStyles();
   updateProxySelectionStyles();
@@ -2537,6 +2569,8 @@ function selectControl(curve, pointIndex, kind, options = {}) {
   const toggle = options.toggle === true && kind === 'anchor' && curve === selectedCurve;
   if (!selectedCurveIds.has(curve.id)) selectedCurveIds = new Set([curve.id]);
   selectedProxy = null;
+  selectedFfdControlIndex = null;
+  selectedFfdControlIndices = new Set();
   selectedCurve = curve;
   if (toggle) {
     selectedPointIndices = togglePointSelection(selectedPointIndices, pointIndex, curve.points.length);
@@ -2562,6 +2596,23 @@ function selectControl(curve, pointIndex, kind, options = {}) {
   setStatus(toggle
     ? `${curve.name} · ${count ? `${count}개 Point 선택` : 'Point 선택 해제'} · Ctrl/⌘ 클릭 토글`
     : `${curve.name} · Point ${pointIndex + 1} · ${label}`);
+}
+
+function setCurvePointSelection(indices, operation = 'replace', activeIndex = null) {
+  if (!curveIsEditable() || !selectedCurve?.points.length) return;
+  selectedPointIndices = applyControlSelection(selectedPointIndices, indices, selectedCurve.points.length, operation);
+  const ordered = orderedControlSelection(selectedPointIndices, selectedCurve.points.length);
+  const requested = Number.isInteger(activeIndex) && selectedPointIndices.has(activeIndex) ? activeIndex : null;
+  const current = selectedControl?.curve === selectedCurve && selectedControl.kind === 'anchor' && selectedPointIndices.has(selectedControl.pointIndex) ? selectedControl.pointIndex : null;
+  const next = requested ?? current ?? ordered.at(-1) ?? null;
+  selectedControl = Number.isInteger(next) ? { curve:selectedCurve, pointIndex:next, kind:'anchor' } : null;
+  if (selectedControl) selectedCurve.lastControl = { pointIndex:selectedControl.pointIndex, kind:'anchor' };
+  updateControlVisuals(selectedCurve);
+  updateControlVisibility();
+  updatePointPanel();
+  updateSelectionBadge();
+  syncGizmo();
+  setStatus(`${selectedCurve.name} · ${ordered.length}개 Point 선택 · Ctrl 추가/토글 · Alt 제외`);
 }
 
 function toggleCurveSelection(curve, options = {}) {
@@ -2739,14 +2790,27 @@ function findFfdControl(event) {
   pointerNDC(event);
   return raycaster.intersectObjects(selectedProxy.latticeControlObjects.filter(control => control.visible), false)[0]?.object || null;
 }
-function selectFfdControl(pointIndex) {
+function setFfdControlSelection(indices, operation = 'replace', activeIndex = null) {
   const modifier = activeProxyModifier();
   if (!modifier || !proxyIsEditable()) return;
-  selectedFfdControlIndex = THREE.MathUtils.clamp(pointIndex, 0, modifier.offsets.length - 1);
-  selectedProxy.lastFfdControlIndex = selectedFfdControlIndex;
+  selectedFfdControlIndices = applyControlSelection(selectedFfdControlIndices, indices, modifier.offsets.length, operation);
+  const ordered = orderedControlSelection(selectedFfdControlIndices, modifier.offsets.length);
+  const requested = Number.isInteger(activeIndex) && selectedFfdControlIndices.has(activeIndex) ? activeIndex : null;
+  selectedFfdControlIndex = requested ?? (selectedFfdControlIndices.has(selectedFfdControlIndex) ? selectedFfdControlIndex : ordered.at(-1) ?? null);
+  syncProxyFfdSelectionMemory(selectedProxy);
   syncFfdLatticePositions(selectedProxy);
   syncGizmo();
-  setStatus(`${selectedProxy.name} · ${modifier.name} · Control Point ${selectedFfdControlIndex + 1}/${modifier.offsets.length}`);
+  refreshProxyModifierUI(selectedProxy);
+  updateSelectionBadge();
+  setStatus(`${selectedProxy.name} · ${modifier.name} · ${ordered.length}개 Control 선택${Number.isInteger(selectedFfdControlIndex) ? ` · Active ${selectedFfdControlIndex + 1}/${modifier.offsets.length}` : ''}`);
+}
+function selectFfdControl(pointIndex, modifiers = {}) {
+  const modifier = activeProxyModifier();
+  if (!modifier || !proxyIsEditable()) return;
+  const index = THREE.MathUtils.clamp(pointIndex, 0, modifier.offsets.length - 1);
+  let operation = controlSelectionOperation(modifiers);
+  if (!modifiers.altKey && (modifiers.ctrlKey || modifiers.metaKey) && selectedFfdControlIndices.has(index)) operation = 'remove';
+  setFfdControlSelection([index], operation, operation === 'remove' ? null : index);
 }
 
 function pointToSegmentDistance2D(px, py, ax, ay, bx, by) {
@@ -3095,14 +3159,17 @@ function refreshProxyModifierUI(proxy = selectedProxy) {
     button.textContent = `${index + 1}. ${modifier.name} · ${modifier.enabled === false ? 'OFF' : 'ON'}`;
     button.addEventListener('click', () => {
       proxy.activeModifierId = modifier.id;
-      selectedFfdControlIndex = Number.isInteger(proxy.lastFfdControlIndex) && proxy.lastFfdControlIndex < modifier.offsets.length ? proxy.lastFfdControlIndex : 0;
+      selectedFfdControlIndices = normalizeControlSelection(proxy.lastFfdControlIndices || [], modifier.offsets.length);
+      if (!selectedFfdControlIndices.size) selectedFfdControlIndices.add(Number.isInteger(proxy.lastFfdControlIndex) && proxy.lastFfdControlIndex < modifier.offsets.length ? proxy.lastFfdControlIndex : 0);
+      selectedFfdControlIndex = selectedFfdControlIndices.has(proxy.lastFfdControlIndex) ? proxy.lastFfdControlIndex : orderedControlSelection(selectedFfdControlIndices, modifier.offsets.length).at(-1);
+      syncProxyFfdSelectionMemory(proxy);
       rebuildProxyLatticeVisual(proxy); refreshProxyModifierUI(proxy); syncGizmo();
       setStatus(`${proxy.name} · ${modifier.name} 선택`);
     });
     row.append(enabled, button); root.appendChild(row);
   });
   const modifier = activeProxyModifier(proxy);
-  if (modifier) $('proxyModifierSelection').textContent = `${modifier.name} · ${modifier.offsets.length} Control Points · Stack ${proxy.modifiers.indexOf(modifier) + 1}/${proxy.modifiers.length}`;
+  if (modifier) $('proxyModifierSelection').textContent = `${modifier.name} · ${ffdSelectionIndices(proxy, modifier).length}/${modifier.offsets.length} Control Selected · Stack ${proxy.modifiers.indexOf(modifier) + 1}/${proxy.modifiers.length}`;
   const index = modifier ? proxy.modifiers.indexOf(modifier) : -1;
   ['addFfd2Btn','addFfd4Btn','addFfd8Btn'].forEach(id => { $(id).disabled = !editable; });
   $('moveProxyModifierUpBtn').disabled = !editable || !modifier || index >= proxy.modifiers.length - 1;
@@ -3610,6 +3677,12 @@ function finishAxisGuideDrag(event = null) {
   return true;
 }
 
+function averageWorldPosition(group, localPositions) {
+  if (!localPositions.length) return null;
+  group.updateMatrixWorld(true);
+  return localPositions.reduce((sum, position) => sum.add(group.localToWorld(position.clone())), new THREE.Vector3()).multiplyScalar(1 / localPositions.length);
+}
+
 function syncGizmo() {
   if (transformDragging) return;
   gizmoContext = null; transformControls.detach(); transformControls.enabled = false; transformControls.getHelper().visible = false;
@@ -3617,13 +3690,13 @@ function syncGizmo() {
   if (mode === 'ffd' && proxyIsEditable() && activeProxyModifier() && Number.isInteger(selectedFfdControlIndex)) {
     const modifier = activeProxyModifier();
     const positions = ffdControlPointPositions(proxyModifierInputTopology(selectedProxy, modifier.id), modifier);
-    const local = positions[selectedFfdControlIndex]; if (!local) return;
-    const world = selectedProxy.group.localToWorld(new THREE.Vector3().fromArray(local));
+    const pointIndices = ffdSelectionIndices();
+    const world = averageWorldPosition(selectedProxy.group, pointIndices.map(index => new THREE.Vector3().fromArray(positions[index]))); if (!world) return;
     const q = coordinateFrameQuaternion($('transformSpace').value, selectedProxy);
     setProxyTransform(world, q); transformControls.attach(gizmoProxy); transformControls.setMode('translate'); transformControls.showX = transformControls.showY = transformControls.showZ = true;
     const helperVisible = shouldShowTransformHelper({ axisGuidesEnabled, operation:'translate' });
     transformControls.enabled = helperVisible; transformControls.getHelper().visible = helperVisible;
-    gizmoContext = { type:'ffd', proxy:selectedProxy, modifierId:modifier.id, pointIndex:selectedFfdControlIndex, operation:'translate' };
+    gizmoContext = { type:'ffd', proxy:selectedProxy, modifierId:modifier.id, pointIndex:selectedFfdControlIndex, pointIndices, operation:'translate' };
     syncAxisGuides(); return;
   }
   if (mode === 'transform' && activeObjectIsEditable()) {
@@ -3644,13 +3717,15 @@ function syncGizmo() {
       const local = p.position.clone().add(selectedControl.kind === 'in' ? p.inTangent : p.outTangent); position = selectedCurve.group.localToWorld(local);
     } else if (pointTool.startsWith('section')) {
       const e = evaluateControlPoint(selectedCurve, selectedControl.pointIndex); if (!e) return; position = selectedCurve.group.localToWorld(e.center.clone());
+    } else if (pointTool === 'pointMove' && selectedPointIndices.size > 1) {
+      position = averageWorldPosition(selectedCurve.group, selectedPointTargetIndices().map(index => selectedCurve.points[index].position));
     } else position = pointWorldPosition(selectedCurve, p);
     const q = coordinateFrameQuaternion($('transformSpace').value, selectedCurve, selectedControl.pointIndex);
     setProxyTransform(position, q); transformControls.attach(gizmoProxy); transformControls.setMode(operation);
     transformControls.showX = true; transformControls.showY = pointTool !== 'sectionScale'; transformControls.showZ = true;
     const helperVisible = shouldShowTransformHelper({ axisGuidesEnabled, operation });
     transformControls.enabled = helperVisible; transformControls.getHelper().visible = helperVisible;
-    gizmoContext = { type:'point', curve:selectedCurve, pointIndex:selectedControl.pointIndex, kind:selectedControl.kind, tool:tangent ? 'tangentMove' : pointTool, operation };
+    gizmoContext = { type:'point', curve:selectedCurve, pointIndex:selectedControl.pointIndex, pointIndices:!tangent && pointTool === 'pointMove' ? selectedPointTargetIndices() : [selectedControl.pointIndex], kind:selectedControl.kind, tool:tangent ? 'tangentMove' : pointTool, operation };
     syncAxisGuides();
   }
 }
@@ -3663,6 +3738,12 @@ function beginGizmoDrag() {
   gizmoDrag = { context:{...gizmoContext}, proxyStart:gizmoProxy.matrixWorld.clone(), proxyStartInv:gizmoProxy.matrixWorld.clone().invert() };
   const ctx = gizmoDrag.context;
   if (ctx.type === 'object') { ctx.target.group.updateMatrixWorld(true); gizmoDrag.targetStart = ctx.target.group.matrixWorld.clone(); }
+  else if (ctx.type === 'ffd') {
+    gizmoDrag.ffdInput = proxyModifierInputTopology(ctx.proxy, ctx.modifierId);
+    gizmoDrag.ffdModifierStart = cloneFfdModifier(activeProxyModifier(ctx.proxy));
+    gizmoDrag.ffdControlStarts = ffdControlPointPositions(gizmoDrag.ffdInput, gizmoDrag.ffdModifierStart);
+  }
+  else if (ctx.tool === 'pointMove') gizmoDrag.pointStarts = new Map(ctx.pointIndices.map(index => [index, ctx.curve.points[index].position.clone()]));
   else if (ctx.tool === 'sectionRotate' || ctx.tool === 'sectionScale') gizmoDrag.targetStart = sectionWorldMatrix(ctx.curve, ctx.pointIndex);
   else if (ctx.tool === 'pointRotate' || ctx.tool === 'pointScale') {
     gizmoDrag.pointStart = clonePointRecord(ctx.curve.points[ctx.pointIndex]);
@@ -3675,6 +3756,12 @@ function worldMatrixToLocalObject(object, worldMatrix) {
   const local = parentInv.multiply(worldMatrix); local.decompose(object.position, object.quaternion, object.scale); object.updateMatrixWorld(true);
 }
 function currentDeltaMatrix() { gizmoProxy.updateMatrixWorld(true); return gizmoProxy.matrixWorld.clone().multiply(gizmoDrag.proxyStartInv); }
+function gizmoTranslationInLocalSpace(group) {
+  group.updateMatrixWorld(true);
+  const startWorld = new THREE.Vector3().setFromMatrixPosition(gizmoDrag.proxyStart);
+  const currentWorld = gizmoProxy.getWorldPosition(new THREE.Vector3());
+  return group.worldToLocal(currentWorld.clone()).sub(group.worldToLocal(startWorld.clone()));
+}
 
 function applyPointUnitTransform(curve, pointIndex, operation) {
   const point = curve.points[pointIndex], start = gizmoDrag.pointStart;
@@ -3721,9 +3808,13 @@ function handleGizmoChange() {
   if (ctx.type === 'ffd') {
     const modifierIndex = ctx.proxy.modifiers.findIndex(modifier => modifier.id === ctx.modifierId);
     if (modifierIndex < 0) return;
-    const input = proxyModifierInputTopology(ctx.proxy, ctx.modifierId);
-    const local = ctx.proxy.group.worldToLocal(gizmoProxy.position.clone()).toArray();
-    ctx.proxy.modifiers[modifierIndex] = setFfdControlPointPosition(input, ctx.proxy.modifiers[modifierIndex], ctx.pointIndex, local);
+    const localDelta = gizmoTranslationInLocalSpace(ctx.proxy.group);
+    let modifier = cloneFfdModifier(gizmoDrag.ffdModifierStart);
+    ctx.pointIndices.forEach(index => {
+      const position = new THREE.Vector3().fromArray(gizmoDrag.ffdControlStarts[index]).add(localDelta).toArray();
+      modifier = setFfdControlPointPosition(gizmoDrag.ffdInput, modifier, index, position);
+    });
+    ctx.proxy.modifiers[modifierIndex] = modifier;
     rebuildProxyMesh(ctx.proxy, { rebuildLattice:false, syncUi:false });
     updateSelectionBadge(); return;
   }
@@ -3733,7 +3824,10 @@ function handleGizmoChange() {
     if (ctx.kind === 'in') p.inTangent.copy(vec); else p.outTangent.copy(vec);
     constrainMovedHandle(p, ctx.kind); updateControlVisuals(curve); updateCurveVisual(curve); if (curve.meshEnabled) rebuildCurveMesh(curve, false);
   } else if (ctx.tool === 'pointMove') {
-    p.position.copy(curve.group.worldToLocal(gizmoProxy.position.clone())); refreshDependentNeighborhood(curve.points, ctx.pointIndex); updateControlVisuals(curve); updateCurveVisual(curve); if (curve.meshEnabled) rebuildCurveMesh(curve, false);
+    const localDelta = gizmoTranslationInLocalSpace(curve.group);
+    ctx.pointIndices.forEach(index => curve.points[index].position.copy(gizmoDrag.pointStarts.get(index)).add(localDelta));
+    ctx.pointIndices.forEach(index => refreshDependentNeighborhood(curve.points, index));
+    updateControlVisuals(curve); updateCurveVisual(curve); if (curve.meshEnabled) rebuildCurveMesh(curve, false);
   } else if (ctx.tool === 'pointRotate' || ctx.tool === 'pointScale') {
     applyPointUnitTransform(curve, ctx.pointIndex, ctx.operation);
   } else if (ctx.tool === 'sectionMove') {
@@ -3790,6 +3884,7 @@ function beginLineCreation() {
   creationPreviousCurve = selectedCurve;
   selectedProxy = null;
   selectedFfdControlIndex = null;
+  selectedFfdControlIndices = new Set();
   selectedCurve = null;
   selectedCurveIds = new Set();
   selectedControl = null;
@@ -3892,18 +3987,20 @@ function setMode(next) {
   $('insertPointBtn').classList.toggle('active', mode === 'insert');
   $('drawCameraToggleBtn').classList.toggle('active', mode === 'draw' && drawCameraOverride);
   if (selectedProxy) refreshProxyModifierUI(selectedProxy);
+  updateSelectionBadge();
   updateLineCreationUI();
 }
 
 function updateHint() {
-  if (mode === 'draw') hintEl.textContent = drawCameraOverride ? 'CREATE 일시 정지 · 카메라 조작 ON · Caps Lock으로 Point 생성 복귀 · Esc 취소' : '클릭: 새 Point · Caps Lock: 카메라 조작 토글 · Esc: Line 취소';
-  else if (mode === 'insert') hintEl.textContent = '커브 위 클릭: Bezier Segment 정확히 분할 · 드래그: 카메라';
+  const navigation = 'MMB Pan · Alt+MMB Orbit · Ctrl+Alt+MMB Zoom · Wheel Zoom';
+  if (mode === 'draw') hintEl.textContent = drawCameraOverride ? `CREATE 일시 정지 · ${navigation} · Caps Lock으로 Point 생성 복귀 · Esc 취소` : `클릭: 새 Point · ${navigation} · Esc: Line 취소`;
+  else if (mode === 'insert') hintEl.textContent = `커브 위 클릭: Bezier Segment 정확히 분할 · ${navigation}`;
   else if (mode === 'edit') {
     const tool = selectedControl?.kind !== 'anchor' ? 'Bezier Handle Move' : pointTool === 'pointMove' ? 'Point + Handles Move' : pointTool === 'pointRotate' ? 'Point + Handles Rotate' : pointTool === 'pointScale' ? 'Point + Handles Scale' : pointTool === 'sectionMove' ? 'Section Offset' : pointTool === 'sectionRotate' ? 'Section Rotate' : 'Section Scale / Taper';
-    hintEl.textContent = `Point/주황색 Handle 선택 · XYZ Gizmo: ${tool} · Move 축선 드래그 · Shift+G 축선 토글`;
-  } else if (mode === 'ffd') hintEl.textContent = 'FFD Control Point 선택 · Move gizmo로 변형 · Modifier Stack은 비파괴 순서대로 누적';
-  else if (mode === 'transform') hintEl.textContent = `${selectedProxy ? 'Proxy Object' : 'Spline Root'} ${objectTransformMode === 'translate' ? 'Move · 긴 축선 드래그 · Shift+G 토글' : objectTransformMode === 'rotate' ? 'Rotate' : 'Scale'} · World / View / Local`;
-  else hintEl.textContent = 'Select · Curve/Proxy 클릭 후 W/E/R: Move/Rotate/Scale · 드래그 회전 / 휠 줌';
+    hintEl.textContent = `LMB 선택/영역 · Ctrl 추가/토글 · Alt 제외 · Point 직접 드래그 · XYZ Gizmo: ${tool} · ${navigation}`;
+  } else if (mode === 'ffd') hintEl.textContent = `LMB 선택/영역 · Ctrl 추가/토글 · Alt 제외 · 선택 Control 직접 드래그/기즈모 이동 · ${navigation}`;
+  else if (mode === 'transform') hintEl.textContent = `${selectedProxy ? 'Proxy Object' : 'Spline Root'} ${objectTransformMode === 'translate' ? 'Move · 긴 축선 드래그 · Shift+G 토글' : objectTransformMode === 'rotate' ? 'Rotate' : 'Scale'} · World / View / Local · ${navigation}`;
+  else hintEl.textContent = `LMB Select · W/E/R Move/Rotate/Scale · Z Frame Selected · ${navigation}`;
 }
 
 function setObjectTransformMode(next) { const object = activeSceneObject(); if (!activeObjectIsEditable()) { setStatus(object ? `${object.name}은 ${object.visible ? '잠겨' : '숨겨'} 있습니다.` : 'Curve 또는 Proxy Object를 먼저 선택하세요.'); return; } objectTransformMode = next; setMode('transform'); updateObjectTransformButtons(); syncGizmo(); updateHint(); }
@@ -4019,12 +4116,154 @@ function toggleDrawCameraOverride() {
   setStatus(drawCameraOverride ? 'Create Points 일시 정지 · 카메라 조작 ON' : '카메라 조작 OFF · Point 생성 재개');
 }
 
+function maxNavigationLabel(event) {
+  if (event.ctrlKey && event.altKey) return 'Zoom';
+  if (event.altKey) return 'Orbit';
+  return 'Pan';
+}
+function beginMaxViewportNavigation(event) {
+  if (event.button !== 1 || transformDragging || referenceImageTransformDragging) return false;
+  orbit.mouseButtons.MIDDLE = event.ctrlKey && event.altKey ? THREE.MOUSE.DOLLY : event.altKey ? THREE.MOUSE.ROTATE : THREE.MOUSE.PAN;
+  maxNavigationPointerId = event.pointerId;
+  orbit.enabled = true;
+  setStatus(`3ds Max Viewport · ${maxNavigationLabel(event)} · MMB`);
+  return true;
+}
+function finishMaxViewportNavigation(event) {
+  if (event.pointerId !== maxNavigationPointerId) return false;
+  maxNavigationPointerId = null;
+  setTimeout(() => { orbit.enabled = mode !== 'draw' || drawCameraOverride; }, 0);
+  return true;
+}
+
+function screenControlRecords(kind) {
+  const rect = renderer.domElement.getBoundingClientRect();
+  const controls = kind === 'ffd'
+    ? selectedProxy?.latticeControlObjects || []
+    : selectedCurve?.controlObjects.filter(control => control.userData.kind === 'anchor') || [];
+  return controls.filter(control => control.visible).flatMap(control => {
+    const projected = control.getWorldPosition(new THREE.Vector3()).project(camera);
+    if (projected.z < -1 || projected.z > 1) return [];
+    return [{
+      index:kind === 'ffd' ? control.userData.ffdPointIndex : control.userData.pointIndex,
+      x:rect.left + (projected.x + 1) * .5 * rect.width,
+      y:rect.top + (1 - projected.y) * .5 * rect.height,
+      radius:kind === 'ffd' ? 4 : 6
+    }];
+  });
+}
+function updateSelectionMarquee(event) {
+  if (!selectionDrag || event.pointerId !== selectionDrag.pointerId) return false;
+  const distance = Math.hypot(event.clientX - selectionDrag.startX, event.clientY - selectionDrag.startY);
+  if (distance < 4 && !selectionDrag.moved) return true;
+  selectionDrag.moved = true;
+  selectionDrag.endX = event.clientX; selectionDrag.endY = event.clientY;
+  const rectangle = selectionRectangle(selectionDrag.startX, selectionDrag.startY, selectionDrag.endX, selectionDrag.endY);
+  const marquee = $('selectionMarquee');
+  marquee.style.display = 'block';
+  marquee.style.left = `${rectangle.left}px`; marquee.style.top = `${rectangle.top}px`;
+  marquee.style.width = `${Math.max(1, rectangle.right - rectangle.left)}px`; marquee.style.height = `${Math.max(1, rectangle.bottom - rectangle.top)}px`;
+  marquee.classList.toggle('crossing', rectangle.crossing);
+  event.preventDefault(); event.stopImmediatePropagation();
+  return true;
+}
+function beginSelectionRegion(event, kind) {
+  selectionDrag = {
+    pointerId:event.pointerId,
+    kind,
+    startX:event.clientX,
+    startY:event.clientY,
+    endX:event.clientX,
+    endY:event.clientY,
+    moved:false,
+    operation:controlSelectionOperation(event)
+  };
+  renderer.domElement.setPointerCapture?.(event.pointerId);
+  orbit.enabled = false;
+  event.preventDefault(); event.stopImmediatePropagation();
+}
+function finishSelectionRegion(event, cancel = false) {
+  if (!selectionDrag || (event && event.pointerId !== selectionDrag.pointerId)) return false;
+  const drag = selectionDrag; selectionDrag = null;
+  $('selectionMarquee').style.display = 'none'; $('selectionMarquee').classList.remove('crossing');
+  if (renderer.domElement.hasPointerCapture?.(drag.pointerId)) renderer.domElement.releasePointerCapture(drag.pointerId);
+  orbit.enabled = mode !== 'draw' || drawCameraOverride;
+  if (!cancel) {
+    if (drag.moved) {
+      const rectangle = selectionRectangle(drag.startX, drag.startY, drag.endX, drag.endY);
+      const hits = controlsInSelectionRectangle(screenControlRecords(drag.kind), rectangle);
+      if (drag.kind === 'ffd') setFfdControlSelection(hits, drag.operation, hits.at(-1));
+      else setCurvePointSelection(hits, drag.operation, hits.at(-1));
+      setStatus(`${rectangle.crossing ? 'Crossing' : 'Window'} Region · ${hits.length}개 hit · Ctrl 추가 / Alt 제외`);
+    } else if (drag.operation === 'replace') {
+      if (drag.kind === 'ffd') setFfdControlSelection([], 'replace');
+      else setCurvePointSelection([], 'replace');
+    }
+  }
+  if (event) { event.preventDefault(); event.stopImmediatePropagation(); }
+  return true;
+}
+
+function beginDirectControlMove(event) {
+  if (!gizmoContext || gizmoContext.operation !== 'translate') return false;
+  const normal = new THREE.Vector3(); camera.getWorldDirection(normal);
+  const pivot = gizmoProxy.getWorldPosition(new THREE.Vector3());
+  const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(normal, pivot);
+  pointerNDC(event);
+  const start = raycaster.ray.intersectPlane(plane, new THREE.Vector3());
+  if (!start) return false;
+  beginGizmoDrag();
+  if (!gizmoDrag) return false;
+  directControlDrag = { pointerId:event.pointerId, plane, start:start.clone(), pivot:pivot.clone(), moved:false };
+  renderer.domElement.setPointerCapture?.(event.pointerId);
+  orbit.enabled = false;
+  event.preventDefault(); event.stopImmediatePropagation();
+  return true;
+}
+function updateDirectControlMove(event) {
+  if (!directControlDrag || event.pointerId !== directControlDrag.pointerId) return false;
+  pointerNDC(event);
+  const point = raycaster.ray.intersectPlane(directControlDrag.plane, new THREE.Vector3());
+  if (point) {
+    directControlDrag.moved = directControlDrag.moved || point.distanceTo(directControlDrag.start) > 1e-5;
+    gizmoProxy.position.copy(directControlDrag.pivot).add(point.sub(directControlDrag.start));
+    gizmoProxy.updateMatrixWorld(true);
+    handleGizmoChange();
+    updateAxisGuideTransform();
+  }
+  event.preventDefault(); event.stopImmediatePropagation();
+  return true;
+}
+function finishDirectControlMove(event, cancel = false) {
+  if (!directControlDrag || (event && event.pointerId !== directControlDrag.pointerId)) return false;
+  const pointerId = directControlDrag.pointerId; directControlDrag = null;
+  if (renderer.domElement.hasPointerCapture?.(pointerId)) renderer.domElement.releasePointerCapture(pointerId);
+  orbit.enabled = mode !== 'draw' || drawCameraOverride;
+  if (cancel && gizmoDrag) {
+    const ctx = gizmoDrag.context;
+    if (ctx.type === 'ffd') {
+      const modifierIndex = ctx.proxy.modifiers.findIndex(modifier => modifier.id === ctx.modifierId);
+      if (modifierIndex >= 0) ctx.proxy.modifiers[modifierIndex] = cloneFfdModifier(gizmoDrag.ffdModifierStart);
+      rebuildProxyMesh(ctx.proxy, { rebuildLattice:false, syncUi:false });
+    } else if (ctx.tool === 'pointMove') {
+      ctx.pointIndices.forEach(index => ctx.curve.points[index].position.copy(gizmoDrag.pointStarts.get(index)));
+      ctx.pointIndices.forEach(index => refreshDependentNeighborhood(ctx.curve.points, index));
+      updateControlVisuals(ctx.curve); updateCurveVisual(ctx.curve); if (ctx.curve.meshEnabled) rebuildCurveMesh(ctx.curve, false);
+    }
+    transformDragging = false; gizmoDrag = null; history.cancel(); syncGizmo(); updateMeshStats();
+  } else endGizmoDrag();
+  if (event) { event.preventDefault(); event.stopImmediatePropagation(); }
+  return true;
+}
+
 function handleViewportClick(event) {
   if (!pointerDownState) return;
   const moved = Math.hypot(event.clientX - pointerDownState.x, event.clientY - pointerDownState.y);
   const wasControl = pointerDownState.controlHit;
   pointerDownState = null;
-  if (moved > 5 || wasControl || transformControls.axis || referenceImageTransformControls.axis) return;
+  const transformAxisActive = transformControls.axis && transformControls.enabled && transformControls.getHelper().visible;
+  const referenceAxisActive = referenceImageTransformControls.axis && referenceImageTransformControls.enabled && referenceImageTransformControls.getHelper().visible;
+  if (moved > 5 || wasControl || transformAxisActive || referenceAxisActive) return;
   if (mode === 'insert') {
     if (!curveIsEditable()) { setStatus('삽입할 편집 가능 커브를 선택하세요.'); return; }
     const nearest = findNearestCurveParameter(event, selectedCurve);
@@ -4048,47 +4287,69 @@ function handleViewportClick(event) {
 }
 
 renderer.domElement.addEventListener('pointerdown', event => {
+  if (beginMaxViewportNavigation(event)) return;
   if (event.button !== 0) return;
-  if ((event.ctrlKey || event.metaKey) && canPickVisibleControl(mode)) {
-    const control = findControl(event);
-    if (control?.userData.kind === 'anchor') {
-      pointerDownState = null;
-      event.preventDefault(); event.stopImmediatePropagation();
-      const curve = curves.find(c => c.id === control.userData.curveId);
-      if (curve) {
-        if (mode !== 'edit') setMode(modeAfterControlPick());
-        selectControl(curve, control.userData.pointIndex, 'anchor', { toggle:true });
+  if (event.ctrlKey || event.metaKey || event.altKey) {
+    if (mode === 'ffd') {
+      const control = findFfdControl(event);
+      if (control) {
+        pointerDownState = null;
+        event.preventDefault(); event.stopImmediatePropagation();
+        selectFfdControl(control.userData.ffdPointIndex, event);
+        return;
       }
-      return;
+    }
+    if (canPickVisibleControl(mode)) {
+      const control = findControl(event);
+      if (control?.userData.kind === 'anchor') {
+        pointerDownState = null;
+        event.preventDefault(); event.stopImmediatePropagation();
+        const curve = curves.find(c => c.id === control.userData.curveId);
+        if (curve) {
+          if (mode !== 'edit') setMode(modeAfterControlPick());
+          if (event.altKey) setCurvePointSelection([control.userData.pointIndex], 'remove');
+          else selectControl(curve, control.userData.pointIndex, 'anchor', { toggle:true });
+        }
+        return;
+      }
     }
   }
   if (startAxisGuideDrag(event)) return;
-  if (!axisGuidesEnabled && transformControls.axis && canPickVisibleControl(mode)) {
-    const control = findControl(event);
-    const isCurrent = control
-      && selectedControl
-      && selectedCurve?.id === control.userData.curveId
-      && selectedControl.pointIndex === control.userData.pointIndex
-      && selectedControl.kind === control.userData.kind;
-    if (control && !isCurrent) {
-      event.preventDefault(); event.stopImmediatePropagation();
-      const curve = curves.find(c => c.id === control.userData.curveId);
-      if (curve) {
-        if (mode !== 'edit') setMode(modeAfterControlPick());
-        selectControl(curve, control.userData.pointIndex, control.userData.kind, { toggle:(event.ctrlKey || event.metaKey) && control.userData.kind === 'anchor' });
-      }
-      return;
-    }
-  }
-  if (transformControls.axis || referenceImageTransformControls.axis) return;
+  const visibleTransformAxis = transformControls.axis && transformControls.enabled && transformControls.getHelper().visible;
+  const visibleReferenceAxis = referenceImageTransformControls.axis && referenceImageTransformControls.enabled && referenceImageTransformControls.getHelper().visible;
+  if (visibleTransformAxis || visibleReferenceAxis) return;
   if (mode === 'ffd') {
     const control = findFfdControl(event);
     if (control) {
       pointerDownState = null;
       event.preventDefault(); event.stopImmediatePropagation();
-      selectFfdControl(control.userData.ffdPointIndex);
+      const index = control.userData.ffdPointIndex;
+      if (selectedFfdControlIndices.has(index) && selectedFfdControlIndices.size > 1) setFfdControlSelection([], 'add', index);
+      else selectFfdControl(index);
+      beginDirectControlMove(event);
       return;
     }
+    beginSelectionRegion(event, 'ffd');
+    return;
+  }
+  if (canPickVisibleControl(mode)) {
+    const control = findControl(event);
+    if (control) {
+      event.preventDefault(); event.stopImmediatePropagation();
+      const curve = curves.find(c => c.id === control.userData.curveId);
+      if (curve) {
+        if (mode !== 'edit') setMode(modeAfterControlPick());
+        const index = control.userData.pointIndex;
+        if (control.userData.kind === 'anchor' && selectedPointIndices.has(index) && selectedPointIndices.size > 1) setCurvePointSelection([], 'add', index);
+        else selectControl(curve, index, control.userData.kind);
+        if (control.userData.kind === 'anchor' && pointTool === 'pointMove') beginDirectControlMove(event);
+      }
+      return;
+    }
+  }
+  if (mode === 'edit' && curveIsEditable()) {
+    beginSelectionRegion(event, 'curve');
+    return;
   }
   pointerDownState = { x:event.clientX, y:event.clientY, controlHit:false };
   if (mode === 'draw') {
@@ -4100,27 +4361,30 @@ renderer.domElement.addEventListener('pointerdown', event => {
     else setStatus(surfacePlacement ? '보이는 Reference / Proxy Mesh 표면을 클릭하세요.' : '현재 View Plane에서 Point 위치를 계산할 수 없습니다.');
     return;
   }
-  if (canPickVisibleControl(mode)) {
-    const control = findControl(event);
-    if (!control) return;
-    pointerDownState.controlHit = true;
-    event.preventDefault(); event.stopImmediatePropagation();
-    const curve = curves.find(c => c.id === control.userData.curveId);
-    if (curve) {
-      if (mode !== 'edit') setMode(modeAfterControlPick());
-      selectControl(curve, control.userData.pointIndex, control.userData.kind, { toggle:(event.ctrlKey || event.metaKey) && control.userData.kind === 'anchor' });
-    }
-  }
 }, true);
-renderer.domElement.addEventListener('pointermove', event => { updateAxisGuideDrag(event); }, true);
+renderer.domElement.addEventListener('pointermove', event => {
+  if (updateDirectControlMove(event)) return;
+  if (updateSelectionMarquee(event)) return;
+  updateAxisGuideDrag(event);
+}, true);
 renderer.domElement.addEventListener('pointerup', event => {
+  if (finishDirectControlMove(event)) { pointerDownState = null; return; }
+  if (finishSelectionRegion(event)) { pointerDownState = null; return; }
   if (finishAxisGuideDrag(event)) { pointerDownState = null; return; }
+  if (finishMaxViewportNavigation(event)) return;
   handleViewportClick(event);
 }, true);
 renderer.domElement.addEventListener('pointercancel', event => {
+  finishDirectControlMove(event, true);
+  finishSelectionRegion(event, true);
   finishAxisGuideDrag(event);
+  finishMaxViewportNavigation(event);
   pointerDownState = null;
 }, true);
+renderer.domElement.addEventListener('contextmenu', event => {
+  event.preventDefault();
+  if (selectionDrag) finishSelectionRegion(null, true);
+});
 
 $('modelFile').addEventListener('change', e => { const f = e.target.files?.[0]; if (f) loadModel(f); });
 $('saveProjectBtn').addEventListener('click', saveProject);
@@ -4303,7 +4567,9 @@ function addFfdModifierToSelected(resolution) {
   selectedProxy.modifiers.push(modifier);
   selectedProxy.activeModifierId = modifier.id;
   selectedFfdControlIndex = 0;
+  selectedFfdControlIndices = new Set([0]);
   selectedProxy.lastFfdControlIndex = 0;
+  selectedProxy.lastFfdControlIndices = new Set([0]);
   rebuildProxyMesh(selectedProxy);
   setMode('ffd');
   setStatus(`${selectedProxy.name} · ${modifier.name} 추가 · Control Point를 선택해 이동하세요.`);
@@ -4329,8 +4595,10 @@ $('moveProxyModifierDownBtn').addEventListener('click', () => moveActiveProxyMod
 $('editFfdPointsBtn').addEventListener('click', () => {
   const modifier = activeProxyModifier();
   if (!proxyIsEditable() || !modifier || modifier.enabled === false) return;
-  if (!Number.isInteger(selectedFfdControlIndex) || selectedFfdControlIndex >= modifier.offsets.length) selectedFfdControlIndex = 0;
-  selectedProxy.lastFfdControlIndex = selectedFfdControlIndex;
+  selectedFfdControlIndices = normalizeControlSelection(selectedFfdControlIndices, modifier.offsets.length);
+  if (!selectedFfdControlIndices.size) selectedFfdControlIndices.add(0);
+  if (!selectedFfdControlIndices.has(selectedFfdControlIndex)) selectedFfdControlIndex = orderedControlSelection(selectedFfdControlIndices, modifier.offsets.length).at(-1);
+  syncProxyFfdSelectionMemory(selectedProxy);
   setMode('ffd'); rebuildProxyLatticeVisual(selectedProxy); syncGizmo();
   setStatus(`${selectedProxy.name} · ${modifier.name} Control Point 편집 · Point 선택 후 Move gizmo`);
 });
@@ -4348,7 +4616,9 @@ $('removeProxyModifierBtn').addEventListener('click', () => {
   selectedProxy.modifiers.splice(index, 1);
   selectedProxy.activeModifierId = selectedProxy.modifiers[Math.min(index, selectedProxy.modifiers.length - 1)]?.id ?? null;
   selectedFfdControlIndex = activeProxyModifier() ? 0 : null;
+  selectedFfdControlIndices = activeProxyModifier() ? new Set([0]) : new Set();
   selectedProxy.lastFfdControlIndex = selectedFfdControlIndex;
+  selectedProxy.lastFfdControlIndices = new Set(selectedFfdControlIndices);
   rebuildProxyMesh(selectedProxy);
   if (!activeProxyModifier()) setMode('orbit'); else syncGizmo();
   setStatus(`${modifier.name} 제거 · 나머지 Stack 유지`); history.commit();
@@ -4636,6 +4906,8 @@ document.addEventListener('keydown', e => {
     setStatus(message || 'Redo할 작업이 없습니다.');
     return;
   }
+  if (e.key === 'Escape' && directControlDrag) { e.preventDefault(); finishDirectControlMove(null, true); return; }
+  if (e.key === 'Escape' && selectionDrag) { e.preventDefault(); finishSelectionRegion(null, true); return; }
   if (e.key === 'Escape' && mode === 'draw') { e.preventDefault(); cancelLineCreation(); return; }
   if (e.code === 'CapsLock' && mode === 'draw') { e.preventDefault(); toggleDrawCameraOverride(); return; }
   if (isTypingTarget(e.target)) return;
@@ -4646,7 +4918,8 @@ document.addEventListener('keydown', e => {
     if (e.key === 'q' || e.key === 'Q') { e.preventDefault(); setReferenceImageTransformTool('none'); return; }
   }
   if (commandKey && (e.key === 'a' || e.key === 'A')) {
-    if (selectedCurve?.points.length) { e.preventDefault(); selectAllCurvePoints(); }
+    if (mode === 'ffd' && activeProxyModifier()) { e.preventDefault(); setFfdControlSelection(activeProxyModifier().offsets.map((_, index) => index), 'replace', 0); }
+    else if (selectedCurve?.points.length) { e.preventDefault(); selectAllCurvePoints(); }
     return;
   }
   if (e.shiftKey && (e.key === 'g' || e.key === 'G')) { e.preventDefault(); toggleAxisGuides(); return; }
@@ -4660,6 +4933,7 @@ document.addEventListener('keydown', e => {
   }
   if (e.key === 'i' || e.key === 'I') { if (curveIsEditable() && selectedCurve.points.length >= 2) setMode(mode === 'insert' ? 'edit' : 'insert'); return; }
   if (e.key === 'q' || e.key === 'Q') { if (mode === 'draw') leaveLineCreationForMode('orbit'); else setMode('orbit'); return; }
+  if (e.key === 'z' || e.key === 'Z') { e.preventDefault(); frameSelected(); return; }
   if (mode === 'ffd') {
     if (e.key === 'w' || e.key === 'W') { e.preventDefault(); syncGizmo(); setStatus('FFD Control Point Move'); }
     else if (e.key === 'e' || e.key === 'E' || e.key === 'r' || e.key === 'R') { e.preventDefault(); setStatus('FFD Control Point는 현재 Move 방식으로 편집합니다.'); }

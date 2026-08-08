@@ -44,7 +44,7 @@ open/recovery/undo/redo
 
 ## 저장 경계
 
-저장됨: Curve/Point/Brush, Curve transform/settings/live flag, Proxy type/settings/transform/visibility/lock과 FFD modifier stack·활성 modifier/control, `nextProxyId`, `nextProxyModifierId`, `selectedObjectKind`와 활성 Curve/Proxy ID, 다중 `selectedCurveIds`, 활성 Control과 `selectedPointIndices`, mode, Hair/Reference material preset, 방향광 azimuth/elevation/intensity, Environment Fill, Viewport background/FOV·`orthographicStandardViews`, Reference wire mode/color, Front/Left/Back Plane의 position/rotation/scale·표시·Flip·Back-face Cull과 파일명 힌트, Grid visibility를 포함한 display 설정과 ID counter.
+저장됨: Curve/Point/Brush, Curve transform/settings/live flag, Proxy type/settings/transform/visibility/lock과 FFD modifier stack·활성 modifier·`lastFfdControlIndices`, `nextProxyId`, `nextProxyModifierId`, `selectedObjectKind`와 활성 Curve/Proxy ID, 다중 `selectedCurveIds`, 활성 Control과 `selectedPointIndices`, mode, Hair/Reference material preset, 방향광 azimuth/elevation/intensity, Environment Fill, Viewport background/FOV·`orthographicStandardViews`, Reference wire mode/color, Front/Left/Back Plane의 position/rotation/scale·표시·Flip·Back-face Cull과 파일명 힌트, Grid visibility를 포함한 display 설정과 ID counter.
 
 저장되지 않음: Reference model binary/scene, Reference Mesh별 visibility/material/수동 texture, Front/Left/Back 이미지 binary/data URL/texture plane, camera/orbit position, transient pointer/gizmo drag, GPU objects, Object URL.
 
@@ -72,7 +72,7 @@ open/recovery/undo/redo
 - Brush topology와 ID reference가 함께 복원되는가?
 - 선택 ID/index가 없는 객체를 가리킬 때 안전한 fallback이 있는가?
 - `proxies`가 없는 version 1 문서는 빈 Proxy 목록으로 열리고, 새 문서는 primitive settings만 저장한 뒤 topology를 재생성하는가?
-- `modifiers`가 없는 기존 Proxy는 빈 stack으로 열리고, 새 Proxy는 FFD resolution/enabled/offsets/order와 활성 modifier/control을 왕복한 뒤 최종 topology를 재평가하는가?
+- `modifiers`/`lastFfdControlIndices`가 없는 기존 Proxy는 빈 stack/단일 legacy control로 열리고, 새 Proxy는 FFD resolution/enabled/offsets/order와 활성 modifier/다중 control을 왕복한 뒤 최종 topology를 재평가하는가?
 - `selectedObjectKind`가 `proxy`면 Curve/Point 선택을 비우고 Proxy Modify 문맥과 gizmo를 복원하는가?
 - 이전 문서의 `selectedCurveId`만 있어도 단일 `selectedCurveIds`로 복원되고, 새 문서는 다중 Curve 선택과 활성 Curve를 함께 복원하는가?
 - Recovery 실패가 앱 부팅을 막지 않는가?
@@ -87,4 +87,4 @@ open/recovery/undo/redo
 ## 검증
 
 - Node: History undo/redo, project round-trip, unrelated/future document reject.
-- Browser: save → mutate → open, Proxy 4종의 parameters/transform/visibility/lock/FFD stack/활성 Modify 문맥, FFD drag 한 단계 Undo/Redo와 Clone modifier ID 분리, Brush 및 참조 Plane 3D transform/Flip/Cull 포함 저장/열기, 이미지 binary 미포함, reload recovery, corrupt recovery fallback, unsaved warning, Undo/Redo 후 Live Mesh/selection 일치.
+- Browser: save → mutate → open, Proxy 4종의 parameters/transform/visibility/lock/FFD stack/활성 Modify 문맥, FFD 다중 Control 선택 집합의 저장 왕복, 다중 drag 한 단계 Undo/Redo와 Clone modifier ID 분리, Brush 및 참조 Plane 3D transform/Flip/Cull 포함 저장/열기, 이미지 binary 미포함, reload recovery, corrupt recovery fallback, unsaved warning, Undo/Redo 후 Live Mesh/selection 일치.

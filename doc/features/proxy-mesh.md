@@ -50,7 +50,8 @@ FFD 변형은 Sederberg/Parry 방식의 tensor-product Bernstein weight를 사�
 | FFD control 좌표 | `ffdControlPointPositions()`, `setFfdControlPointPosition()` | `src/geometry/ffd-lattice.js` |
 | Proxy record/codec | `makeProxyRecord()`, `proxyState()`, `proxyFromState()`, `disposeProxy()` | HTML composition root |
 | 최종 topology/렌더 | `rebuildProxyMesh()`, `proxyTopologyToThree()` | HTML composition root |
-| Lattice 표시·선택 | `rebuildProxyLatticeVisual()`, `syncFfdLatticePositions()`, `findFfdControl()`, `selectFfdControl()` | HTML composition root |
+| Lattice 표시·선택 | `rebuildProxyLatticeVisual()`, `syncFfdLatticePositions()`, `findFfdControl()`, `setFfdControlSelection()` | HTML composition root + `control-selection.js` |
+| 영역 선택 | `beginSelectionRegion()`, `screenControlRecords()`, `finishSelectionRegion()` | HTML composition root + `region-selection.js` |
 | Modifier UI | `#proxyModifierList`, `refreshProxyModifierUI()`, `addFfdModifierToSelected()`, `moveActiveProxyModifier()` | HTML composition root |
 | FFD Move/History | `syncGizmo()`, `beginGizmoDrag()`, `handleGizmoChange()`, `endGizmoDrag()` | HTML composition root |
 | 표면 배치 | `updateDrawTargetUI()`, `pointOnSurface()` | HTML composition root |
@@ -72,7 +73,8 @@ proxy
 │       ├── enabled
 │       └── offsets[]           # resolution³개의 normalized [x,y,z]
 ├── activeModifierId
-├── lastFfdControlIndex
+├── lastFfdControlIndex         # active control, legacy 호환
+├── lastFfdControlIndices       # 저장되는 다중 선택
 ├── baseTopology                # 파생 데이터
 ├── topology                    # stack 평가가 끝난 파생 데이터
 ├── meshGroup/solidMesh/wireMesh
@@ -86,7 +88,10 @@ proxy
 - 활성 root object는 Curve 또는 Proxy 중 하나다. `selectCurve()`와 `selectProxy()`는 반대 종류의 선택을 해제한다.
 - FFD row의 순서는 Base에 가까운 항목부터 Top 방향이다. `Move Up`은 나중에, `Move Down`은 먼저 평가되도록 이동한다.
 - row checkbox를 끄면 데이터는 보존하고 평가만 건너뛴다. 편집 중인 FFD를 끄면 안전하게 Object/Camera 모드로 나온다.
-- `Edit Control Points`는 선택 modifier의 lattice만 표시하고 Move gizmo만 제공한다. E/R은 Proxy root를 회전/스케일하지 않는다.
+- `Edit Control Points`는 선택 modifier의 lattice만 표시한다. LMB 클릭은 단일 선택, Ctrl/⌘ 클릭은 추가/해제 토글, Alt 클릭은 제외다.
+- 빈 곳에서 LMB를 드래그하면 사각 영역을 만든다. 좌→우는 완전히 포함된 control만 고르는 Window, 우→좌는 닿는 control도 고르는 Crossing이다. Ctrl은 기존 선택에 추가하고 Alt는 제외한다.
+- 선택된 Control 하나를 직접 LMB 드래그하면 View Plane에서 전체 선택을 함께 이동한다. Move gizmo와 긴 Axis Line은 좌표계 축 제약 이동을 담당한다.
+- 다중 선택 기즈모는 control 평균 위치에 나타나며 모든 선택 offset에 같은 local delta를 적용한다. E/R은 Proxy root를 회전/스케일하지 않는다.
 - FFD 모드의 `Delete`는 Proxy나 control을 지우지 않는다. Control 수는 resolution 계약이므로 `Reset FFD` 또는 `Remove Modifier`를 사용한다.
 - `Reset FFD`는 선택 modifier의 모든 offset만 0으로 만들고 다른 stack 항목은 유지한다.
 - Clone은 stack 값은 복제하지만 modifier ID는 새로 할당해 원본과 독립 편집한다.
@@ -96,9 +101,9 @@ proxy
 
 ## History·Project·Export
 
-- FFD 추가, control drag, ON/OFF, 순서 변경, Reset, Remove는 각각 한 번의 History transaction이다.
+- FFD 추가, 직접/기즈모 control drag, ON/OFF, 순서 변경, Reset, Remove는 각각 한 번의 History transaction이다. 선택 변경만으로는 geometry History를 만들지 않는다.
 - drag 중에는 geometry를 실시간 재평가하지만 pointer up에서 한 개 Undo step으로 확정한다.
-- `nextProxyModifierId`, `activeModifierId`, `lastFfdControlIndex`를 저장·복원한다.
+- `nextProxyModifierId`, `activeModifierId`, `lastFfdControlIndex`, `lastFfdControlIndices`를 저장·복원한다. 단일 index만 있는 이전 프로젝트는 1개 선택 Set으로 승격한다.
 - OBJ/FBX는 표시 중인 Proxy의 최종 FFD 결과와 Object transform을 bake한다. modifier stack 자체는 교환 포맷에 포함하지 않는다.
 - hidden Proxy는 Surface raycast와 Export에서 제외한다.
 
@@ -123,12 +128,14 @@ UI의 `min/max`는 안내이며 실제 안전 경계는 순수 normalize 함수�
 - 8×8×8의 512 control과 lattice line이 선택 가능하고 viewport를 멈추게 하지 않는가?
 - Proxy가 숨겨지거나 삭제되면 Surface option/raycast 후보가 즉시 갱신되는가?
 - Curve↔Proxy↔FFD 모드 전환 시 Modify, row, badge, gizmo, keyboard target이 같은 frame에 바뀌는가?
+- Window/Crossing 방향, Ctrl 추가/클릭 토글, Alt 제외, Ctrl+A 전체 선택이 2/4/8 lattice 모두에서 유효한가?
+- 다중 선택을 직접/기즈모로 이동할 때 모든 선택 offset만 같은 delta를 받고 한 Undo로 원복되는가?
 - Export가 Base가 아닌 최종 stack topology를 bake하는가?
 
 ## 검증 기준
 
 - Node: 4종 primitive clamp/topology/winding, FFD resolution/identity/Bernstein 변형/stack order/disabled, project modifier round-trip.
-- Browser: FFD 2/4/8 추가, 실제 gizmo drag, Undo/Redo, ON/OFF 모드 이탈, reorder/reset/remove, Delete 안전장치, Clone 독립 ID, Save/Open/Recovery.
+- Browser: FFD 2/4/8 추가, Window/Crossing과 Ctrl/Alt 선택, 다중 직접/gizmo drag, Axis Lines OFF 직접 drag, 한 단계 Undo/Redo, ON/OFF 모드 이탈, reorder/reset/remove, Delete 안전장치, Clone 독립 ID, Save/Open/Recovery.
 - Surface: Reference 없이 Proxy만 있는 장면에서 Surface option 활성화, 2 Point Line 생성 완료.
 - Export: FFD로 이동한 vertex가 OBJ/FBX 최종 geometry에 포함되고 여러 Proxy object가 분리되는지 확인.
 - Visual: 1600×900과 1024×768에서 Primitive/Modifier rollout, 2×2×2와 8×8×8 lattice, Scene Explorer와 viewport clipping 확인.

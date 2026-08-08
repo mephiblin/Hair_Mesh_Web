@@ -3,6 +3,8 @@ import { createHistory } from '../src/state/history.js';
 import { canFinishLine, lineCreationExitAction } from '../src/state/line-creation-policy.js';
 import { allPointIndices, normalizePointSelection, selectedPointIndices, togglePointSelection } from '../src/state/point-selection.js';
 import { activeCurveId, normalizeCurveSelection, selectedCurveIds, toggleCurveSelection } from '../src/state/curve-selection.js';
+import { applyControlSelection, controlSelectionOperation, orderedControlSelection } from '../src/state/control-selection.js';
+import { controlsInSelectionRectangle, selectionRectangle } from '../src/viewport/region-selection.js';
 import { normalizeMeshBudget } from '../src/geometry/mesh-limits.js';
 import {
   buildProxyTopology,
@@ -100,6 +102,19 @@ test('command-click curve selection toggles rows and resolves an active curve', 
   assert.deepEqual(selectedCurveIds(selection, [1, 2, 3]), [1]);
   assert.equal(activeCurveId(selection, 2), 1);
   assert.deepEqual(selectedCurveIds([], [1, 2, 3], 3), [3]);
+});
+
+test('3ds Max control selection replaces, adds, and removes with modifier keys', () => {
+  let selected = applyControlSelection([], [1, 2], 8, controlSelectionOperation());
+  selected = applyControlSelection(selected, [4], 8, controlSelectionOperation({ ctrlKey:true }));
+  selected = applyControlSelection(selected, [2], 8, controlSelectionOperation({ altKey:true }));
+  assert.deepEqual(orderedControlSelection(selected, 8), [1, 4]);
+});
+
+test('selection drag uses window left-to-right and crossing right-to-left', () => {
+  const controls = [{ index:0, x:20, y:20, radius:3 }, { index:1, x:31, y:20, radius:3 }];
+  assert.deepEqual(controlsInSelectionRectangle(controls, selectionRectangle(10, 10, 30, 30)), [0]);
+  assert.deepEqual(controlsInSelectionRectangle(controls, selectionRectangle(30, 30, 10, 10)), [0, 1]);
 });
 
 test('mesh budget clamps direct values and normalizes fallback values', () => {
