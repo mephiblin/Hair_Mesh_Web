@@ -46,6 +46,7 @@ Hair Card MVP의 Bézier 편집과 Curve-to-Mesh 생성에 더해 버전형 프�
 | M-002 | P1 | FFD/Edit의 잠정 Region handler가 click도 소비해 다른 Proxy의 Viewport 선택을 막았다. | 이동 임계값 미만은 `finishSelectionRegion()`에서 Scene picking으로 전달한다. | FFD `Sphere002 → Box001` click-through browser regression |
 | M-003 | P1 | Control 직접 drag는 있었지만 Proxy Object `W` 표면 drag 경로가 없었다. | Object/Control이 `beginDirectViewportMove()` History 경계를 공유하도록 확장하고 Esc/Undo 복원을 추가했다. | Proxy position 변화 + one-step Undo browser regression |
 | M-004 | P2 | 제품 감사·기준선 문서의 revision, 테스트 수, Axis 설명과 모듈 목록이 현재 코드보다 오래됐다. | 현재 revision/26개 Node 계약/24개 self-check/Viewport CI gate 및 신규 모듈로 문서를 동기화했다. | 문서 유지 규칙, symbol/DOM anchor 대조, 동일 커밋 문서 갱신 |
+| M-005 | P2 | GitHub Actions `checkout/setup-node@v4`가 내부 Node.js 20 지원 종료 경고를 냈다. | 공식 Playwright CI 예시와 현재 Actions runtime에 맞춰 두 job을 `@v6`로 갱신했다. | push 후 Validate annotation과 Core/Viewport job 결과 확인 |
 
 이번 감사에서 새 P0 또는 미해결 P1은 발견되지 않았다. 다만 Viewport 포인터 동작은 DOM 없는 Node 테스트만으로 충분히 보호할 수 없으므로 Chromium 회귀 job을 필수 게이트로 유지한다.
 
