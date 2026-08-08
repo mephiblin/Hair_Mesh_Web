@@ -50,6 +50,7 @@ input[type=checkbox]{accent-color:var(--accent)}
 .kbd{display:inline-block;min-width:20px;text-align:center;padding:0 3px;border:1px solid #777;background:#2e2e2e}.live{font-size:10px;color:var(--ok);margin-top:5px}.statusbar{display:flex;align-items:center;padding:0 8px;background:#343434;border-top:1px solid #1f1f1f;color:#ddd;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.status-mode{margin-left:auto;color:var(--accent-strong);padding-left:12px}.mini-separator{height:1px;background:#2a2a2a;margin:7px 0}.point-nav{display:grid;grid-template-columns:30px 1fr 30px;gap:3px;margin-bottom:5px}.point-nav .index{display:flex;align-items:center;justify-content:center;background:#373737;border:1px solid #666}.range-header{display:flex!important;align-items:center;justify-content:space-between}.range-value{min-width:38px;text-align:right;color:var(--accent-strong);font-variant-numeric:tabular-nums}.range-control{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:6px;color:var(--muted);font-size:10px}
 .material-picker{display:grid;grid-template-columns:38px minmax(0,1fr);gap:7px;align-items:center;margin:5px 0;padding:5px;background:#3d3d3d;border:1px solid #626262}.material-picker label{margin:0!important}.material-preview{width:32px;height:32px;border-radius:50%;border:1px solid rgba(255,255,255,.35);box-shadow:inset -6px -8px 12px rgba(0,0,0,.42),0 1px 0 #1d1d1d;justify-self:center}.material-picker small{display:block;margin-top:3px;color:var(--muted);font-size:10px}
 .reference-object-list{max-height:150px;overflow:auto;background:#363636;border:1px solid #616161;padding:3px}.reference-object-row{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:3px;align-items:center;margin:1px 0}.reference-object-row.selected .reference-object-select{background:#557071;border-color:#9bcaca}.reference-object-row.hidden-object{opacity:.55}.reference-object-select{min-width:0;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.reference-object-mode{max-width:92px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:10px}.texture-status{min-height:34px;display:flex;align-items:center;gap:7px;padding:5px;margin-top:5px;background:#363636;border:1px solid #616161;color:var(--muted);overflow:hidden}.texture-swatch{width:28px;height:28px;flex:0 0 28px;background:linear-gradient(135deg,#595959 25%,#303030 25% 50%,#595959 50% 75%,#303030 75%);background-size:12px 12px;border:1px solid #777;object-fit:cover}.texture-status span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.reference-image-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin-bottom:7px}.reference-image-card{position:relative;display:grid;grid-template-rows:52px auto;gap:2px;min-width:0;padding:3px;background:#343434;border:1px solid #606060;color:var(--muted);text-align:left;overflow:hidden}.reference-image-card:hover{background:#414141}.reference-image-card.active{border-color:var(--accent-strong);box-shadow:inset 0 0 0 1px #2d5b5e;color:var(--accent-strong)}.reference-image-card.loaded:after{content:'';position:absolute;right:5px;top:5px;width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 1px #243424}.reference-image-thumb{position:relative;display:grid;place-items:center;overflow:hidden;background:linear-gradient(135deg,#292d31,#1d2023);border:1px solid #555}.reference-image-thumb img{width:100%;height:100%;object-fit:cover}.reference-image-placeholder{font:700 21px/1 "Segoe UI",sans-serif;color:#7f898c}.reference-image-card strong{display:block;font-size:10px;letter-spacing:.08em}.reference-image-card small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:inherit;font-size:9px}.reference-image-actions{display:grid;grid-template-columns:1.25fr .75fr;gap:4px;margin:5px 0}.reference-image-status{min-height:35px}
 @media(max-width:1080px){.editor-shell{grid-template-rows:72px minmax(0,1fr) 24px}.topbar{height:72px;align-content:center;flex-wrap:wrap;overflow:visible}.workspace{grid-template-columns:200px minmax(300px,1fr) 320px}.brand,.tool-label,.project-state{display:none}.viewport-badge{top:auto;bottom:8px}.hint{max-width:calc(100% - 16px)}}
 @media(max-width:820px){html,body{overflow:auto}.editor-shell{height:auto;min-height:100vh;grid-template-rows:auto 1fr auto}.topbar{flex-wrap:wrap}.workspace{grid-template-columns:1fr;grid-template-rows:240px 62vh auto}.scene-panel{border-right:0}.command-panel{border-left:0}.viewport-wrap{grid-row:2}.command-panel{grid-row:3;height:650px}}
 </style>
@@ -92,6 +93,7 @@ input[type=checkbox]{accent-color:var(--accent)}
       <button id="viewPerspectiveBtn" class="view-btn" type="button">Persp</button>
       <button id="viewFrontBtn" class="view-btn" type="button">Front</button>
       <button id="viewLeftBtn" class="view-btn" type="button">Left</button>
+      <button id="viewBackBtn" class="view-btn" type="button">Back</button>
       <button id="viewTopBtn" class="view-btn" type="button">Top</button>
       <button id="fitSelectedBtn" class="view-btn" type="button">Frame</button>
     </div>
@@ -270,6 +272,51 @@ input[type=checkbox]{accent-color:var(--accent)}
             </div>
           </div>
           <div class="rollout">
+            <button class="rollout-header" type="button">Viewport Reference Images · Front / Left / Back</button>
+            <div class="rollout-body">
+              <p class="muted">AI 분석 없이 정투상 이미지 평면을 모델링 뷰에 표시합니다. 카드를 누르면 해당 뷰로 전환합니다.</p>
+              <div class="reference-image-strip" id="referenceImageStrip">
+                <button class="reference-image-card active" type="button" data-reference-image-view="front">
+                  <span class="reference-image-thumb"><img id="referenceImageFrontPreview" class="hidden" alt="Front reference preview" /><span id="referenceImageFrontPlaceholder" class="reference-image-placeholder">F</span></span>
+                  <span><strong>FRONT</strong><small id="referenceImageFrontCardStatus">Empty</small></span>
+                </button>
+                <button class="reference-image-card" type="button" data-reference-image-view="left">
+                  <span class="reference-image-thumb"><img id="referenceImageLeftPreview" class="hidden" alt="Left reference preview" /><span id="referenceImageLeftPlaceholder" class="reference-image-placeholder">L</span></span>
+                  <span><strong>LEFT</strong><small id="referenceImageLeftCardStatus">Empty</small></span>
+                </button>
+                <button class="reference-image-card" type="button" data-reference-image-view="back">
+                  <span class="reference-image-thumb"><img id="referenceImageBackPreview" class="hidden" alt="Back reference preview" /><span id="referenceImageBackPlaceholder" class="reference-image-placeholder">B</span></span>
+                  <span><strong>BACK</strong><small id="referenceImageBackCardStatus">Empty</small></span>
+                </button>
+              </div>
+              <input id="referenceImageFrontFile" class="project-file-input" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,.png,.jpg,.jpeg,.webp,.svg" />
+              <input id="referenceImageLeftFile" class="project-file-input" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,.png,.jpg,.jpeg,.webp,.svg" />
+              <input id="referenceImageBackFile" class="project-file-input" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,.png,.jpg,.jpeg,.webp,.svg" />
+              <div id="referenceImageSelection" class="selected-label">FRONT · No image</div>
+              <div class="reference-image-actions"><button id="loadReferenceImageBtn" class="primary" type="button">Load Front Image</button><button id="clearReferenceImageBtn" type="button" disabled>Clear</button></div>
+              <div class="coords2">
+                <label>Layer<select id="referenceImageLayer"><option value="behind" selected>Behind Geometry</option><option value="overlay">Overlay on Top</option></select></label>
+                <label>Opacity<input id="referenceImageOpacity" type="number" min="0" max="1" step="0.05" value="0.45" /></label>
+              </div>
+              <div class="coords2">
+                <label>Scale X<input id="referenceImageScaleX" type="number" min="0.01" max="20" step="0.05" value="1" /></label>
+                <label>Scale Y<input id="referenceImageScaleY" type="number" min="0.01" max="20" step="0.05" value="1" /></label>
+              </div>
+              <div class="coords2">
+                <label>Offset X<input id="referenceImageOffsetX" type="number" min="-10" max="10" step="0.01" value="0" /></label>
+                <label>Offset Y<input id="referenceImageOffsetY" type="number" min="-10" max="10" step="0.01" value="0" /></label>
+              </div>
+              <label>Rotation · degrees<input id="referenceImageRotation" type="number" min="-180" max="180" step="1" value="0" /></label>
+              <div class="row">
+                <label class="checkrow"><input id="referenceImageVisible" type="checkbox" checked /> Show this view</label>
+                <label class="checkrow"><input id="referenceImageMirror" type="checkbox" /> Mirror</label>
+              </div>
+              <div class="row" style="margin-top:5px"><button id="fitReferenceImagesBtn" type="button">Fit to Model</button><button id="resetReferenceImageBtn" type="button">Reset Active</button></div>
+              <div id="referenceImageStatus" class="stat reference-image-status">Front 이미지를 불러오세요.</div>
+              <p class="muted">이미지 파일은 프로젝트에 포함하지 않습니다. 정렬값과 파일명만 저장되므로 프로젝트를 다시 열면 같은 이미지를 다시 지정하세요.</p>
+            </div>
+          </div>
+          <div class="rollout">
             <button class="rollout-header" type="button">Reference Objects</button>
             <div class="rollout-body">
               <div id="referenceObjectList" class="reference-object-list muted">Reference 모델을 불러오면 Mesh별로 표시됩니다.</div>
@@ -386,6 +433,12 @@ import {
   normalizeReferenceWireMode,
   referenceWireUsesSurfaceDepthBias
 } from './src/viewport/reference-wireframe.js';
+import {
+  REFERENCE_IMAGE_VIEWS,
+  alignedReferenceImageView,
+  normalizeReferenceImageSettings,
+  referenceImagePlaneLayout
+} from './src/viewport/reference-images.js';
 import { runCoreSelfChecks } from './src/diagnostics/core-self-check.js';
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/+esm';
 import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/controls/OrbitControls.js/+esm';
@@ -436,7 +489,9 @@ scene.add(grid);
 
 const modelRoot = new THREE.Group();
 const curvesRoot = new THREE.Group();
-scene.add(modelRoot, curvesRoot);
+const referenceImageRoot = new THREE.Group();
+referenceImageRoot.name = 'ViewportReferenceImages';
+scene.add(referenceImageRoot, modelRoot, curvesRoot);
 
 const COLORS = { accent: 0x6da6ff, curve: 0x9bc1ff, tangent: 0xffb86b, selected: 0xffff8a, multiSelected: 0x8fc7c7, wire: 0xe8f1ff };
 const AXIS_COLORS = Object.freeze({ X:0xff5a5a, Y:0x65d66e, Z:0x5795ff });
@@ -470,6 +525,16 @@ const axisGuideLines = Object.entries(AXIS_COLORS).map(([axis, color]) => {
 });
 let surfaceMeshes = [];
 let selectedReferenceMesh = null;
+let activeReferenceImageView = 'front';
+let referenceImageSettings = normalizeReferenceImageSettings();
+const referenceImageRuntime = Object.fromEntries(REFERENCE_IMAGE_VIEWS.map(viewName => [viewName, {
+  plane:null,
+  texture:null,
+  objectUrl:'',
+  fileName:'',
+  aspect:1,
+  loadToken:0
+}]));
 let nextReferenceObjectId = 1;
 let modelDiagonal = 1;
 let handleRadius = .015;
@@ -785,6 +850,226 @@ function applyViewportDisplay() {
   camera.fov = settings.cameraFov;
   camera.updateProjectionMatrix();
   grid.visible = $('gridVisible').checked;
+}
+function referenceImageViewLabel(viewName) {
+  return viewName === 'front' ? 'Front' : viewName === 'left' ? 'Left' : 'Back';
+}
+function currentReferenceImageSettings() {
+  referenceImageSettings = normalizeReferenceImageSettings(referenceImageSettings);
+  return referenceImageSettings;
+}
+function disposeReferenceImage(viewName) {
+  const runtime = referenceImageRuntime[viewName];
+  if (!runtime) return;
+  runtime.loadToken += 1;
+  if (runtime.plane) {
+    referenceImageRoot.remove(runtime.plane);
+    disposeTree(runtime.plane);
+  } else runtime.texture?.dispose?.();
+  if (runtime.objectUrl) URL.revokeObjectURL(runtime.objectUrl);
+  runtime.plane = null;
+  runtime.texture = null;
+  runtime.objectUrl = '';
+  runtime.fileName = '';
+  runtime.aspect = 1;
+  const label = referenceImageViewLabel(viewName);
+  const preview = $(`referenceImage${label}Preview`);
+  preview?.removeAttribute('src');
+}
+function reconcileReferenceImageRuntime() {
+  const settings = currentReferenceImageSettings();
+  for (const viewName of REFERENCE_IMAGE_VIEWS) {
+    const runtime = referenceImageRuntime[viewName];
+    if (runtime.fileName !== settings.views[viewName].fileName) disposeReferenceImage(viewName);
+  }
+}
+function referenceImageFrameFromModel() {
+  if (!surfaceMeshes.length) return null;
+  const box = new THREE.Box3().setFromObject(modelRoot);
+  if (box.isEmpty()) return null;
+  const center = box.getCenter(new THREE.Vector3()).toArray();
+  const rawSize = box.getSize(new THREE.Vector3()).toArray();
+  const size = rawSize.map((value, index) => {
+    if (value > 0.0001) return value;
+    const fallback = index === 2 ? Math.max(rawSize[0] || 1, rawSize[1] || 1) * 0.75 : 1;
+    return Math.max(fallback, 0.0001);
+  });
+  return { center, size };
+}
+function fitReferenceImagesToModel({ announce = true, dirty = true } = {}) {
+  const frame = referenceImageFrameFromModel();
+  if (!frame) {
+    if (announce) setStatus('Viewport Reference Image를 맞출 Reference Model이 없습니다.');
+    return false;
+  }
+  referenceImageSettings = normalizeReferenceImageSettings({ ...referenceImageSettings, frame });
+  applyReferenceImageDisplay();
+  syncReferenceImageUI();
+  if (dirty) markProjectChanged();
+  if (announce) setStatus('Front / Left / Back 이미지 평면을 Reference Model bounds에 맞췄습니다.');
+  return true;
+}
+function applyReferenceImageDisplay() {
+  const settings = currentReferenceImageSettings();
+  const alignedView = alignedReferenceImageView(camera.position, orbit.target);
+  for (const viewName of REFERENCE_IMAGE_VIEWS) {
+    const runtime = referenceImageRuntime[viewName];
+    const plane = runtime.plane;
+    if (!plane) continue;
+    const layout = referenceImagePlaneLayout(viewName, settings, runtime.aspect);
+    plane.position.fromArray(layout.position);
+    const base = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), layout.baseRotationY);
+    const roll = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), layout.rollRadians);
+    plane.quaternion.copy(base).multiply(roll);
+    plane.scale.set((layout.mirror ? -1 : 1) * layout.width, layout.height, 1);
+    plane.material.opacity = layout.opacity;
+    plane.material.depthTest = layout.layer === 'behind';
+    plane.material.depthWrite = false;
+    plane.material.needsUpdate = true;
+    plane.renderOrder = layout.layer === 'overlay' ? 90 : -90;
+    plane.visible = layout.visible && alignedView === viewName;
+  }
+}
+function syncReferenceImageUI() {
+  const settings = currentReferenceImageSettings();
+  const active = settings.views[activeReferenceImageView];
+  const activeLabel = referenceImageViewLabel(activeReferenceImageView);
+  $('referenceImageLayer').value = settings.layer;
+  $('referenceImageOpacity').value = String(settings.opacity);
+  $('referenceImageScaleX').value = String(active.scaleX);
+  $('referenceImageScaleY').value = String(active.scaleY);
+  $('referenceImageOffsetX').value = String(active.offsetX);
+  $('referenceImageOffsetY').value = String(active.offsetY);
+  $('referenceImageRotation').value = String(active.rotation);
+  $('referenceImageVisible').checked = active.visible;
+  $('referenceImageMirror').checked = active.mirror;
+  $('loadReferenceImageBtn').textContent = `Load ${activeLabel} Image`;
+
+  for (const viewName of REFERENCE_IMAGE_VIEWS) {
+    const label = referenceImageViewLabel(viewName);
+    const runtime = referenceImageRuntime[viewName];
+    const expectedName = settings.views[viewName].fileName;
+    const card = document.querySelector(`[data-reference-image-view="${viewName}"]`);
+    card?.classList.toggle('active', viewName === activeReferenceImageView);
+    card?.classList.toggle('loaded', !!runtime.plane);
+    $(`referenceImage${label}Preview`)?.classList.toggle('hidden', !runtime.objectUrl);
+    $(`referenceImage${label}Placeholder`)?.classList.toggle('hidden', !!runtime.objectUrl);
+    const cardStatus = $(`referenceImage${label}CardStatus`);
+    if (cardStatus) cardStatus.textContent = runtime.fileName || (expectedName ? `Reload ${expectedName}` : 'Empty');
+  }
+
+  const runtime = referenceImageRuntime[activeReferenceImageView];
+  const expected = active.fileName;
+  $('clearReferenceImageBtn').disabled = !runtime.plane && !expected;
+  $('referenceImageSelection').textContent = `${activeLabel.toUpperCase()} · ${runtime.fileName || (expected ? `Reload ${expected}` : 'No image')}`;
+  $('referenceImageStatus').textContent = runtime.plane
+    ? `${runtime.fileName} · ${activeLabel} 정투상에서 표시 · ${runtime.aspect.toFixed(3)} aspect`
+    : expected
+      ? `프로젝트는 ${expected} 정렬값을 기억합니다. 같은 ${activeLabel} 이미지를 다시 불러오세요.`
+      : `${activeLabel} 이미지를 불러오세요.`;
+}
+function updateReferenceImageSettingsFromUI() {
+  const view = { ...referenceImageSettings.views[activeReferenceImageView] };
+  view.visible = $('referenceImageVisible').checked;
+  view.scaleX = $('referenceImageScaleX').value;
+  view.scaleY = $('referenceImageScaleY').value;
+  view.offsetX = $('referenceImageOffsetX').value;
+  view.offsetY = $('referenceImageOffsetY').value;
+  view.rotation = $('referenceImageRotation').value;
+  view.mirror = $('referenceImageMirror').checked;
+  referenceImageSettings = normalizeReferenceImageSettings({
+    ...referenceImageSettings,
+    opacity:$('referenceImageOpacity').value,
+    layer:$('referenceImageLayer').value,
+    views:{ ...referenceImageSettings.views, [activeReferenceImageView]:view }
+  });
+  applyReferenceImageDisplay();
+}
+function setActiveReferenceImageView(viewName, { switchCamera = true } = {}) {
+  if (!REFERENCE_IMAGE_VIEWS.includes(viewName)) return;
+  activeReferenceImageView = viewName;
+  syncReferenceImageUI();
+  if (switchCamera) {
+    const frameCenter = new THREE.Vector3().fromArray(currentReferenceImageSettings().frame.center);
+    setStandardView(viewName, { targetOverride:frameCenter });
+  }
+}
+async function loadReferenceImage(viewName, file) {
+  if (!REFERENCE_IMAGE_VIEWS.includes(viewName) || !file) return;
+  const hadLoadedImage = REFERENCE_IMAGE_VIEWS.some(name => referenceImageRuntime[name].plane);
+  disposeReferenceImage(viewName);
+  const runtime = referenceImageRuntime[viewName];
+  const token = runtime.loadToken;
+  const objectUrl = URL.createObjectURL(file);
+  const label = referenceImageViewLabel(viewName);
+  $('referenceImageStatus').textContent = `${file.name} 로딩 중...`;
+  try {
+    const texture = await new THREE.TextureLoader().loadAsync(objectUrl);
+    if (runtime.loadToken !== token) {
+      texture.dispose();
+      URL.revokeObjectURL(objectUrl);
+      return;
+    }
+    texture.name = `ViewportReference_${label}_${file.name}`;
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.wrapS = texture.wrapT = THREE.ClampToEdgeWrapping;
+    texture.needsUpdate = true;
+    const material = new THREE.MeshBasicMaterial({
+      map:texture,
+      color:0xffffff,
+      transparent:true,
+      opacity:referenceImageSettings.opacity,
+      side:THREE.DoubleSide,
+      depthWrite:false,
+      toneMapped:false
+    });
+    const plane = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), material);
+    plane.name = `ViewportReferenceImage_${label}`;
+    plane.frustumCulled = false;
+    plane.userData.viewportReferenceImage = viewName;
+    runtime.plane = plane;
+    runtime.texture = texture;
+    runtime.objectUrl = objectUrl;
+    runtime.fileName = file.name;
+    runtime.aspect = Math.max(0.01, Number(texture.image?.naturalWidth || texture.image?.width || 1)
+      / Math.max(1, Number(texture.image?.naturalHeight || texture.image?.height || 1)));
+    referenceImageRoot.add(plane);
+    referenceImageSettings.views[viewName].fileName = file.name;
+    const preview = $(`referenceImage${label}Preview`);
+    if (preview) preview.src = objectUrl;
+    if (!hadLoadedImage && surfaceMeshes.length) fitReferenceImagesToModel({ announce:false, dirty:false });
+    applyReferenceImageDisplay();
+    syncReferenceImageUI();
+    markProjectChanged();
+    setStatus(`${label} Viewport Reference Image 로드 완료: ${file.name}`);
+  } catch (error) {
+    URL.revokeObjectURL(objectUrl);
+    console.error(error);
+    syncReferenceImageUI();
+    setStatus(`${label} 이미지 로드 실패: ${error.message}`);
+  } finally {
+    const input = $(`referenceImage${label}File`);
+    if (input) input.value = '';
+  }
+}
+function clearActiveReferenceImage() {
+  const viewName = activeReferenceImageView;
+  const label = referenceImageViewLabel(viewName);
+  disposeReferenceImage(viewName);
+  referenceImageSettings.views[viewName].fileName = '';
+  applyReferenceImageDisplay();
+  syncReferenceImageUI();
+  markProjectChanged();
+  setStatus(`${label} Viewport Reference Image를 제거했습니다.`);
+}
+function resetActiveReferenceImageTransform() {
+  const current = referenceImageSettings.views[activeReferenceImageView];
+  const defaults = normalizeReferenceImageSettings().views[activeReferenceImageView];
+  referenceImageSettings.views[activeReferenceImageView] = { ...defaults, fileName:current.fileName };
+  applyReferenceImageDisplay();
+  syncReferenceImageUI();
+  markProjectChanged();
+  setStatus(`${referenceImageViewLabel(activeReferenceImageView)} 이미지 정렬값을 초기화했습니다.`);
 }
 function applyHairMaterialDisplay() {
   const preset = selectedHairMaterialPreset();
@@ -1153,6 +1438,7 @@ function captureAppState() {
       cameraFov: currentViewportSettings().cameraFov,
       referenceWireMode: selectedReferenceWireMode(),
       referenceWireColor: selectedReferenceWireColor(),
+      referenceImages: currentReferenceImageSettings(),
       showPoints: $('showPoints').checked,
       showTangents: $('showTangents').checked,
       showCurveLines: $('showCurveLines').checked,
@@ -1257,6 +1543,8 @@ function restoreAppState(state) {
   $('cameraFov').value = String(viewportSettings.cameraFov);
   $('referenceWireMode').value = normalizeReferenceWireMode(display.referenceWireMode ?? (display.modelWireframe ? 'wire' : 'off'));
   $('referenceWireColor').value = normalizeReferenceWireColor(display.referenceWireColor);
+  referenceImageSettings = normalizeReferenceImageSettings(display.referenceImages);
+  reconcileReferenceImageRuntime();
   if (typeof display.showPoints === 'boolean') $('showPoints').checked = display.showPoints;
   if (typeof display.showTangents === 'boolean') $('showTangents').checked = display.showTangents;
   if (typeof display.showCurveLines === 'boolean') $('showCurveLines').checked = display.showCurveLines;
@@ -1265,6 +1553,8 @@ function restoreAppState(state) {
   if (display.modelOpacity != null) $('modelOpacity').value = display.modelOpacity;
   if (typeof display.gridVisible === 'boolean') $('gridVisible').checked = display.gridVisible;
   applyViewportDisplay();
+  applyReferenceImageDisplay();
+  syncReferenceImageUI();
   applyLightingDisplay();
   applyModelDisplay();
   applyHairMaterialDisplay();
@@ -2848,9 +3138,9 @@ function frameSelected() {
   else if (curves.length) fitObject(curvesRoot);
 }
 
-function setStandardView(kind) {
-  let target = orbit.target.clone();
-  if (selectedCurve?.visible && selectedCurve.points.length) {
+function setStandardView(kind, { targetOverride = null } = {}) {
+  let target = targetOverride?.clone?.() || orbit.target.clone();
+  if (!targetOverride && selectedCurve?.visible && selectedCurve.points.length) {
     const box = new THREE.Box3().setFromObject(selectedCurve.group);
     if (!box.isEmpty()) target = box.getCenter(new THREE.Vector3());
   }
@@ -2859,12 +3149,14 @@ function setStandardView(kind) {
   camera.up.set(0,1,0);
   if (kind === 'front') direction.set(0,0,1);
   else if (kind === 'left') direction.set(-1,0,0);
+  else if (kind === 'back') direction.set(0,0,-1);
   else if (kind === 'top') { direction.set(0,1,0); camera.up.set(0,0,-1); }
   camera.position.copy(target).addScaledVector(direction, distance);
   orbit.target.copy(target);
   camera.lookAt(target);
   orbit.update();
   syncGizmo();
+  applyReferenceImageDisplay();
   setStatus(`${kind === 'perspective' ? 'Perspective' : kind[0].toUpperCase() + kind.slice(1)} View`);
 }
 
@@ -3190,12 +3482,37 @@ $('viewportBackground').addEventListener('change', () => { applyViewportDisplay(
 $('cameraFov').addEventListener('input', applyViewportDisplay);
 $('cameraFov').addEventListener('change', () => { applyViewportDisplay(); markProjectChanged(); });
 $('gridVisible').addEventListener('change', () => { applyViewportDisplay(); markProjectChanged(); });
+document.querySelectorAll('[data-reference-image-view]').forEach(card => card.addEventListener('click', () => {
+  setActiveReferenceImageView(card.dataset.referenceImageView);
+}));
+for (const viewName of REFERENCE_IMAGE_VIEWS) {
+  const label = referenceImageViewLabel(viewName);
+  $(`referenceImage${label}File`).addEventListener('change', event => {
+    const file = event.target.files?.[0];
+    if (file) loadReferenceImage(viewName, file);
+  });
+}
+$('loadReferenceImageBtn').addEventListener('click', () => {
+  $(`referenceImage${referenceImageViewLabel(activeReferenceImageView)}File`).click();
+});
+$('clearReferenceImageBtn').addEventListener('click', clearActiveReferenceImage);
+$('fitReferenceImagesBtn').addEventListener('click', () => fitReferenceImagesToModel());
+$('resetReferenceImageBtn').addEventListener('click', resetActiveReferenceImageTransform);
+['referenceImageOpacity','referenceImageScaleX','referenceImageScaleY','referenceImageOffsetX','referenceImageOffsetY','referenceImageRotation'].forEach(id => {
+  $(id).addEventListener('input', updateReferenceImageSettingsFromUI);
+  $(id).addEventListener('change', () => { updateReferenceImageSettingsFromUI(); syncReferenceImageUI(); markProjectChanged(); });
+});
+['referenceImageLayer','referenceImageVisible','referenceImageMirror'].forEach(id => {
+  $(id).addEventListener('change', () => { updateReferenceImageSettingsFromUI(); syncReferenceImageUI(); markProjectChanged(); });
+});
+orbit.addEventListener('change', applyReferenceImageDisplay);
 $('clearGeneratedBtn').addEventListener('click', () => { history.begin('모든 Live Mesh 비활성화'); curves.forEach(c => { c.meshEnabled = false; removeCurveMesh(c); }); refreshCurveList(); syncModifierUIFromCurve(selectedCurve); updateControlVisibility(); setStatus('모든 Live Mesh 비활성화 · 커브와 Modifier 값은 유지'); history.commit(); });
 $('fitBtn').addEventListener('click', () => { if (surfaceMeshes.length) fitObject(modelRoot); else if (curves.length) fitObject(curvesRoot); });
 $('fitSelectedBtn').addEventListener('click', frameSelected);
 $('viewPerspectiveBtn').addEventListener('click', () => setStandardView('perspective'));
 $('viewFrontBtn').addEventListener('click', () => setStandardView('front'));
 $('viewLeftBtn').addEventListener('click', () => setStandardView('left'));
+$('viewBackBtn').addEventListener('click', () => setStandardView('back'));
 $('viewTopBtn').addEventListener('click', () => setStandardView('top'));
 $('undoBtn').addEventListener('click', () => { const message = history.undo(); setStatus(message || 'Undo할 작업이 없습니다.'); });
 $('redoBtn').addEventListener('click', () => { const message = history.redo(); setStatus(message || 'Redo할 작업이 없습니다.'); });
@@ -3325,7 +3642,7 @@ initNumericScrubbers(document, {
 });
 animate();
 refreshCurveList(); refreshBrushUI(); syncModifierUIFromCurve(null); updateControlVisibility(); updatePointPanel();
-updateAverageAmountOutput(); updateObjectTransformButtons(); updateHint(); updateSelectionBadge(); updateMeshTypeUI(); updateDrawTargetUI(); refreshReferenceObjectUI(); applyViewportDisplay(); applyLightingDisplay(); applyHairMaterialDisplay(); applyModelDisplay(); setMode('orbit');
+updateAverageAmountOutput(); updateObjectTransformButtons(); updateHint(); updateSelectionBadge(); updateMeshTypeUI(); updateDrawTargetUI(); refreshReferenceObjectUI(); syncReferenceImageUI(); applyViewportDisplay(); applyReferenceImageDisplay(); applyLightingDisplay(); applyHairMaterialDisplay(); applyModelDisplay(); setMode('orbit');
 const recoveredProject = restoreRecovery();
 if (!recoveredProject) { activateCommandTab('create'); updateProjectStatus('saved', 'Empty'); }
 projectLifecycleReady = true;

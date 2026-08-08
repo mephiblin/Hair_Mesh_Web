@@ -7,7 +7,7 @@ Hair Mesh Web은 빌드 과정 없이 ES Module을 직접 제공하는 정적 �
 - `curve_mesh_hair_tool_v4.html`: UI 마크업/CSS, Three.js 객체 생명주기, 기능 조립을 소유합니다.
 - `src/geometry`: DOM과 무관한 Geometry 계산을 소유합니다.
 - `src/state`: 직렬화 가능한 상태와 사용자 행동 정책을 소유합니다.
-- `src/viewport`: Picking/좌표 제약과 material/light/wire display 정규화 정책을 소유합니다.
+- `src/viewport`: Picking/좌표 제약과 material/light/wire/reference-image display 정규화 정책을 소유합니다.
 - `src/ui`: 재사용 가능한 DOM 상호작용을 소유합니다.
 - `src/diagnostics`: 실제 Three.js 런타임이 필요한 빠른 진단을 소유합니다.
 - `tests`: Node에서 실행 가능한 순수 정책/상태 회귀 테스트를 소유합니다.
@@ -53,7 +53,7 @@ curl -I http://127.0.0.1:8080/curve_mesh_hair_tool_v4.html
 
 Scene 객체를 JSON에 직접 넣지 않습니다. 새 기능을 저장하려면 최소 데이터만 직렬화 상태에 넣고 Scene 객체는 복원 시 다시 만드십시오.
 
-Reference 파일 자체와 Mesh별 표시/재질/수동 텍스처는 Import 세션 상태이며 프로젝트에 넣지 않습니다. 전역 Reference preset과 Viewport 배경/FOV/Grid/조명만 `display` snapshot으로 저장합니다. Reference 기능은 `normalizeMaterials()` → `refreshReferenceObjectUI()` → `applyModelDisplay()` 경로를 함께 확인하고, 순수 모드 결정은 `src/viewport/reference-object-policy.js`에 둡니다.
+Reference 파일 자체와 Mesh별 표시/재질/수동 텍스처는 Import 세션 상태이며 프로젝트에 넣지 않습니다. 전역 Reference preset과 Viewport 배경/FOV/Grid/조명은 `display` snapshot으로 저장합니다. Front/Left/Back 참조 이미지도 binary/Texture/plane은 세션 상태이고 `src/viewport/reference-images.js`로 정규화한 frame·표시·정렬값과 파일명 힌트만 snapshot에 저장합니다. Reference 모델 기능은 `normalizeMaterials()` → `refreshReferenceObjectUI()` → `applyModelDisplay()` 경로를, 이미지 기능은 `loadReferenceImage()` → `applyReferenceImageDisplay()` → `disposeReferenceImage()` 경로를 함께 확인합니다.
 
 ## 4. 주요 불변 조건
 
@@ -67,6 +67,7 @@ Reference 파일 자체와 Mesh별 표시/재질/수동 텍스처는 Import 세�
 - Draft Line을 취소하면 생성 전 Curve 선택을 복원합니다.
 - Point `Ctrl/⌘` 토글은 활성 Curve 안에서만 동작하며 0개 선택을 허용합니다.
 - Scene Curve 다중 선택은 `selectedCurveIds`와 활성 `selectedCurve`를 함께 유지하고, Modifier/Gizmo는 활성 Curve 하나만 편집합니다.
+- Front/Left/Back 참조 이미지 plane은 대응 카메라 방향에서만 보이며 모델 raycast와 Mesh Export에 참여하지 않습니다.
 
 관련 정책은 `src/state/curve-policy.js`, `curve-selection.js`, `point-selection.js`, `line-creation-policy.js`, `src/geometry/mesh-limits.js`에 있으며 Node 테스트가 계약을 고정합니다.
 
@@ -147,7 +148,7 @@ History 밖에서 표시 옵션처럼 상태를 직접 바꾸는 경우 `markPro
 - 숨김/잠금/Live 상태 정책
 - History transaction과 양방향 복원
 - 프로젝트 문서 round-trip/버전 거부
-- Viewport material/light/wire/object/환경 설정 정규화
+- Viewport material/light/wire/object/환경과 Front/Left/Back 참조 이미지 설정·plane 배치·카메라 정렬 정규화
 
 새 순수 모듈은 이 테스트에 직접 import하여 회귀를 추가합니다.
 
@@ -171,9 +172,11 @@ globalThis.__CURVE_TOOL_SELF_TEST__
 4. Brush fixture Import 후 Brush Mesh 생성
 5. 숨김/잠금 Curve가 수정되지 않는지 확인
 6. `.hairmesh.json` 저장 후 다시 열어 Curve/Brush/선택/Live Mesh 확인
+   - 참조 이미지 정렬값과 파일명 힌트는 복원되고 JSON에 image payload가 없는지 확인
 7. 변경 후 새로고침하여 복구 확인
 8. OBJ/FBX Export 후 대상 DCC Import 확인
-9. 좁은 뷰포트에서 Toolbar와 패널 접근 확인
+9. Front/Left/Back 이미지는 대응 정투상에서만 보이고 Perspective/Top에서는 숨는지 확인
+10. 좁은 뷰포트에서 Toolbar와 패널 접근 확인
 
 ## 11. 알려진 기술 부채와 확장 방향
 

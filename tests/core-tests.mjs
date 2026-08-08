@@ -39,6 +39,12 @@ import {
   referenceWireUsesSurfaceDepthBias
 } from '../src/viewport/reference-wireframe.js';
 import { canInteractWithAxisGuides, shouldShowTransformHelper } from '../src/viewport/interaction-policy.js';
+import {
+  DEFAULT_REFERENCE_IMAGE_SETTINGS,
+  alignedReferenceImageView,
+  normalizeReferenceImageSettings,
+  referenceImagePlaneLayout
+} from '../src/viewport/reference-images.js';
 
 const tests = [];
 function test(name, run) { tests.push({ name, run }); }
@@ -178,6 +184,64 @@ test('disabled axis guides cannot render an interactive pick target', () => {
   assert.equal(shouldShowTransformHelper({ axisGuidesEnabled:true, operation:'translate' }), true);
   assert.equal(shouldShowTransformHelper({ axisGuidesEnabled:false, operation:'rotate' }), true);
   assert.equal(shouldShowTransformHelper({ axisGuidesEnabled:false, operation:'scale' }), true);
+});
+
+test('reference image settings normalize optional project fields without embedding image data', () => {
+  const settings = normalizeReferenceImageSettings({
+    opacity: 9,
+    layer: 'overlay',
+    frame: { center:[4, 5, 6], size:[2, -4, 0] },
+    views: { front:{ scaleX:0, offsetY:99, rotation:400, mirror:true, fileName:'front.png' } }
+  });
+  assert.equal(settings.opacity, 1);
+  assert.equal(settings.layer, 'overlay');
+  assert.deepEqual(settings.frame, { center:[4, 5, 6], size:[2, 4, 0.0001] });
+  assert.equal(settings.views.front.scaleX, 0.01);
+  assert.equal(settings.views.front.offsetY, 10);
+  assert.equal(settings.views.front.rotation, 180);
+  assert.equal(settings.views.front.fileName, 'front.png');
+  assert.equal('dataUrl' in settings.views.front, false);
+  assert.deepEqual(normalizeReferenceImageSettings(), {
+    opacity: DEFAULT_REFERENCE_IMAGE_SETTINGS.opacity,
+    layer: DEFAULT_REFERENCE_IMAGE_SETTINGS.layer,
+    frame: { center:[0, 0, 0], size:[2, 2, 2] },
+    views: {
+      front:{ visible:true, scaleX:1, scaleY:1, offsetX:0, offsetY:0, rotation:0, mirror:false, fileName:'' },
+      left:{ visible:true, scaleX:1, scaleY:1, offsetX:0, offsetY:0, rotation:0, mirror:false, fileName:'' },
+      back:{ visible:true, scaleX:1, scaleY:1, offsetX:0, offsetY:0, rotation:0, mirror:false, fileName:'' }
+    }
+  });
+});
+
+test('reference image planes map each screen axis and stay behind the fitted frame', () => {
+  const settings = normalizeReferenceImageSettings({
+    opacity:.6,
+    frame:{ center:[10, 20, 30], size:[4, 8, 6] },
+    views:{
+      front:{ offsetX:.5, offsetY:-.25, scaleX:1.2, scaleY:.8 },
+      left:{ offsetX:.5 },
+      back:{ offsetX:.5 }
+    }
+  });
+  const front = referenceImagePlaneLayout('front', settings, .5);
+  const left = referenceImagePlaneLayout('left', settings, .5);
+  const back = referenceImagePlaneLayout('back', settings, .5);
+  assert.deepEqual(front.position.slice(0, 2), [12, 19]);
+  assert.ok(front.position[2] < 27);
+  assert.ok(left.position[0] > 12);
+  assert.equal(left.position[2], 32);
+  assert.equal(back.position[0], 8);
+  assert.ok(back.position[2] > 33);
+  assert.equal(front.width, 4.8);
+  assert.equal(front.height, 6.4);
+});
+
+test('reference images appear only when camera is aligned to Front, Left, or Back', () => {
+  assert.equal(alignedReferenceImageView([0, 0, 5], [0, 0, 0]), 'front');
+  assert.equal(alignedReferenceImageView([-5, 0, 0], [0, 0, 0]), 'left');
+  assert.equal(alignedReferenceImageView([0, 0, -5], [0, 0, 0]), 'back');
+  assert.equal(alignedReferenceImageView([3, 2, 4], [0, 0, 0]), null);
+  assert.equal(alignedReferenceImageView([0, 5, 0], [0, 0, 0]), null);
 });
 
 let passed = 0;

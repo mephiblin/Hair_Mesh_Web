@@ -50,6 +50,7 @@ launch_server.py
 | Reference Mesh 관리 | `#referenceObjectList`, `refreshReferenceObjectUI()` | Mesh별 숨김/표시, 재질 override, 이미지 texture/UV 경고 | `src/viewport/reference-object-policy.js`, 다중 OBJ fixture |
 | Viewport 환경/조명 | `#viewportBackground`, `#cameraFov`, `#gridVisible`, `#light*`, `#fillLightIntensity` | `applyViewportDisplay()`, `applyLightingDisplay()` | `src/viewport/viewport-settings.js`, `src/viewport/lighting.js` |
 | Reference Wireframe | `#referenceWireMode`, `#referenceWireColor` | `ensureReferenceWireObject()`, `applyReferenceWireframeDisplay()`로 독립 `LineSegments` 관리 | `src/viewport/reference-wireframe.js`, 브라우저 QA |
+| Front/Left/Back 참조 이미지 | `#referenceImageStrip`, `loadReferenceImage()`, `setActiveReferenceImageView()` | 정투상 전용 plane 배치, Behind/Overlay, view별 정렬, 프로젝트 파일명 대조와 자원 해제 | `src/viewport/reference-images.js`, `reconcileReferenceImageRuntime()`, Node/브라우저 QA |
 | 프로젝트 저장 | `#saveProjectBtn`, `saveProject()` | 앱 상태 캡처 → versioned document → JSON 다운로드 | `src/state/project-format.js`, Node round-trip 테스트 |
 | 프로젝트 열기 | `#projectFileInput`, `openProjectFile()` | JSON 검증 → state restore → History 초기화 | future/unrelated document 거부 테스트 |
 | 자동 복구 | `RECOVERY_KEY`, `scheduleRecovery()`, `restoreRecovery()` | localStorage에 debounce 저장하고 시작 시 복원 | 브라우저 reload QA |
@@ -75,6 +76,7 @@ launch_server.py
 | `mode` | `orbit`, `draw`, `edit`, `insert`, `transform` | `setMode()`, 키보드/Toolbar event |
 | `projectDirty` | 마지막 명시 저장 이후 변경 여부 | `markProjectChanged()`, `updateProjectStatus()` |
 | `history` | Undo/Redo snapshot controller | `createHistory(...)` 생성부 |
+| `referenceImageSettings` / `referenceImageRuntime` | 저장 가능한 3방향 정렬값 / 세션 전용 texture·plane·Object URL | `currentReferenceImageSettings()`, `loadReferenceImage()`, `disposeReferenceImage()` |
 
 ## Curve record 구조
 
@@ -137,7 +139,7 @@ Open/Undo/Redo/Recovery
   → 모든 시각화/메시/UI 재구성
 ```
 
-Reference model은 `modelRoot`에만 존재하고 `captureAppState()`에 포함되지 않습니다. 이를 저장 대상으로 바꾸려면 파일 포맷 버전, 용량 정책, Object URL/원본 binary 처리까지 먼저 설계해야 합니다.
+Reference model은 `modelRoot`에만 존재하고 `captureAppState()`에 포함되지 않습니다. Front/Left/Back 이미지는 `referenceImageRoot`에만 존재하며 `captureAppState()`에는 `referenceImageSettings`의 정렬값과 파일명 힌트만 포함됩니다. 어느 binary든 저장 대상으로 바꾸려면 파일 포맷 버전, 용량 정책, Object URL/원본 binary 처리까지 먼저 설계해야 합니다.
 
 ## 변경할 때 함께 확인할 파일
 
@@ -148,4 +150,5 @@ Reference model은 `modelRoot`에만 존재하고 `captureAppState()`에 포함�
 | 선택/모드 규칙 | `updateCommandAvailability`, `updateHint`, `syncGizmo`, `updateControlVisibility`, 단축키 |
 | Brush topology | `brushState`, `brushFromState`, 두 Import parser, `makeBrushTopology`, 프로젝트 round-trip |
 | 저장 형식 | `PROJECT_VERSION`, parser migration, README, `DEVELOPMENT_GUIDE.md`, fixture 기반 테스트 |
+| Viewport 참조 이미지 | `reference-images.js`, HTML plane 생명주기, `captureAppState`/`restoreAppState`, Perspective 숨김, Object URL dispose, 프로젝트 payload 검사 |
 | 새 사용자 기능 | HTML control, event handler, History transaction, dirty/recovery, 회귀 테스트, 이 문서 |

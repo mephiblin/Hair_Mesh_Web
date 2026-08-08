@@ -14,7 +14,7 @@ browser_checks: src/diagnostics/core-self-check.js
 project_format: .hairmesh.json, version 1
 external_runtime: three@0.180.0 via jsDelivr
 default_branch: master
-current_node_contracts: 15
+current_node_contracts: 18
 current_browser_self_checks: 24
 ```
 
@@ -26,7 +26,7 @@ current_browser_self_checks: 24
 | Ribbon, Tube, Brush, Sweep, topology, UV, cap, twist | [`features/mesh-generation.md`](features/mesh-generation.md) | `makeTopologyForCurve`, `rebuildCurveMesh` |
 | Save, Open, JSON, Recovery, Dirty, Undo, Redo, schema | [`features/project-state.md`](features/project-state.md) | `captureAppState`, `restoreAppState`, `createHistory` |
 | Viewport, picking, gizmo, mode, axis, keyboard | [`features/viewport-ui.md`](features/viewport-ui.md) | `setMode`, `syncGizmo`, `handleViewportClick` |
-| Display, MatCap, texture, object visibility, light, wireframe, background, FOV, grid | [`features/viewport-display.md`](features/viewport-display.md) | `applyModelDisplay`, `refreshReferenceObjectUI`, `applyViewportDisplay` |
+| Display, MatCap, texture, object visibility, light, wireframe, Front/Left/Back image, background, FOV, grid | [`features/viewport-display.md`](features/viewport-display.md) | `applyModelDisplay`, `applyReferenceImageDisplay`, `applyViewportDisplay` |
 | Reference model/material, OBJ/FBX/GLTF Import, Project/OBJ/FBX Export | [`features/io-export.md`](features/io-export.md) + material 변경이면 [`features/viewport-display.md`](features/viewport-display.md) | `loadModel`, `applyModelDisplay`, `exportQuadOBJ` |
 | 구조 분리, 새 모듈, 전반 개발 절차 | [`DEVELOPMENT_GUIDE.md`](DEVELOPMENT_GUIDE.md)와 관련 기능 문서 | HTML import block, `src/` exports |
 | 제품 평가, 우선순위, Blender 대비 범위 | [`../docs/product-audit/recursive-audit.md`](../docs/product-audit/recursive-audit.md) | 문서 목차 |
@@ -78,6 +78,8 @@ viewport_material: display-only, preserve imported original
 reference_object_overrides: session-only visibility/material/texture per imported Mesh
 reference_auto_material: preserve textured/visible original, fallback dark untextured original to default-lit
 reference_wireframe: independent LineSegments, never mutate imported material wireframe
+viewport_reference_images: session-only texture planes; persist alignment and filename hints, never image payload
+viewport_reference_image_visibility: matching Front/Left/Back camera direction only
 viewport_environment: background/FOV/grid/directional/fill persisted, MatCap unaffected by lights
 export_topology: preserve logical quad/ngon faces
 resource_cleanup: dispose removed geometry and material
@@ -104,7 +106,7 @@ resource_cleanup: dispose removed geometry and material
 5. 숨김/잠금 Curve가 포인터, 숫자 입력, 단축키로 수정되지 않는지 확인한다.
 6. 프로젝트 저장/열기와 새로고침 자동 복구를 확인한다.
 7. 관련 변경이면 OBJ/FBX를 대상 DCC에 Import한다.
-8. Display 변경이면 Hair/Reference preset, 다중 Reference Mesh 숨김/재질/텍스처, 조명 reset, Wire Only/Surface + Wire, Wire color, Background/FOV/Grid와 Recovery를 확인한다.
+8. Display 변경이면 Hair/Reference preset, 다중 Reference Mesh 숨김/재질/텍스처, 조명 reset, Wire Only/Surface + Wire, Wire color, Front/Left/Back 이미지의 정투상 전용 표시·정렬·파일 재선택, Background/FOV/Grid와 Recovery를 확인한다.
 
 ## 8. 탐색 명령
 
