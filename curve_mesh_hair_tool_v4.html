@@ -135,7 +135,7 @@ input[type=checkbox]{accent-color:var(--accent)}
       </div>
       <div class="command-content">
         <section class="tab-panel hidden" data-command-panel="create">
-          <div class="rollout">
+          <div class="rollout collapsed">
             <button class="rollout-header" type="button">Line Creation</button>
             <div class="rollout-body">
               <div class="row3"><button id="newCurveBtn" class="primary" type="button" title="Line 생성 시작">＋ Line</button><button id="finishCurveBtn" type="button" disabled>Finish Line</button><button id="createEditBtn" type="button" disabled>Finish & Edit</button></div>
@@ -146,7 +146,7 @@ input[type=checkbox]{accent-color:var(--accent)}
               <p class="muted">첫 포인트를 찍을 때 Curve Object가 생성됩니다. 생성 중 <span class="kbd">Caps Lock</span>으로 카메라 조작을 전환합니다.</p>
             </div>
           </div>
-          <div class="rollout">
+          <div class="rollout collapsed">
             <button class="rollout-header" type="button">Mesh Brush Library</button>
             <div class="rollout-body">
               <label>OBJ / FBX / GLB 여러 개 추가<input id="brushFiles" type="file" accept=".obj,.fbx,.glb,.gltf" multiple /></label>
@@ -159,7 +159,7 @@ input[type=checkbox]{accent-color:var(--accent)}
 
         <section class="tab-panel" data-command-panel="modify">
           <div class="object-header"><input id="curveNameInput" type="text" value="" placeholder="No selection" /><div class="color-chip" title="Curve color"></div></div>
-          <div class="rollout">
+          <div class="rollout collapsed">
             <button class="rollout-header" type="button">Selection / Spline Editing</button>
             <div class="rollout-body">
               <label class="checkrow"><input id="showPoints" type="checkbox" checked /> 선택 커브의 포인트 항상 표시</label>
@@ -180,7 +180,7 @@ input[type=checkbox]{accent-color:var(--accent)}
             </div>
           </div>
 
-          <div class="rollout">
+          <div class="rollout collapsed">
             <button class="rollout-header" type="button">Curve Object</button>
             <div class="rollout-body">
               <button id="resetTransformBtn" class="wide" type="button">Reset Transform</button>
@@ -193,7 +193,7 @@ input[type=checkbox]{accent-color:var(--accent)}
             </div>
           </div>
 
-          <div class="rollout">
+          <div class="rollout collapsed">
             <button class="rollout-header" type="button">Live Curve → Mesh</button>
             <div class="rollout-body">
               <label class="checkrow"><input id="enableLiveMesh" type="checkbox" /> Enable in Viewport</label>
@@ -223,7 +223,7 @@ input[type=checkbox]{accent-color:var(--accent)}
             </div>
           </div>
 
-          <div class="rollout">
+          <div class="rollout collapsed">
             <button class="rollout-header" type="button">Point Cross-section</button>
             <div class="rollout-body">
               <p class="muted">Spline 경로가 아니라, 선택 Point에서 Live Mesh의 단면 중심·회전·폭/깊이를 조절합니다. Offset은 경로를 움직이지 않고 단면만 이동하며 Scale / Taper의 0은 끝을 뾰족하게 만듭니다.</p>
@@ -243,7 +243,7 @@ input[type=checkbox]{accent-color:var(--accent)}
         </section>
 
         <section class="tab-panel hidden" data-command-panel="display">
-          <div class="rollout">
+          <div class="rollout collapsed">
             <button class="rollout-header" type="button">Viewport Material</button>
             <div class="rollout-body">
               <div class="material-picker">
@@ -257,7 +257,7 @@ input[type=checkbox]{accent-color:var(--accent)}
               <p id="materialPresetHelp" class="muted">MatCap은 조명과 무관하게 형태를 또렷하게 보여줍니다. Export 형상에는 영향을 주지 않습니다.</p>
             </div>
           </div>
-          <div class="rollout">
+          <div class="rollout collapsed">
             <button class="rollout-header" type="button">Curve Display</button>
             <div class="rollout-body">
               <label>Mesh View<select id="viewMode"><option value="solidwire">Solid + Polygon Edges</option><option value="solid">Solid</option><option value="wire">Polygon Edges Only</option></select></label>
@@ -266,13 +266,13 @@ input[type=checkbox]{accent-color:var(--accent)}
               <p class="muted">Polygon Edge는 렌더링용 삼각 대각선이 아니라 저장되는 Quad/N-gon 경계입니다.</p>
             </div>
           </div>
-          <div class="rollout">
+          <div class="rollout collapsed">
             <button class="rollout-header" type="button">Reference Display</button>
             <div class="rollout-body">
               <label>Reference Opacity<input id="modelOpacity" type="number" min="0" max="1" step="0.05" value="1" /></label>
             </div>
           </div>
-          <div class="rollout">
+          <div class="rollout collapsed">
             <button class="rollout-header" type="button">Viewport Reference Images · Front / Left / Back</button>
             <div class="rollout-body">
               <p class="muted">각 이미지는 실제 3D Plane Mesh입니다. 카드를 누르면 Plane을 선택하고 해당 기준 뷰로 전환합니다.</p>
@@ -334,7 +334,7 @@ input[type=checkbox]{accent-color:var(--accent)}
               <p class="muted">이미지 파일은 프로젝트에 포함하지 않습니다. 정렬값과 파일명만 저장되므로 프로젝트를 다시 열면 같은 이미지를 다시 지정하세요.</p>
             </div>
           </div>
-          <div class="rollout">
+          <div class="rollout collapsed">
             <button class="rollout-header" type="button">Reference Objects</button>
             <div class="rollout-body">
               <div id="referenceObjectList" class="reference-object-list muted">Reference 모델을 불러오면 Mesh별로 표시됩니다.</div>
@@ -348,7 +348,7 @@ input[type=checkbox]{accent-color:var(--accent)}
               </div>
             </div>
           </div>
-          <div class="rollout">
+          <div class="rollout collapsed">
             <button class="rollout-header" type="button">Reference Wireframe</button>
             <div class="rollout-body">
               <label>Mode<select id="referenceWireMode"><option value="off" selected>Off</option><option value="wire">Wire Only</option><option value="overlay">Surface + Wire</option></select></label>
@@ -356,7 +356,7 @@ input[type=checkbox]{accent-color:var(--accent)}
               <p class="muted">Import material과 분리된 실제 Line layer입니다. MatCap을 바꿔도 지정한 선 색상을 유지합니다.</p>
             </div>
           </div>
-          <div class="rollout">
+          <div class="rollout collapsed">
             <button class="rollout-header" type="button">Viewport</button>
             <div class="rollout-body">
               <div class="coords2">
@@ -2144,6 +2144,17 @@ function activateCommandTab(name) {
   document.querySelectorAll('[data-command-panel]').forEach(panel => panel.classList.toggle('hidden', panel.dataset.commandPanel !== target));
 }
 
+function setRolloutCollapsed(rollout, collapsed) {
+  if (!rollout) return;
+  rollout.classList.toggle('collapsed', collapsed);
+  rollout.querySelector(':scope > .rollout-header')?.setAttribute('aria-expanded', String(!collapsed));
+  rollout.querySelector(':scope > .rollout-body')?.setAttribute('aria-hidden', String(collapsed));
+}
+
+function initializeRollouts() {
+  document.querySelectorAll('.rollout').forEach(rollout => setRolloutCollapsed(rollout, rollout.classList.contains('collapsed')));
+}
+
 function curveIsEditable(curve = selectedCurve) { return canEditCurve(curve); }
 function curveHasReadyMesh(curve) { return hasReadyMesh({ enabled:curve?.meshEnabled, status:curve?.meshStatus, hasTopology:!!curve?.topology }); }
 
@@ -3790,7 +3801,11 @@ $('undoBtn').addEventListener('click', () => { const message = history.undo(); s
 $('redoBtn').addEventListener('click', () => { const message = history.redo(); setStatus(message || 'Redo할 작업이 없습니다.'); });
 
 document.querySelectorAll('[data-command-tab]').forEach(btn => btn.addEventListener('click', () => activateCommandTab(btn.dataset.commandTab)));
-document.querySelectorAll('.rollout-header').forEach(btn => btn.addEventListener('click', () => btn.closest('.rollout').classList.toggle('collapsed')));
+initializeRollouts();
+document.querySelectorAll('.rollout-header').forEach(btn => btn.addEventListener('click', () => {
+  const rollout = btn.closest('.rollout');
+  setRolloutCollapsed(rollout, !rollout.classList.contains('collapsed'));
+}));
 
 function activeExportMeshes() { return curves.filter(c => c.meshEnabled && c.topology); }
 function exportPoint(point) {

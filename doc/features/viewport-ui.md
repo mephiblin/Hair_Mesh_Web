@@ -20,6 +20,7 @@ Scene 초기화, picking, mode, TransformControls, axis guide, keyboard과 패�
 | Reference Plane Gizmo | `setReferenceImageTransformTool()`, `syncReferenceImageTransformControls()`, `updateReferenceImageTransformFromPlane()` | `referenceImageTransformControls` |
 | Axis guides | `syncAxisGuides()`, `startAxisGuideDrag()`, `updateAxisGuideDrag()` | `src/viewport/axis-guide-drag.js` |
 | UI availability | `updateCommandAvailability()`, `updatePointToolButtons()` | curve editability policy |
+| Rollout panel | `.rollout`, `setRolloutCollapsed()`, `initializeRollouts()` | DOM session state only |
 | Curve mesh view | `applyViewModeToCurve()`, `#viewMode` | `viewport-display.md` |
 | Keyboard | `isTypingTarget()`, document `keydown` listener | README shortcut table |
 | Numeric scrub | `initNumericScrubbers()` | `src/ui/numeric-scrubber.js` |
@@ -57,6 +58,12 @@ Reference Plane은 Curve mode와 별개의 `translate | rotate | scale | none` �
 7. Orbit mode에서 Curve가 잡히지 않으면 보이는 Front/Left/Back Plane을 선택하고 Move gizmo를 연다.
 8. 빈 공간은 mode 계약에 따라 deselect 또는 Point placement한다.
 
+## Rollout 패널 계약
+
+- Create·Modify·Display 탭의 직접 자식 `.rollout`은 새 페이지 로드에서 모두 `collapsed`로 시작한다. Export rollout은 기존처럼 열린 상태다.
+- 헤더를 클릭하면 해당 DOM의 `collapsed`, `aria-expanded`, `aria-hidden`만 동기화한다. 탭 전환·mode 전환·프로젝트 복원은 rollout을 재초기화하지 않는다.
+- rollout 열림 상태는 편집 데이터가 아니므로 History, `.hairmesh.json`, Recovery, local/session storage에 저장하지 않는다. 페이지를 새로 초기화하면 마크업 기본값으로 복귀한다.
+
 ## 변경 체크리스트
 
 - 숨김/잠금 객체가 click, gizmo, numeric, shortcut 모든 경로에서 보호되는가?
@@ -70,9 +77,10 @@ Reference Plane은 Curve mode와 별개의 `translate | rotate | scale | none` �
 - Ctrl/⌘ Anchor 토글이 Point 중앙의 Transform Gizmo에 가로막히지 않는가?
 - Control x-ray/depth 설정과 visibility checkbox가 일치하는가?
 - 1024px 폭에서도 topbar와 양쪽 panel의 기능에 접근 가능한가?
+- Create·Modify·Display가 모두 닫힌 상태로 시작하고, 항목별 열림/닫힘과 ARIA 상태가 탭 왕복 후에도 유지되는가?
 - 새 단축키가 README 및 도움말과 일치하는가?
 
 ## 검증
 
 - Self-test: visible-control pick policy, axis guide enabled/visible interaction policy, axis vector/plane/scalar.
-- Browser: 각 mode 전이, object/point/handle/axis/Reference Plane picking, Plane Move/Rotate/Scale drag, drag cancel, input focus shortcut, hidden/locked protection, narrow viewport layout. Display 변경은 `viewport-display.md`의 수용 시나리오를 추가한다.
+- Browser: 각 mode 전이, object/point/handle/axis/Reference Plane picking, Plane Move/Rotate/Scale drag, drag cancel, input focus shortcut, hidden/locked protection, rollout 기본 닫힘·탭 왕복·페이지 재초기화, narrow viewport layout. Display 변경은 `viewport-display.md`의 수용 시나리오를 추가한다.
