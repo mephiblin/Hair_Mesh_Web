@@ -53,7 +53,7 @@ curves + proxies
   → logical faces + optional UV 직렬화
 ```
 
-Export는 Live/Primitive 관계를 bake한다. Curve/Point/Modifier와 Proxy parameter 편집성은 OBJ/FBX에 포함되지 않는다. hidden Curve/Proxy는 출력하지 않는다.
+Export는 Live/Primitive/FFD 관계를 bake한다. Curve/Point/Modifier와 Proxy parameter·FFD stack 편집성은 OBJ/FBX에 포함되지 않으며 최종 평가된 Proxy vertex만 기록한다. hidden Curve/Proxy는 출력하지 않는다.
 
 ## 변경 체크리스트
 
@@ -67,6 +67,7 @@ Export는 Live/Primitive 관계를 bake한다. Curve/Point/Modifier와 Proxy par
 - Brush face index와 `faceUvs` 길이가 일치하는가?
 - Curve root의 position/quaternion/scale이 Export vertex에 정확히 적용되는가?
 - Proxy group transform과 논리 Quad face가 Curve와 같은 export 경로로 적용되고 hidden Proxy가 제외되는가?
+- Proxy FFD stack의 최종 변형 vertex가 bake되고 Base topology나 disabled modifier 결과를 잘못 출력하지 않는가?
 - 축 변환과 scale이 vertex/normal 의미를 일치시키는가?
 - OBJ의 vertex/UV offset이 여러 Curve/Proxy 사이에서 누적되고 object 이름이 구분되는가?
 - FBX polygon termination negative index와 Normal/UV mapping이 importer에서 유효한가?

@@ -1,6 +1,6 @@
 ---
 name: hair-mesh-web-development
-description: Inspect, implement, debug, review, test, or document Hair Mesh Web features in this repository. Use for work involving curve creation/editing, Bézier handles, Three.js viewport interaction, MatCap/material/light/wireframe display, Ribbon/Tube/Brush mesh generation, project save/recovery/history, model import, OBJ/FBX export, UI controls, or modularization of curve_mesh_hair_tool_v4.html.
+description: Inspect, implement, debug, review, test, or document Hair Mesh Web features in this repository. Use for work involving curve creation/editing, Bézier handles, Proxy primitives and persistent FFD stacks, Three.js viewport interaction, MatCap/material/light/wireframe display, Ribbon/Tube/Brush mesh generation, project save/recovery/history, model import, OBJ/FBX export, UI controls, or modularization of curve_mesh_hair_tool_v4.html.
 ---
 
 # Hair Mesh Web Development
@@ -32,6 +32,7 @@ Before editing, identify which contracts the change touches:
 - hidden/locked editability policy
 - Live Mesh `disabled | ready | error` honesty
 - mesh-budget normalization
+- Proxy Base → ordered FFD stack evaluation and Surface raycast inclusion
 - Three.js Geometry/Material disposal
 - project schema compatibility
 
@@ -62,5 +63,7 @@ For runtime/UI changes, also:
 2. Confirm the printed app URL returns HTTP 200.
 3. Open the URL with `?selftest=1` and inspect `globalThis.__CURVE_TOOL_SELF_TEST__` when relevant.
 4. Exercise the routed manual acceptance scenarios in `doc/CODEX_INDEX.md` and the feature document.
+
+For Proxy/FFD changes, acceptance must include a real lattice control drag, one-step Undo/Redo, stack ON/OFF or reorder, project round-trip, Proxy-only Surface Line placement, and final baked Export topology.
 
 Report checks actually run. Keep commit and push actions conditional on explicit user authorization.

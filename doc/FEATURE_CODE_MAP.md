@@ -23,13 +23,15 @@ launch_server.py
 | 앱 실행 | `launch_server.py:main()` | 로컬 서버 생성, 빈 포트 선택, 브라우저 열기 | 수동 HTTP 200 확인 |
 | Three.js 초기화/렌더 | `#viewport`, `scene`, `camera`, `perspectiveCamera`, `orthographicCamera`, `renderer`, `animate()` | HTML composition root의 Scene/Camera/Renderer/Controls 조립 | 브라우저 Self-test |
 | 기준 모델 Import | `#modelFile`, `loadModel()` | `normalizeMaterials()`, `fitObject()`, `applyModelDisplay()` | OBJ/FBX/GLTF Loader, 실제 브라우저 QA |
-| 표면/평면 Point 배치 | `#drawTarget`, `pointOnSurface()`, `pointInFreePlane()` | Raycaster로 모델 표면 또는 카메라 평면 좌표 계산 | `src/state/line-creation-policy.js` |
+| 표면/평면 Point 배치 | `#drawTarget`, `updateDrawTargetUI()`, `pointOnSurface()`, `pointInFreePlane()` | Raycaster로 보이는 Reference/Proxy 중 최근접 표면 또는 카메라 평면 좌표 계산 | `src/state/line-creation-policy.js` |
 | Line 생성/완료/취소 | `#newCurveBtn`, `beginLineCreation()`, `finishLineCreation()`, `cancelLineCreation()` | Draft curve 생성, 최소 Point 검사, 이전 선택 복원 | Node의 `line creation requires two points` |
 | Curve/Point 선택 | `selectCurve()`, `toggleCurveSelection()`, `selectControl()`, `#curveList` | Ctrl/⌘ 토글, 활성 Curve/Point, UI/Gizmo 동기화 | `src/state/curve-selection.js`, `src/state/point-selection.js` |
 | Curve 표시/잠금 | `setCurveVisible()`, `setCurveLocked()` | Scene row와 편집 가능 상태 동기화 | `src/state/curve-policy.js` 및 정책 테스트 |
 | Curve 복제/삭제 | `#duplicateCurveBtn`, `deleteSelectedCurve()` | Curve state 복제/폐기와 History transaction | 브라우저 QA + Undo/Redo |
 | Proxy 4종 생성 | `#create*ProxyBtn`, `createProxyPrimitive()` | Orbit target에 Box/Sphere/Quad Sphere/Cylinder 생성 | `src/geometry/proxy-primitives.js`, Node topology 테스트 |
 | Proxy 파라미터 | `#proxy*`, `readProxySettingsFromUI()`, `rebuildProxyMesh()` | 크기·축별 segment·Smooth·Edges를 비파괴 재생성 | `normalizeProxySettings()`, 브라우저 QA |
+| Proxy FFD Stack | `#proxyModifierList`, `addFfdModifierToSelected()`, `moveActiveProxyModifier()` | FFD 2/4/8 추가, ON/OFF, 순서, Reset/Remove | `src/geometry/ffd-lattice.js`, Node stack 테스트 |
+| FFD Control 편집 | `findFfdControl()`, `selectFfdControl()`, `rebuildProxyLatticeVisual()`, `syncGizmo()` | 선택 lattice Point의 Move와 최종 Proxy 재평가 | `ffdControlPointPositions()`, `setFfdControlPointPosition()` |
 | 객체별 Modify 문맥 | `syncModifyContext()`, `#curveModifyContext`, `#proxyModifyContext` | 활성 Curve/Proxy에 해당하는 rollout만 표시 | `features/proxy-mesh.md` |
 | Proxy 선택/표시/잠금 | `selectProxy()`, `refreshProxyList()`, `setProxyVisible()`, `setProxyLocked()` | Scene Explorer와 viewport pick, edit policy 동기화 | 브라우저 QA + Project restore |
 | Proxy 복제/삭제 | `#duplicateCurveBtn`, `deleteSelectedProxy()` | 파라미터/transform 복제와 GPU 자원 폐기 | History + 브라우저 QA |
@@ -78,12 +80,14 @@ launch_server.py
 | `proxies` | 파라미터 기반 Proxy record 배열 | `makeProxyRecord()`, `captureAppState()` |
 | `selectedProxy` | 현재 UI/Transform 대상 Proxy, `selectedCurve`와 상호 배타 | `selectProxy()`, `restoreAppState()` |
 | `nextProxyId` | 저장·복원되는 Proxy ID counter | `makeProxyRecord()`, `captureAppState()` |
+| `nextProxyModifierId` | Proxy 사이에서도 고유한 FFD ID counter | `createFfdModifier()`, clone, `captureAppState()` |
+| `selectedFfdControlIndex` | 선택 Proxy의 활성 FFD Control Point | `selectFfdControl()`, `syncGizmo()`, `restoreAppState()` |
 | `selectedCurveIds` | Scene Explorer 다중 선택 Curve ID Set | `toggleCurveSelection()`, `captureAppState()` |
 | `selectedControl` | Point 또는 in/out Handle 선택 | `selectControl()`, `captureAppState()` |
 | `selectedPointIndices` | 다중 Point 선택 Set | `src/state/point-selection.js`로 정규화 |
 | `drawingCurve` | 아직 완료하지 않은 Line draft | `beginLineCreation()`/`finishLineCreation()` |
 | `brushes` | Import된 Brush topology 배열 | `brushState()`/`brushFromState()` |
-| `mode` | `orbit`, `draw`, `edit`, `insert`, `transform` | `setMode()`, 키보드/Toolbar event |
+| `mode` | `orbit`, `draw`, `edit`, `insert`, `transform`, `ffd` | `setMode()`, 키보드/Toolbar event |
 | `projectDirty` | 마지막 명시 저장 이후 변경 여부 | `markProjectChanged()`, `updateProjectStatus()` |
 | `history` | Undo/Redo snapshot controller | `createHistory(...)` 생성부 |
 | `referenceImageSettings` / `referenceImageRuntime` | 저장 가능한 3방향 Plane transform/표시값 / 세션 전용 texture·plane·outline·Object URL | `currentReferenceImageSettings()`, `loadReferenceImage()`, `disposeReferenceImage()` |

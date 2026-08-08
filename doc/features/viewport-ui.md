@@ -13,10 +13,10 @@ Scene 초기화, picking, mode, TransformControls, axis guide, keyboard과 패�
 | Resize/frame | `resize()`, `setOrthographicFrustumHeight()`, `fitObject()`, `frameSelected()` | `matchedOrthographicHeight()` |
 | Control visual | `rebuildControlVisuals()`, `updateControlVisuals()`, `applyControlAppearance()` | curve policy |
 | Visibility | `updateControlVisibility()`, `updateCurveSelectionStyles()` | viewport interaction policy |
-| Picking | `findControl()`, `selectControl()`, `findSceneObjectAtEvent()`, `handleViewportClick()` | `interaction-policy.js`, `point-selection.js` |
+| Picking | `findControl()`, `selectControl()`, `findFfdControl()`, `selectFfdControl()`, `findSceneObjectAtEvent()`, `handleViewportClick()` | `interaction-policy.js`, `point-selection.js` |
 | Surface/free placement | `pointOnSurface()`, `pointInFreePlane()` | raycaster |
 | Mode | `setMode()`, `leaveLineCreationForMode()`, `updateHint()` | line creation policy |
-| Curve/Proxy/Point Gizmo | `activeSceneObject()`, `syncGizmo()`, `beginGizmoDrag()`, `handleGizmoChange()`, `endGizmoDrag()` | `transformControls` |
+| Curve/Proxy/Point/FFD Gizmo | `activeSceneObject()`, `syncGizmo()`, `beginGizmoDrag()`, `handleGizmoChange()`, `endGizmoDrag()` | `transformControls` |
 | Reference Plane Gizmo | `setReferenceImageTransformTool()`, `syncReferenceImageTransformControls()`, `updateReferenceImageTransformFromPlane()` | `referenceImageTransformControls` |
 | Axis guides | `syncAxisGuides()`, `startAxisGuideDrag()`, `updateAxisGuideDrag()` | `src/viewport/axis-guide-drag.js` |
 | UI availability/Modify context | `updateCommandAvailability()`, `syncModifyContext()`, `updatePointToolButtons()` | Curve/Proxy editability policy |
@@ -33,6 +33,7 @@ draw: draft Point placement
 edit: Point/Handle/section edit
 insert: nearest curve segment split
 transform: active Curve root 또는 Proxy object transform
+ffd: active Proxy modifier의 단일 lattice control Move
 ```
 
 모드 변경 시 함께 동기화할 것: select value, toolbar active state, status mode, hint, OrbitControls enabled, TransformControls attachment, control visibility, axis guide, command availability.
@@ -52,11 +53,12 @@ Reference Plane은 Curve mode와 별개의 `translate | rotate | scale | none` �
 1. 현재 mode와 visibility가 Control pick을 허용하는지 검사한다.
 2. `Ctrl/⌘ + Anchor`이면 Transform/Axis Gizmo보다 먼저 Point membership 토글을 처리한다.
 3. Axis guide drag 대상이면 축 제약을 처리한다.
-4. Point/Handle control hit를 검사한다.
-5. Insert mode면 선택 Curve의 근접 segment를 찾는다.
-6. Curve line/generated mesh 또는 Proxy solid/edge를 `findSceneObjectAtEvent()`에서 가장 가까운 root selection으로 해석한다.
-7. Orbit mode에서 Curve/Proxy가 잡히지 않으면 보이는 Front/Left/Back Plane을 선택하고 Move gizmo를 연다.
-8. 빈 공간은 mode 계약에 따라 deselect 또는 Point placement한다.
+4. FFD mode면 active lattice control hit를 검사한다.
+5. Point/Handle control hit를 검사한다.
+6. Insert mode면 선택 Curve의 근접 segment를 찾는다.
+7. Curve line/generated mesh 또는 Proxy solid/edge를 `findSceneObjectAtEvent()`에서 가장 가까운 root selection으로 해석한다.
+8. Orbit mode에서 Curve/Proxy가 잡히지 않으면 보이는 Front/Left/Back Plane을 선택하고 Move gizmo를 연다.
+9. 빈 공간은 mode 계약에 따라 deselect 또는 Point placement한다.
 
 ## Rollout 패널 계약
 
@@ -76,6 +78,7 @@ Reference Plane은 Curve mode와 별개의 `translate | rotate | scale | none` �
 - Pointer cancel/up이 History transaction과 OrbitControls를 복구하는가?
 - Axis Lines OFF가 parent/child guide visibility, guide raycast, Translate gizmo 표시/입력을 모두 차단하고 다른 Point 선택을 막지 않는가? Rotate/Scale gizmo는 유지되어야 한다.
 - Ctrl/⌘ Anchor 토글이 Point 중앙의 Transform Gizmo에 가로막히지 않는가?
+- FFD Point pick이 Move gizmo와 충돌하지 않고, E/R/Delete가 Proxy root 또는 lattice 구조를 우발 변경하지 않는가?
 - Control x-ray/depth 설정과 visibility checkbox가 일치하는가?
 - 1024px 폭에서도 topbar와 양쪽 panel의 기능에 접근 가능한가?
 - Create·Modify·Display가 모두 닫힌 상태로 시작하고, 항목별 열림/닫힘과 ARIA 상태가 탭 왕복 후에도 유지되는가?
@@ -84,4 +87,4 @@ Reference Plane은 Curve mode와 별개의 `translate | rotate | scale | none` �
 ## 검증
 
 - Self-test: visible-control pick policy, axis guide enabled/visible interaction policy, axis vector/plane/scalar.
-- Browser: 각 mode 전이, Curve/Proxy object·point·handle·axis·Reference Plane picking, Proxy/Plane Move/Rotate/Scale drag, drag cancel, input focus shortcut, hidden/locked protection, 객체별 Modify 전환, rollout 기본 닫힘·탭 왕복·페이지 재초기화, narrow viewport layout. Display 변경은 `viewport-display.md`의 수용 시나리오를 추가한다.
+- Browser: 각 mode 전이, Curve/Proxy object·point·handle·FFD control·axis·Reference Plane picking, Proxy/Plane Move/Rotate/Scale과 FFD Move drag, drag cancel, input focus shortcut, hidden/locked protection, 객체별 Modify 전환, rollout 기본 닫힘·탭 왕복·페이지 재초기화, narrow viewport layout. Display 변경은 `viewport-display.md`의 수용 시나리오를 추가한다.

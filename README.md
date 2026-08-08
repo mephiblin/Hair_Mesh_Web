@@ -5,12 +5,13 @@ Hair Mesh Web은 브라우저에서 Bézier 가이드를 그리고, 가이드를
 ## 현재 가능한 작업
 
 - 모델 없이 카메라 평면에 커브 생성
-- OBJ, FBX, GLB/GLTF 기준 모델 표면에 커브 생성
+- OBJ, FBX, GLB/GLTF 기준 모델 또는 Proxy Mesh 표면에 커브 생성
 - Bézier Point/Handle 편집과 Point 추가·삭제·분할·평균화
 - `Ctrl/⌘` 클릭으로 같은 Curve의 Point와 Scene Explorer의 Curve 행 다중 선택/해제
 - 커브 전체 Transform과 Point별 단면 Offset/Rotate/Scale/Taper
 - Ribbon, Tube, Imported Mesh Brush 방식의 Live Mesh 생성
 - Box, Sphere, 모든 면이 Quad인 Quad Sphere, Cylinder 프록시 생성과 크기·세그먼트 비파괴 조정
+- Proxy별 FFD 2×2×2 / 4×4×4 / 8×8×8 영구 Modifier Stack과 Control Point 변형
 - Scene Explorer에서 Curve/Proxy를 분리 관리하고, 선택 객체 종류에 따라 바뀌는 Modify 패널
 - ZBrush 스타일 MatCap 재질로 Hair Mesh와 Import 모델 표시
 - 하나의 Reference 파일 안의 여러 Mesh를 개별 표시/숨김하고 재질·이미지 텍스처 지정
@@ -67,7 +68,9 @@ HTML 파일을 직접 더블클릭하는 방식은 ES Module/CORS 제한 때문�
 10. `Display → Viewport`에서 배경색, Perspective Camera FOV, Grid와 조명을 조정합니다.
 11. `Save Project`로 편집본을 보존하거나 `Export` 탭에서 OBJ/FBX를 출력합니다.
 
-프록시가 필요하면 `Create → Proxy Mesh`에서 Box, Sphere, Quad Sphere 또는 Cylinder를 만듭니다. 생성 위치는 현재 카메라가 바라보는 Orbit 중심입니다. Scene Explorer의 `Proxy Objects`에서 선택하면 Modify가 `Primitive Parameters`로 바뀌며 크기, 축별 Segments/Sides/Rings, Smooth Shading과 자체 Polygon Edges를 조정할 수 있습니다. 상단 W/E/R, Frame, Clone과 Delete는 활성 Curve 또는 Proxy에 적용됩니다.
+프록시가 필요하면 `Create → Proxy Mesh`에서 Box, Sphere, Quad Sphere 또는 Cylinder를 만듭니다. 생성 위치는 현재 카메라가 바라보는 Orbit 중심입니다. Scene Explorer의 `Proxy Objects`에서 선택하면 Modify가 Proxy 문맥으로 바뀝니다. `Primitive Parameters`에서는 크기·Segments/Sides/Rings·Smooth·Edges를 조정하고, `Modifier Stack`에서는 FFD 2×2×2 / 4×4×4 / 8×8×8을 여러 개 쌓습니다. `Edit Control Points`를 누르고 lattice Point를 선택한 뒤 Move gizmo로 변형합니다. 각 FFD의 ON/OFF, 순서, Reset, Remove 상태는 Proxy와 함께 저장되고 한 번의 drag는 한 Undo 단계가 됩니다.
+
+Proxy를 Reference 대용 또는 누락 부위 보충 표면으로 쓰려면 `Create → Line Creation → 포인트 배치`를 `Reference / Proxy Surface`로 바꿉니다. 보이는 Reference와 Proxy 중 카메라에서 가장 가까운 표면에 Point가 찍힙니다. FFD 결과는 Viewport·Surface 배치·OBJ/FBX Export에 반영되며 Export에서는 최종 geometry로 bake됩니다.
 
 Create·Modify·Display 탭의 내부 항목은 처음에 모두 닫힌 상태로 시작합니다. 항목 제목을 눌러 펼치거나 닫으면 탭을 전환하거나 편집하는 동안 그 상태가 유지되며, 페이지를 새로 초기화하면 다시 모두 닫힙니다. Export 탭은 기존처럼 열린 상태로 시작합니다.
 
@@ -84,12 +87,12 @@ Create·Modify·Display 탭의 내부 항목은 처음에 모두 닫힌 상태�
 | `Ctrl/⌘ + A` | 선택 커브의 모든 Point 선택 |
 | `Ctrl/⌘ + Point 클릭` | 활성 Curve 안의 Point를 다중 선택/해제 |
 | `Ctrl/⌘ + Curve 행 클릭` | Scene Explorer Curve를 다중 선택/해제 |
-| `W / E / R` | 활성 Curve/Proxy/Point 또는 Reference Plane의 Move / Rotate / Scale |
+| `W / E / R` | 활성 Curve/Proxy/Point 또는 Reference Plane의 Move / Rotate / Scale. FFD Point는 `W` Move만 사용 |
 | `Q` | Object/Camera 모드 또는 Reference Plane gizmo 숨김 |
 | `I` | Point Insert 모드 |
 | `Shift + G` | 축 가이드 표시 전환 |
 | `Esc` | 진행 중인 Line 생성 취소 |
-| `Delete` | 선택 Point, Curve 또는 Proxy 삭제 |
+| `Delete` | 선택 Point, Curve 또는 Proxy 삭제. FFD 편집 중에는 삭제하지 않고 안내 표시 |
 
 ## 검증
 
@@ -110,7 +113,7 @@ Hair_Mesh_Web/
 ├── launch_server.py               # 로컬 HTTP 서버/브라우저 실행기
 ├── 3D_Web_Paint_실행.cmd          # Windows 실행 진입점
 ├── src/
-│   ├── geometry/                  # Bézier·Sweep·프록시 primitive·메시 제한 계산
+│   ├── geometry/                  # Bézier·Sweep·프록시 primitive·FFD·메시 제한 계산
 │   ├── state/                     # History·프로젝트·선택·편집 정책
 │   ├── viewport/                  # Picking/축 드래그 + 재질/조명/Wire 표시 정책
 │   ├── ui/                        # 숫자 입력 Scrubber
@@ -133,6 +136,7 @@ Hair_Mesh_Web/
 - FBX/GLTF Loader가 복원한 내장/해결된 텍스처는 `Original`/`Auto`에서 유지됩니다. 단일 파일 선택으로 찾을 수 없는 외부 sidecar 이미지는 `Reference Objects → Color Texture`에서 Mesh별로 다시 지정하십시오.
 - 메시 예산은 Path Segments `2–512`, Tube Sides `3–64`로 제한됩니다.
 - 프록시 예산은 Box 축별 Segments `1–128`, Sphere Segments `3–256`/Rings `2–128`, Quad Sphere `1–64`, Cylinder Sides `3–256`/Height·Cap Segments `1–128`로 제한됩니다.
+- FFD lattice는 각 축 `2`, `4`, `8`만 지원하며 각각 8, 64, 512개의 Control Point를 가집니다. 현재 FFD Control 편집은 단일 Point Move 방식입니다.
 - 제품 평가, 안정화 근거와 후속 로드맵은 [재귀 제품 감사 보고서](docs/product-audit/recursive-audit.md)에 있습니다.
 
 원본 프로토타입 기준선은 커밋 `b1b121a84e845d1afd215a63a7f03e9e6533b33a`입니다. 이후 안정화·Viewport·Reference material/texture·다중 선택 작업은 기본 브랜치 `master`에 통합되었고 임시 작업 브랜치는 제거되었습니다.

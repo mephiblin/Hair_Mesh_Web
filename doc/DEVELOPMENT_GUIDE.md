@@ -48,7 +48,7 @@ curl -I http://127.0.0.1:8080/curve_mesh_hair_tool_v4.html
 
 이 앱에는 서로 연결된 두 종류의 상태가 있습니다.
 
-1. **직렬화 상태**: Curve/Point/Brush, Proxy primitive parameters/transform, 선택, 모드, 표시 설정. `captureAppState()`가 반환하고 JSON/History/Recovery가 사용합니다.
+1. **직렬화 상태**: Curve/Point/Brush, Proxy primitive parameters/transform/FFD stack, 선택, 모드, 표시 설정. `captureAppState()`가 반환하고 JSON/History/Recovery가 사용합니다.
 2. **파생 Scene 상태**: Three.js Group, Control mesh, Line, BufferGeometry, TransformControls. `restoreAppState()`와 각 `rebuild*` 함수가 직렬화 상태로부터 재구성합니다.
 
 Scene 객체를 JSON에 직접 넣지 않습니다. 새 기능을 저장하려면 최소 데이터만 직렬화 상태에 넣고 Scene 객체는 복원 시 다시 만드십시오.
@@ -61,6 +61,7 @@ Reference 파일 자체와 Mesh별 표시/재질/수동 텍스처는 Import 세�
 - 숨김 또는 잠긴 Curve는 편집할 수 없습니다.
 - 숨김 또는 잠긴 Proxy는 파라미터·이름·Transform·복제/삭제로 편집할 수 없습니다.
 - 활성 root object는 Curve 또는 Proxy 중 하나이며 `syncModifyContext()`가 해당 Modify UI만 표시합니다.
+- Proxy FFD는 Base부터 Top까지 순서대로 평가하며 control offset을 원본 vertex에 bake하지 않습니다. 최종 bake는 Export 경계에서만 수행합니다.
 - Live Mesh는 `meshEnabled`, `meshStatus === 'ready'`, 유효한 `topology`가 모두 충족되어야 Ready입니다.
 - Path Segments는 2–512, Tube Sides는 3–64 범위입니다.
 - Point/Brush의 Vector와 Quaternion은 배열로 변환한 뒤 저장합니다.
@@ -115,7 +116,7 @@ History 밖에서 표시 옵션처럼 상태를 직접 바꾸는 경우 `markPro
 
 고비용 설정에는 상한을 둡니다. 입력의 HTML `min/max`만 신뢰하지 말고 계산 직전에도 정규화하십시오.
 
-Proxy primitive를 추가/변경할 때는 [`features/proxy-mesh.md`](features/proxy-mesh.md)의 type/default/normalize/topology/UI/record/project/export 전체 경로를 사용합니다. 파생 topology나 Three.js 객체를 snapshot에 넣지 않습니다.
+Proxy primitive 또는 FFD를 추가/변경할 때는 [`features/proxy-mesh.md`](features/proxy-mesh.md)의 type/default/normalize/topology/stack/UI/record/project/export 전체 경로를 사용합니다. 파생 topology나 Three.js 객체를 snapshot에 넣지 않습니다.
 
 ## 8. Geometry/Three.js 규칙
 
@@ -175,7 +176,7 @@ globalThis.__CURVE_TOOL_SELF_TEST__
    - Scene Explorer Curve 행을 Ctrl/⌘ 클릭해 다중 선택/활성 전환/전체 해제
 3. Ribbon과 Tube 생성, Segment/Sides 경계값 확인
 4. Brush fixture Import 후 Brush Mesh 생성
-5. Proxy 4종 생성, 크기/Segments/Sides/Rings 변경, Curve↔Proxy Modify 전환과 W/E/R/Frame/Clone/Delete 확인
+5. Proxy 4종 생성, 크기/Segments/Sides/Rings 변경, Curve↔Proxy Modify 전환과 W/E/R/Frame/Clone/Delete 확인. FFD 관련 변경이면 2/4/8 추가, Point Move, stack reorder/ON/OFF/reset/remove, Proxy Surface Line도 확인
 6. 숨김/잠금 Curve/Proxy가 수정되지 않는지 확인
 7. `.hairmesh.json` 저장 후 다시 열어 Curve/Brush/Proxy/활성 Modify 문맥/Live Mesh 확인
    - 참조 이미지 정렬값과 파일명 힌트는 복원되고 JSON에 image payload가 없는지 확인

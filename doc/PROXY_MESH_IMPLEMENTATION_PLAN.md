@@ -1,6 +1,6 @@
 # Proxy Mesh · Object-aware Modify 구현 계획
 
-> 구현 상태: 2026-08-08 기준 1–7단계 완료. 현재 동작 계약과 코드 지도는 [`features/proxy-mesh.md`](features/proxy-mesh.md)를 우선한다. 이 문서는 도입 당시 IA와 단계별 의사결정 기록이다.
+> 구현 상태: 2026-08-08 기준 primitive 1–7단계와 FFD stack 8–12단계 완료. 현재 동작 계약과 코드 지도는 [`features/proxy-mesh.md`](features/proxy-mesh.md)를 우선한다. 이 문서는 도입 당시 IA와 단계별 의사결정 기록이다.
 
 ## IA thesis
 
@@ -19,7 +19,7 @@ flowchart TD
   Curves --> Active[Active Object]
   Proxies --> Active
   Active -->|Curve| CurveModify[Point / Knot / Live Curve Mesh / Cross-section]
-  Active -->|Proxy| ProxyModify[Primitive Parameters / Segments / Smooth / Edges]
+  Active -->|Proxy| ProxyModify[Primitive Parameters + persistent FFD Stack]
   Active --> Transform[Move / Rotate / Scale / Frame / Clone / Delete]
   Active --> Project[History / Project Save / Recovery]
   Active --> Export[OBJ / FBX Mesh Export]
@@ -58,6 +58,9 @@ proxy:
   visible: boolean
   locked: boolean
   settings: normalized primitive parameters
+  modifiers: ordered FFD[]
+  activeModifierId: integer | null
+  lastFfdControlIndex: integer | null
   position: [x, y, z]
   quaternion: [x, y, z, w]
   scale: [x, y, z]
@@ -69,6 +72,8 @@ derived_scene_only:
 ```
 
 Proxy topology는 settings에서 다시 만들 수 있으므로 프로젝트 JSON에 vertex/face 배열을 중복 저장하지 않는다. 이전 문서에 `proxies`가 없으면 빈 배열로 복원하는 optional 필드로 추가한다.
+
+FFD modifier는 `resolution`, `enabled`, 정규화된 control `offsets`만 저장한다. Base topology와 stack 최종 topology는 모두 파생 상태다. 이전 Proxy에 `modifiers`가 없으면 빈 배열로 해석한다.
 
 ## Geometry contract
 
@@ -88,6 +93,11 @@ Proxy topology는 settings에서 다시 만들 수 있으므로 프로젝트 JSO
 5. Persistence: optional proxy state, active object kind/id, Undo/Redo/Recovery/project round-trip.
 6. Export: ready Hair topology와 visible Proxy topology를 공통 export entry로 OBJ/FBX에 포함.
 7. Validation: 모든 primitive 생성, 세그먼트 최소/증가, Modify context 전환, gizmo, Undo/Redo, 저장 왕복, 1024px 레이아웃, OBJ/FBX 정적 구조.
+8. `src/geometry/ffd-lattice.js`: FFD 2/4/8 데이터 정규화, Bernstein 변형, ordered stack 평가와 Node 회귀 테스트.
+9. Proxy record/persistence: modifier 배열, 활성 modifier/control, 독립 ID counter, Clone/Undo/Recovery round-trip.
+10. Modify UI: stack 추가·선택·ON/OFF·Move Up/Down·Reset·Remove와 object-aware availability.
+11. Viewport: lattice line/control, control picking, translate-only gizmo, 한 drag당 한 Undo step.
+12. Workflow integration: 보이는 Proxy를 Surface Point placement에 포함하고 final stack topology를 OBJ/FBX에 bake, 1600/1024 Playwright 검증.
 
 ## Acceptance gates
 
@@ -97,12 +107,18 @@ Proxy topology는 settings에서 다시 만들 수 있으므로 프로젝트 JSO
 - Proxy의 Move/Rotate/Scale, Clone, Delete, visibility, lock, Frame이 Curve 작업을 오염시키지 않는다.
 - 구 프로젝트는 그대로 열리고, 새 프로젝트는 Proxy 파라미터·transform·선택을 왕복한다.
 - Export에서 Quad Sphere와 subdivided Box의 logical quad face가 유지된다.
+- FFD 2/4/8을 여러 개 쌓고 순서와 ON/OFF를 바꿀 수 있으며 Base primitive와 modifier 값이 계속 편집 가능하다.
+- FFD Control drag가 실시간 최종 topology를 바꾸고 한 번의 Undo/Redo로 왕복한다.
+- Reference가 없어도 보이는 Proxy 표면에 Line Point를 배치하고, Export에는 최종 FFD 결과를 bake한다.
 
 ## 완료 검증 기록
 
-- Node `npm run check`: 21/21 계약 통과. 4종 parameter clamp, 예상 vertex/face/quad/render triangle 수와 outward face winding 포함.
+- Node `npm run check`: 24/24 계약 통과. 4종 parameter clamp/topology/winding과 FFD resolution/identity/Bernstein/stack/order/project round-trip 포함.
 - Browser self-test: 24/24 통과.
 - 1600×900: Box 생성 → 축별 Segments 변경 → Quad Sphere 변환 → Clone → Undo/Redo → Project Save → OBJ 2-object 출력 확인.
 - 실제 canvas 입력으로 Proxy X축 gizmo drag 후 OBJ world vertex 평균 X 이동, Curve↔Proxy 선택에 따른 Modify 문맥 전환, Show Edges/Smooth 왕복과 Frame을 확인.
 - 1024×768: 4종 생성, Cylinder Sides/Height/Cap Segments 변경, lock 편집 차단, Delete 후 Project Open 복원, FBX 4 Model 출력과 패널 clipping 없음 확인.
+- FFD: 실제 canvas X축 drag로 control offset `0 → 0.293896...`, Undo `0`, Redo `0.293896...` 왕복. 3단 stack, active OFF 시 Object/Camera 이탈, Reset/Remove, FFD mode Delete 안전장치, Clone modifier ID 분리를 확인.
+- Proxy Surface: Reference가 없는 장면에서 Surface option 활성화, Proxy 위 2 Point Line 완료. OBJ 2-object 출력에서 변형 vertex bake를 확인.
+- FFD 8×8×8: 512 Control Point/lattice 표시와 브라우저 오류 없음 확인. 1600×900 및 1024×768에서 패널·viewport clipping 없음.
 - 남은 외부 검증: FBX는 실험 기능이므로 최종 호환 판정 전에 3ds Max/Blender Import가 필요하다.

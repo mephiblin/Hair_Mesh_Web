@@ -10,6 +10,17 @@ import {
   normalizeProxySettings,
   proxyTopologyStats
 } from '../src/geometry/proxy-primitives.js';
+import {
+  applyFfdModifier,
+  createFfdModifier,
+  evaluateFfdStack,
+  ffdControlPointPositions,
+  ffdLatticeIndex,
+  ffdPointCount,
+  normalizeFfdModifier,
+  normalizeFfdResolution,
+  setFfdControlPointPosition
+} from '../src/geometry/ffd-lattice.js';
 import { canEditCurve, hasReadyMesh } from '../src/state/curve-policy.js';
 import {
   PROJECT_FORMAT,
@@ -143,6 +154,43 @@ test('proxy primitive face winding points away from each primitive center', () =
   }
 });
 
+test('FFD modifiers normalize supported lattice sizes and finite offsets', () => {
+  assert.equal(normalizeFfdResolution(4), 4);
+  assert.equal(normalizeFfdResolution(3), 2);
+  assert.equal(ffdPointCount(8), 512);
+  const modifier = normalizeFfdModifier({ id:7, resolution:4, offsets:[[Infinity, 2, 'bad']] });
+  assert.equal(modifier.offsets.length, 64);
+  assert.deepEqual(modifier.offsets[0], [0, 2, 0]);
+});
+
+test('FFD identity and moved control layer evaluate with trivariate Bernstein weights', () => {
+  const base = buildProxyTopology('box');
+  const identity = createFfdModifier(1, 2);
+  assert.deepEqual(applyFfdModifier(base, identity).positions, base.positions);
+  const moved = createFfdModifier(1, 2);
+  for (let z = 0; z < 2; z++) for (let x = 0; x < 2; x++) moved.offsets[ffdLatticeIndex(x, 1, z, 2)] = [.5, 0, 0];
+  const result = applyFfdModifier(base, moved);
+  base.positions.forEach((position, index) => {
+    const expectedX = position[0] + (position[1] > 0 ? .5 : 0);
+    assert.ok(Math.abs(result.positions[index][0] - expectedX) < 1e-10);
+  });
+});
+
+test('FFD control edits and modifier stacks preserve ordered non-destructive evaluation', () => {
+  const base = buildProxyTopology('box');
+  let first = createFfdModifier(11, 2);
+  const firstInputControl = ffdControlPointPositions(base, first)[ffdLatticeIndex(1, 1, 1, 2)];
+  first = setFfdControlPointPosition(base, first, ffdLatticeIndex(1, 1, 1, 2), [firstInputControl[0] + .5, firstInputControl[1], firstInputControl[2]]);
+  const second = createFfdModifier(12, 4);
+  second.offsets = second.offsets.map(() => [0, .25, 0]);
+  const firstOnly = evaluateFfdStack(base, [first, second], { stopBeforeId:12 });
+  const stacked = evaluateFfdStack(base, [first, second]);
+  assert.notDeepEqual(firstOnly.positions, base.positions);
+  stacked.positions.forEach((position, index) => assert.ok(Math.abs(position[1] - firstOnly.positions[index][1] - .25) < 1e-10));
+  second.enabled = false;
+  assert.deepEqual(evaluateFfdStack(base, [first, second]).positions, firstOnly.positions);
+});
+
 test('curve policy rejects hidden/locked edits and dishonest live state', () => {
   assert.equal(canEditCurve({ visible: true, locked: false }), true);
   assert.equal(canEditCurve({ visible: false, locked: false }), false);
@@ -165,10 +213,19 @@ test('project document round-trips versioned application state', () => {
   const appState = {
     nextCurveId:2,
     nextProxyId:2,
+    nextProxyModifierId:2,
     selectedObjectKind:'proxy',
     selectedProxyId:1,
     curves:[{ id:1, name:'HairCard' }],
-    proxies:[{ id:1, name:'QuadSphere001', type:'quad-sphere', settings:{ radius:.5, segments:4 } }]
+    proxies:[{
+      id:1,
+      name:'QuadSphere001',
+      type:'quad-sphere',
+      settings:{ radius:.5, segments:4 },
+      modifiers:[createFfdModifier(1, 4)],
+      activeModifierId:1,
+      lastFfdControlIndex:63
+    }]
   };
   const encoded = serializeProjectDocument(createProjectDocument(appState, { projectName: 'test' }));
   const decoded = parseProjectDocument(encoded);

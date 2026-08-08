@@ -14,7 +14,7 @@ browser_checks: src/diagnostics/core-self-check.js
 project_format: .hairmesh.json, version 1
 external_runtime: three@0.180.0 via jsDelivr
 default_branch: master
-current_node_contracts: 21
+current_node_contracts: 24
 current_browser_self_checks: 24
 ```
 
@@ -24,7 +24,7 @@ current_browser_self_checks: 24
 | --- | --- | --- |
 | Line, Curve, Point, Handle, Knot, Average, Insert, Delete | [`features/curve-editing.md`](features/curve-editing.md) | `makeCurveRecord`, `selectControl`, `BezierChainCurve` |
 | Ribbon, Tube, Brush, Sweep, topology, UV, cap, twist | [`features/mesh-generation.md`](features/mesh-generation.md) | `makeTopologyForCurve`, `rebuildCurveMesh` |
-| Proxy Mesh, Box, Sphere, Quad Sphere, Cylinder, primitive segments | [`features/proxy-mesh.md`](features/proxy-mesh.md) | `buildProxyTopology`, `makeProxyRecord`, `syncModifyContext` |
+| Proxy Mesh, Box, Sphere, Quad Sphere, Cylinder, FFD 2/4/8, Modifier Stack, Proxy Surface | [`features/proxy-mesh.md`](features/proxy-mesh.md) | `buildProxyTopology`, `evaluateFfdStack`, `rebuildProxyMesh`, `syncModifyContext` |
 | Save, Open, JSON, Recovery, Dirty, Undo, Redo, schema | [`features/project-state.md`](features/project-state.md) | `captureAppState`, `restoreAppState`, `createHistory` |
 | Viewport, Perspective/Orthographic camera, standard view, picking, gizmo, mode, axis, keyboard | [`features/viewport-ui.md`](features/viewport-ui.md) | `useViewportCamera`, `setStandardView`, `setMode`, `syncGizmo`, `handleViewportClick` |
 | Display, MatCap, texture, object visibility, light, wireframe, Front/Left/Back Plane, background, FOV, Ortho Views, grid | [`features/viewport-display.md`](features/viewport-display.md) | `applyModelDisplay`, `applyReferenceImageDisplay`, `applyViewportDisplay` |
@@ -89,6 +89,8 @@ viewport_environment: background/FOV/grid/directional/fill persisted, MatCap una
 standard_view_projection: Persp always perspective; Ortho Views defaults ON for Front/Left/Back/Top and is persisted
 export_topology: preserve logical quad/ngon faces
 proxy_export: include visible proxy topology beside visible ready curve meshes
+proxy_surface_placement: visible Reference/Proxy nearest raycast hit
+proxy_ffd_stack: ordered persistent 2x2x2 | 4x4x4 | 8x8x8 modifiers, export final evaluated topology
 resource_cleanup: dispose removed geometry and material
 ```
 
@@ -109,7 +111,7 @@ resource_cleanup: dispose removed geometry and material
 2. 2개 이상 Point Line을 완료하고 Point/Handle 편집을 Undo/Redo한다.
    - 같은 Curve의 Anchor를 Ctrl/⌘ 클릭해 추가/해제하고, Curve 행도 2개 이상 다중 선택 후 활성 행 전환과 전체 해제를 확인한다.
 3. Ribbon과 Tube를 생성하고 제한 경계에서 Live 상태와 topology를 확인한다.
-4. Box/Sphere/Quad Sphere/Cylinder를 생성하고 Modify 문맥, 세그먼트 변경, transform, visibility/lock, clone/delete를 확인한다.
+4. Box/Sphere/Quad Sphere/Cylinder를 생성하고 Modify 문맥, 세그먼트 변경, transform, visibility/lock, clone/delete를 확인한다. FFD 2/4/8 추가·Point Move·stack reorder/ON/OFF/reset/remove·Undo/Redo와 Proxy Surface Line 생성을 함께 확인한다.
 5. Brush fixture를 Import하여 Sweep하고 저장 후 다시 연다.
 6. 숨김/잠금 Curve와 Proxy가 포인터, 숫자 입력, 단축키로 수정되지 않는지 확인한다.
 7. 프로젝트 저장/열기와 새로고침 자동 복구를 확인한다.
