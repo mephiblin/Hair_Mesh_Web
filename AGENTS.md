@@ -19,4 +19,5 @@
 - Run `npm run check` for every JavaScript or state-contract change.
 - Run `git diff --check` for all changes.
 - For runtime/UI changes, start the server and test the affected browser flow; use `?selftest=1` when relevant.
+- For Viewport pointer/gizmo/Proxy changes, run `npm run test:viewport`. Do not couple `Axis Lines` to standard TransformControls visibility, remove FFD/Edit click-through Scene picking, or drop Proxy `W` surface drag without an explicit contract change.
 - Update `doc/CODEX_INDEX.md` or its routed feature document when ownership, symbols, invariants, or validation paths change.

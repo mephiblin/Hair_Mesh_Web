@@ -11,6 +11,7 @@ launcher: launch_server.py
 pure_modules: src/
 node_tests: tests/core-tests.mjs
 browser_checks: src/diagnostics/core-self-check.js
+browser_regression: tests/viewport-regression.mjs
 project_format: .hairmesh.json, version 1
 external_runtime: three@0.180.0 via jsDelivr
 default_branch: master
@@ -104,6 +105,7 @@ resource_cleanup: dispose removed geometry and material
 | 문서만 | `git diff --check`, 링크/심볼 존재 확인 |
 | `src/` 순수 로직 | `npm run check`, 관련 Node 회귀 테스트 |
 | HTML runtime/UI | 위 검사 + HTTP 200 + 관련 브라우저 흐름 |
+| Viewport pointer/gizmo | 위 검사 + `npm run test:viewport` + 실제 캔버스 시각 확인 |
 | Geometry/Three.js 수학 | 위 검사 + `?selftest=1` |
 | 저장 스키마 | round-trip, 이전 버전/미래 버전, Undo/Redo, Recovery |
 | Export | 생성 성공만으로 완료하지 말고 대상 DCC Import 확인 |

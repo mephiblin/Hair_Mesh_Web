@@ -4977,6 +4977,22 @@ const recoveredProject = restoreRecovery();
 if (!recoveredProject) { activateCommandTab('create'); updateProjectStatus('saved', 'Empty'); }
 projectLifecycleReady = true;
 updateCommandAvailability();
+if (new URLSearchParams(location.search).has('selftest')) {
+  Object.defineProperty(globalThis, '__CURVE_TOOL_RUNTIME_DIAGNOSTICS__', {
+    configurable:true,
+    get:() => ({
+      mode,
+      axisGuidesEnabled,
+      axisGuidesVisible:axisGuideGroup.visible && axisGuideLines.some(line => line.visible),
+      transformHelperVisible:transformControls.getHelper().visible,
+      transformHelperEnabled:transformControls.enabled,
+      transformOperation:transformControls.mode,
+      selectedProxyName:selectedProxy?.name || null,
+      selectedProxyPosition:selectedProxy?.group.position.toArray() || null,
+      selectedFfdControlCount:ffdSelectionIndices().length
+    })
+  });
+}
 </script>
 </body>
 </html>

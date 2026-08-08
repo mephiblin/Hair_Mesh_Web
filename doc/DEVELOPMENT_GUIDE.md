@@ -33,6 +33,7 @@ npx playwright install chromium
 
 ```bash
 npm run check
+npm run test:viewport
 python3 launch_server.py --no-browser --port 8080
 ```
 
@@ -76,6 +77,13 @@ Reference 파일 자체와 Mesh별 표시/재질/수동 텍스처는 Import 세�
 - `Persp`는 항상 Perspective Camera이며, Ortho Views ON의 Front/Left/Back/Top은 Orthographic Camera입니다. active camera를 바꾸면 OrbitControls, 두 TransformControls, picking/raycast, resize/frame 경로를 함께 검사하십시오.
 
 관련 정책은 `src/state/curve-policy.js`, `curve-selection.js`, `point-selection.js`, `line-creation-policy.js`, `src/geometry/mesh-limits.js`, `proxy-primitives.js`에 있으며 Node 테스트가 계약을 고정합니다.
+
+### Viewport 입력 회귀 방지
+
+- `axisGuideGroup`과 Three.js `TransformControls` helper는 별도 표시 계층입니다. `axisGuidesEnabled`를 `transformControls.enabled` 또는 helper visibility의 조건으로 재사용하지 않습니다.
+- FFD/Edit의 빈 공간 pointerdown은 우선 잠정 Region 입력을 시작하지만, 이동 임계값을 넘지 않은 click은 `findSceneObjectAtEvent()`로 전달합니다. 그렇지 않으면 Control 편집 중 다른 Proxy/Curve를 Viewport에서 선택할 수 없습니다.
+- `W`의 Proxy 표면 drag와 Control 직접 drag는 `beginDirectViewportMove()`의 같은 History 경계를 사용합니다. Object 취소는 `targetStart`, FFD/Point 취소는 각 시작 snapshot으로 복원합니다.
+- Pointer routing을 바꾸면 `tests/viewport-regression.mjs`의 Axis OFF, Proxy drag/Undo, FFD→Proxy click-through, 1024px 검사를 먼저 확장하고 `npm run test:viewport`를 실행합니다.
 
 ## 5. 기능 구현 패턴
 
@@ -178,7 +186,7 @@ globalThis.__CURVE_TOOL_SELF_TEST__
    - Scene Explorer Curve 행을 Ctrl/⌘ 클릭해 다중 선택/활성 전환/전체 해제
 3. Ribbon과 Tube 생성, Segment/Sides 경계값 확인
 4. Brush fixture Import 후 Brush Mesh 생성
-5. Proxy 4종 생성, 크기/Segments/Sides/Rings 변경, Curve↔Proxy Modify 전환과 W/E/R/Frame/Clone/Delete 확인. FFD 관련 변경이면 2/4/8 추가, Window/Crossing·Ctrl/Alt 다중 선택, 직접/기즈모 다중 Move, 한 단계 Undo/Redo, stack reorder/ON/OFF/reset/remove, Proxy Surface Line도 확인
+5. Proxy 4종 생성, 크기/Segments/Sides/Rings 변경, Curve↔Proxy Modify 전환과 W/E/R/Frame/Clone/Delete 확인. Axis Lines OFF에서 긴 선은 숨고 기본 XYZ gizmo는 유지되는지, `W` Proxy 표면 drag/Undo와 FFD 상태의 다른 Proxy 클릭 선택을 먼저 확인합니다. FFD 관련 변경이면 2/4/8 추가, Window/Crossing·Ctrl/Alt 다중 선택, 직접/기즈모 다중 Move, 한 단계 Undo/Redo, stack reorder/ON/OFF/reset/remove, Proxy Surface Line도 확인
 6. 숨김/잠금 Curve/Proxy가 수정되지 않는지 확인
 7. `.hairmesh.json` 저장 후 다시 열어 Curve/Brush/Proxy/활성 Modify 문맥/Live Mesh 확인
    - 참조 이미지 정렬값과 파일명 힌트는 복원되고 JSON에 image payload가 없는지 확인

@@ -110,6 +110,8 @@ Create·Modify·Display 탭의 내부 항목은 처음에 모두 닫힌 상태�
 | `Ctrl + Alt + MMB 드래그` | Zoom |
 | Mouse Wheel | Zoom |
 
+사각 영역 선택은 현재 Curve Point와 FFD Control을 대상으로 합니다. Proxy Object는 Viewport 클릭 또는 Scene Explorer에서 선택하며, `W` 상태에서는 선택 Proxy 표면을 직접 드래그해 이동합니다.
+
 ## 검증
 
 Node.js 20 이상에서 핵심 상태·정책 테스트와 모듈 문법 검사를 실행합니다.
@@ -117,9 +119,10 @@ Node.js 20 이상에서 핵심 상태·정책 테스트와 모듈 문법 검사�
 ```bash
 npm test
 npm run check
+npm run test:viewport
 ```
 
-브라우저 핵심 진단은 실행 주소 뒤에 `?selftest=1`을 붙여 확인할 수 있습니다. 결과는 개발자 도구에서 `globalThis.__CURVE_TOOL_SELF_TEST__`로 조회할 수 있습니다.
+`npm run test:viewport`는 임시 로컬 서버와 Chromium을 자동으로 실행해 Axis Lines/기본 XYZ gizmo 분리, Proxy 직접 drag/Undo, FFD 모드의 Proxy 선택 전달과 1024px 레이아웃을 검사합니다. 브라우저 핵심 진단은 실행 주소 뒤에 `?selftest=1`을 붙여 확인할 수 있으며 결과는 개발자 도구의 `globalThis.__CURVE_TOOL_SELF_TEST__`, 회귀 진단 상태는 `globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__`에서 조회할 수 있습니다.
 
 ## 저장소 구조
 
@@ -134,7 +137,7 @@ Hair_Mesh_Web/
 │   ├── viewport/                  # Picking/축 드래그 + 재질/조명/Wire 표시 정책
 │   ├── ui/                        # 숫자 입력 Scrubber
 │   └── diagnostics/               # 브라우저 Self-test
-├── tests/                         # Node 핵심 회귀 테스트와 Fixture
+├── tests/                         # Node 계약, Playwright Viewport 회귀 테스트와 Fixture
 ├── doc/                           # 개발자용 코드 지도와 작업 지침
 └── docs/product-audit/             # 제품 평가 및 장기 개선 기록
 ```

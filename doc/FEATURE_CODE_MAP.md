@@ -68,7 +68,8 @@ launch_server.py
 | FBX Export | `#exportFbxBtn`, `activeExportMeshes()`, `exportAsciiFBX()` | Curve/Proxy FBX 7.4 ASCII Geometry/Normal/UV 작성 | 실험 기능, 대상 DCC Import 확인 |
 | 단축키 | `document.addEventListener('keydown', ...)` | 저장, History, 선택, 모드, Transform dispatch | README 단축키 표와 함께 갱신 |
 | Command rollout | `.rollout-header`, `setRolloutCollapsed()`, `initializeRollouts()` | Create/Modify/Display 기본 닫힘, 탭 전환 중 DOM 상태 유지, ARIA 동기화 | `features/viewport-ui.md`, 브라우저 QA |
-| 내장 진단 | URL `?selftest=1`, `runCoreSelfChecks()` | 순수 Geometry/Policy smoke test 실행 후 전역 결과 노출 | `src/diagnostics/core-self-check.js` |
+| 내장 진단 | URL `?selftest=1`, `runCoreSelfChecks()`, `__CURVE_TOOL_RUNTIME_DIAGNOSTICS__` | 순수 Geometry/Policy smoke test와 selftest 전용 runtime 상태 노출 | `src/diagnostics/core-self-check.js` |
+| Viewport 자동 회귀 | `npm run test:viewport` | 임시 서버+Chromium으로 Axis/gizmo 분리, Proxy drag/Undo, FFD click-through, 1024px 검사 | `tests/viewport-regression.mjs`, GitHub Validate `viewport` job |
 
 ## 핵심 상태의 코드 위치
 

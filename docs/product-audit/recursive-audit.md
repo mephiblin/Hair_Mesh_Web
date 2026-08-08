@@ -1,6 +1,6 @@
 # Recursive Product Audit
 
-Overall status: COMPLETE · synchronized with `master` on 2026-08-08
+Overall status: COMPLETE · maintenance audit synchronized on 2026-08-09
 
 ## Completion contract
 
@@ -15,20 +15,21 @@ Overall status: COMPLETE · synchronized with `master` on 2026-08-08
 
 - Repository / surface: `mephiblin/Hair_Mesh_Web`, `curve_mesh_hair_tool_v4.html`
 - Historical baseline: `b1b121a84e845d1afd215a63a7f03e9e6533b33a`, 2026-08-07
-- Current implementation revision reviewed: `2e1128cb8b29b5acf611ed65786eb475e5f09516`, 2026-08-08
-- Runtime / test entry points: `python3 launch_server.py`, `?selftest=1`, `npm test`
+- Current implementation revision reviewed: `51508d86cb60cee5276d105a0d851680b93893de`, 2026-08-09; documentation/regression-test changes are the immediate follow-up commit.
+- Runtime / test entry points: `python3 launch_server.py`, `?selftest=1`, `npm run check`, `npm run test:viewport`
 - Existing documentation: `PROJECT_AUDIT.md`, `BLENDER_FEATURE_RESEARCH.md`, `MODULARIZATION.md`
 
 ## Current conclusion
 
-Hair Card MVP의 Bézier 편집과 Curve-to-Mesh 생성에 더해 버전형 프로젝트 저장/열기, 자동복구, Brush topology 영속성, 숨김·잠금·LIVE 상태, 메시 입력 예산이 검증됐다. 이후 ZBrush식 MatCap, Reference 독립 Wire, Directional/Environment 조명, Viewport 배경/FOV/Grid, 다중 Reference Mesh 표시·재질·수동 텍스처, Point/Curve Ctrl/⌘ 다중 선택과 Recovery까지 통합됐다. Reference binary 재연결, 다중 Curve 일괄 변환/삭제, Blender식 Grooming 확장은 잔여 백로그이며 현재 Hair Card MVP 완료 계약을 막지 않는다.
+Hair Card MVP의 Bézier 편집과 Curve-to-Mesh 생성에 더해 버전형 프로젝트 저장/열기, 자동복구, Brush topology 영속성, 숨김·잠금·LIVE 상태, 메시 입력 예산이 검증됐다. 이후 ZBrush식 MatCap, Reference 독립 Wire, Directional/Environment 조명, Viewport 배경/FOV/Grid와 정사영 표준 뷰, 다중 Reference Mesh 표시·재질·수동 텍스처, 3방향 Reference Plane, Point/Curve/FFD 다중 선택, Proxy primitive와 영구 FFD stack, 3ds Max식 Viewport 조작까지 통합됐다. Reference binary 재연결, Proxy Object 다중 박스 선택, 다중 Curve 일괄 변환/삭제, Blender식 Grooming 확장은 잔여 백로그이며 현재 Hair Card MVP 완료 계약을 막지 않는다.
 
 ## Current verification snapshot
 
 | Check | Current result |
 | --- | --- |
-| Node policy/state regression | `npm run check` · 15/15 tests |
+| Node policy/state regression | `npm run check` · 26/26 tests |
 | Browser core self-check | 24/24 |
+| Viewport regression | `npm run test:viewport` · Axis Lines/XYZ gizmo 분리, Proxy drag/Undo, FFD→Proxy pick, 1024px PASS |
 | Reference display acceptance | 공식 Three.js FBX Import → MatCap Silver, 다중 OBJ Mesh별 visibility/material/texture, Wire Overlay 확인 |
 | Selection acceptance | Point 3→2→1→0 Ctrl/⌘ 토글, Curve 2→1→0 행 토글, 일반 클릭 복귀 확인 |
 | Persistence acceptance | Viewport 환경과 다중 Curve/Point 선택을 Recovery 후 복원 |
@@ -36,6 +37,17 @@ Hair Card MVP의 Bézier 편집과 Curve-to-Mesh 생성에 더해 버전형 프�
 | GitHub | 기본 브랜치 `master` Validate 성공 |
 
 아래 Cycle 1의 7/7·22/22 수치는 당시 안정화 사이클의 역사적 증거이며, 현재 총계는 위 표를 사용한다.
+
+## Maintenance audit · 2026-08-09
+
+| ID | Severity | Finding | Resolution | Permanent gate |
+| --- | --- | --- | --- | --- |
+| M-001 | P1 | `Axis Lines OFF`가 긴 guide뿐 아니라 기본 Translate XYZ helper까지 숨겼다. | `axisGuidesEnabled`를 custom `axisGuideGroup` visibility/raycast에만 사용하고 TransformControls helper를 분리했다. | Node/self-test 정책 + `npm run test:viewport` runtime helper assertion |
+| M-002 | P1 | FFD/Edit의 잠정 Region handler가 click도 소비해 다른 Proxy의 Viewport 선택을 막았다. | 이동 임계값 미만은 `finishSelectionRegion()`에서 Scene picking으로 전달한다. | FFD `Sphere002 → Box001` click-through browser regression |
+| M-003 | P1 | Control 직접 drag는 있었지만 Proxy Object `W` 표면 drag 경로가 없었다. | Object/Control이 `beginDirectViewportMove()` History 경계를 공유하도록 확장하고 Esc/Undo 복원을 추가했다. | Proxy position 변화 + one-step Undo browser regression |
+| M-004 | P2 | 제품 감사·기준선 문서의 revision, 테스트 수, Axis 설명과 모듈 목록이 현재 코드보다 오래됐다. | 현재 revision/26개 Node 계약/24개 self-check/Viewport CI gate 및 신규 모듈로 문서를 동기화했다. | 문서 유지 규칙, symbol/DOM anchor 대조, 동일 커밋 문서 갱신 |
+
+이번 감사에서 새 P0 또는 미해결 P1은 발견되지 않았다. 다만 Viewport 포인터 동작은 DOM 없는 Node 테스트만으로 충분히 보호할 수 없으므로 Chromium 회귀 job을 필수 게이트로 유지한다.
 
 ## Cycle 1
 
@@ -99,6 +111,8 @@ Hair Card MVP의 Bézier 편집과 Curve-to-Mesh 생성에 더해 버전형 프�
 | Reference 모델 binary는 프로젝트 JSON에 포함되지 않는다. | 프로젝트 재개 시 표면 배치 기준을 다시 선택해야 한다. | 파일명과 재연결 안내를 보존하고 향후 asset package 설계 | Reference가 필수 제작 입력이 되는 시점 |
 | Reference Mesh별 visibility/material/수동 texture는 세션 전용이다. | 프로젝트를 다시 열면 Reference를 재Import하고 외부 texture를 다시 지정해야 한다. | 전역 display만 저장하고 UI에 session 경계를 명시 | Reference asset package 설계 시점 |
 | ASCII FBX round-trip이 자동 검증되지 않는다. | 일부 DCC에서 normal/UV 해석 차이 가능 | Experimental 표기 유지, OBJ 우선 사용 | Blender/3ds Max fixture 환경 확보 |
+| Viewport 자동 검사는 Three.js CDN과 Chromium 설치에 의존한다. | 네트워크/브라우저 설치 장애가 기능 회귀와 무관하게 CI를 실패시킬 수 있다. | Core job과 Viewport job을 분리하고 로컬 `npm run test:viewport` 결과를 함께 확인 | 오프라인 Three.js 번들 도입 시 |
+| Proxy Object는 단일 active 선택만 지원한다. | Object 수준 Window/Crossing 다중 선택·일괄 변환은 불가 | 현재 Region 범위를 Curve Point/FFD Control로 명시 | Proxy 반복 배치 작업에서 다중 편집 요구가 확인될 때 |
 
 ## Future capability backlog
 

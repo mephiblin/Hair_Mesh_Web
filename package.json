@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "test": "node tests/core-tests.mjs",
-    "check": "npm test && node --check src/**/*.js"
+    "test:viewport": "node tests/viewport-regression.mjs",
+    "check": "npm test && node --check src/**/*.js && node --check tests/viewport-regression.mjs"
   },
   "devDependencies": {
     "playwright": "^1.62.1"

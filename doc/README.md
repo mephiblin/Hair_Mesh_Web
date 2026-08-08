@@ -1,6 +1,6 @@
 # 개발 문서 색인
 
-> 현재 구현 기준: 기본 브랜치 `master`, 2026-08-08 기능 상태. 문서의 줄 번호보다 함수명·DOM ID·모듈 경로를 우선합니다.
+> 현재 구현 기준: 기본 브랜치 `master`, 2026-08-09 기능 상태. 문서의 줄 번호보다 함수명·DOM ID·모듈 경로를 우선합니다.
 
 이 폴더는 Hair Mesh Web에서 **수정할 기능의 코드 위치를 빨리 찾고, 주변 상태 흐름과 회귀 위험을 함께 확인**하기 위한 개발자 문서입니다. 사용자 작업 기준으로 찾는 task-first 구조를 사용합니다.
 
@@ -51,5 +51,6 @@ rg -n "project document|history" tests src
 - 상태 구조 또는 저장 형식 변경: `DEVELOPMENT_GUIDE.md`와 프로젝트 버전/테스트
 - 새 모듈 추가 또는 책임 이동: 두 개발 문서의 구조·소유권 표
 - 기능 계약/검증 변경: 해당 `features/*.md`와 `CODEX_INDEX.md` 라우터
+- Viewport pointer/gizmo 변경: `features/viewport-ui.md`, `tests/viewport-regression.mjs`, 저장소 Skill의 수용 게이트
 - 실행 조건/명령 변경: 루트 `README.md`
 - 제품 범위/로드맵 변경: `docs/product-audit/recursive-audit.md`

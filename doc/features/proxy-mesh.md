@@ -91,6 +91,8 @@ proxy
 - `Edit Control Points`는 선택 modifier의 lattice만 표시한다. LMB 클릭은 단일 선택, Ctrl/⌘ 클릭은 추가/해제 토글, Alt 클릭은 제외다.
 - 빈 곳에서 LMB를 드래그하면 사각 영역을 만든다. 좌→우는 완전히 포함된 control만 고르는 Window, 우→좌는 닿는 control도 고르는 Crossing이다. Ctrl은 기존 선택에 추가하고 Alt는 제외한다.
 - 선택된 Control 하나를 직접 LMB 드래그하면 View Plane에서 전체 선택을 함께 이동한다. Move gizmo와 긴 Axis Line은 좌표계 축 제약 이동을 담당한다.
+- Proxy Object `W` mode에서는 solid/edge 표면 drag가 root transform을 View Plane에서 이동한다. `Axis Lines` OFF는 긴 제약선만 숨기며 기본 XYZ gizmo와 Proxy 표면 drag는 유지한다.
+- FFD mode에서 Control이 아닌 Proxy/Curve 표면을 click하면 Scene object 선택으로 전달한다. Region의 click/drag 분기를 합치면 다른 Proxy 선택이 막히므로 `finishSelectionRegion()`의 click fallback을 유지한다.
 - 다중 선택 기즈모는 control 평균 위치에 나타나며 모든 선택 offset에 같은 local delta를 적용한다. E/R은 Proxy root를 회전/스케일하지 않는다.
 - FFD 모드의 `Delete`는 Proxy나 control을 지우지 않는다. Control 수는 resolution 계약이므로 `Reset FFD` 또는 `Remove Modifier`를 사용한다.
 - `Reset FFD`는 선택 modifier의 모든 offset만 0으로 만들고 다른 stack 항목은 유지한다.
@@ -131,11 +133,13 @@ UI의 `min/max`는 안내이며 실제 안전 경계는 순수 normalize 함수�
 - Window/Crossing 방향, Ctrl 추가/클릭 토글, Alt 제외, Ctrl+A 전체 선택이 2/4/8 lattice 모두에서 유효한가?
 - 다중 선택을 직접/기즈모로 이동할 때 모든 선택 offset만 같은 delta를 받고 한 Undo로 원복되는가?
 - Export가 Base가 아닌 최종 stack topology를 bake하는가?
+- `Axis Lines` OFF에서 기본 XYZ gizmo가 보이고 입력 가능하며, Proxy 표면 drag와 FFD 상태의 다른 Proxy click 선택이 함께 유지되는가?
 
 ## 검증 기준
 
 - Node: 4종 primitive clamp/topology/winding, FFD resolution/identity/Bernstein 변형/stack order/disabled, project modifier round-trip.
 - Browser: Proxy Object 표면 직접 Move drag와 한 단계 Undo, Axis Lines OFF의 기본 XYZ gizmo 유지, FFD 상태에서 다른 Proxy viewport 선택, FFD 2/4/8 추가, Window/Crossing과 Ctrl/Alt 선택, 다중 직접/gizmo drag, 한 단계 Undo/Redo, ON/OFF 모드 이탈, reorder/reset/remove, Delete 안전장치, Clone 독립 ID, Save/Open/Recovery.
+- Automated browser gate: `tests/viewport-regression.mjs` / `npm run test:viewport`를 pointer·gizmo 변경마다 실행한다.
 - Surface: Reference 없이 Proxy만 있는 장면에서 Surface option 활성화, 2 Point Line 생성 완료.
 - Export: FFD로 이동한 vertex가 OBJ/FBX 최종 geometry에 포함되고 여러 Proxy object가 분리되는지 확인.
 - Visual: 1600×900과 1024×768에서 Primitive/Modifier rollout, 2×2×2와 8×8×8 lattice, Scene Explorer와 viewport clipping 확인.

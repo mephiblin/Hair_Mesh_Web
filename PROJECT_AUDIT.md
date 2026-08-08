@@ -1,6 +1,6 @@
 # Curve Mesh Hair Tool v4 구현 감사
 
-> **보관 문서 · 현재 상태 2026-08-08:** 아래 본문은 원본 프로토타입의 문제를 기록한 기준선 감사이며 현재 제품 상태가 아닙니다. 해결 작업은 기본 브랜치 `master`에 통합되었고 임시 작업 브랜치는 제거되었습니다. 현재 계약과 검증 결과는 [`doc/CODEX_INDEX.md`](./doc/CODEX_INDEX.md), [`doc/features/`](./doc/features/), [`docs/product-audit/recursive-audit.md`](./docs/product-audit/recursive-audit.md)를 우선하십시오. 본문의 과거 줄 번호 링크는 증거 기록일 뿐 현재 탐색 앵커로 사용하지 않습니다.
+> **보관 문서 · 현재 상태 2026-08-09:** 아래 본문은 원본 프로토타입의 문제를 기록한 기준선 감사이며 현재 제품 상태가 아닙니다. 해결 작업은 기본 브랜치 `master`에 통합되었고 임시 작업 브랜치는 제거되었습니다. 현재 계약과 검증 결과는 [`doc/CODEX_INDEX.md`](./doc/CODEX_INDEX.md), [`doc/features/`](./doc/features/), [`docs/product-audit/recursive-audit.md`](./docs/product-audit/recursive-audit.md)를 우선하십시오. 본문의 과거 줄 번호 링크는 증거 기록일 뿐 현재 탐색 앵커로 사용하지 않습니다.
 
 ## 현재 해결 상태 요약
 
@@ -11,7 +11,9 @@
 | 표시 설정 미저장 | MatCap, Reference Wire, Viewport 배경/FOV/Grid/조명을 display snapshot에 저장 |
 | 어두운 Reference와 재질 관리 부족 | Auto/Default Lit, Mesh별 표시·재질·수동 텍스처 구현 |
 | Point/Curve 선택 부족 | Anchor 및 Scene Curve 행 Ctrl/⌘ 토글, 0개 선택, Recovery 복원 구현 |
-| Surface + Wire 깜빡임/Axis Lines OFF 간섭 | Surface depth bias와 Translate helper/pick 차단으로 해결 |
+| Proxy 목업·누락 표면 지원 부족 | 4종 primitive, 비파괴 parameter, FFD 2/4/8 stack, Surface 배치와 최종 topology Export 구현 |
+| Viewport DCC 조작 부족 | 3ds Max식 MMB/Alt+MMB/Ctrl+Alt+MMB, Control Region·다중 Move, Proxy 표면 직접 Move 구현 |
+| Surface + Wire 깜빡임/Axis Lines OFF 간섭 | Surface depth bias 적용. Axis Lines는 긴 guide/raycast만 끄고 기본 XYZ gizmo는 유지하도록 분리했으며 자동 Viewport 회귀 검사 추가 |
 
 아래 1절 이후의 판정과 수치는 2026-08-07 당시 기준선 기록으로 유지합니다.
 

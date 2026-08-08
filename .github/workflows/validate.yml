@@ -14,4 +14,16 @@ jobs:
           node-version: 22
       - run: npm test
       - run: node --check src/**/*.js
+      - run: node --check tests/viewport-regression.mjs
       - run: python3 launch_server.py --help
+  viewport:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:viewport

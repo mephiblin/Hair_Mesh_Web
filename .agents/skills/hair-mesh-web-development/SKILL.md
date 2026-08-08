@@ -64,6 +64,8 @@ For runtime/UI changes, also:
 3. Open the URL with `?selftest=1` and inspect `globalThis.__CURVE_TOOL_SELF_TEST__` when relevant.
 4. Exercise the routed manual acceptance scenarios in `doc/CODEX_INDEX.md` and the feature document.
 
+For viewport pointer, gizmo, mode, or Proxy interaction changes, run `npm run test:viewport`. Preserve these independent contracts: `Axis Lines` controls only the long custom guide/raycast layer while the standard XYZ TransformControls helper stays visible and interactive; Proxy `W` surface drag remains available; and click-only Region input in FFD/Edit falls through to Scene object picking.
+
 For Proxy/FFD changes, acceptance must include Window/Crossing plus Ctrl/Alt control selection, a real multi-control direct or gizmo drag, one-step Undo/Redo, stack ON/OFF or reorder, project round-trip, Proxy-only Surface Line placement, and final baked Export topology. For viewport-input changes, also verify MMB Pan, Alt+MMB Orbit, Ctrl+Alt+MMB Zoom, wheel zoom, and that object/control picking still works.
 
 Report checks actually run. Keep commit and push actions conditional on explicit user authorization.

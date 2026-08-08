@@ -45,7 +45,7 @@ Reference Plane은 Curve mode와 별개의 `translate | rotate | scale | none` �
 
 ## 3ds Max 입력 계약
 
-- LMB는 선택과 Control 직접 이동에만 사용하며 카메라 회전에 쓰지 않는다.
+- LMB는 Object/Control 선택, Region, Control·Proxy 직접 이동에 사용하며 카메라 회전에 쓰지 않는다.
 - MMB drag는 Pan, Alt+MMB drag는 Orbit, Ctrl+Alt+MMB drag는 Zoom이다. Wheel Zoom도 유지한다.
 - `Q`는 Select/Object mode, `W/E/R`은 Move/Rotate/Scale, `Z`는 Frame Selected다.
 - FFD와 Curve Anchor의 빈 영역 LMB drag는 Rectangle Region이다. 좌→우 Window, 우→좌 Crossing 자동 방향을 사용한다.
@@ -53,6 +53,30 @@ Reference Plane은 Curve mode와 별개의 `translate | rotate | scale | none` �
 - Move 도구에서 선택 Control을 직접 drag하면 camera-facing plane을 따라 이동하며, 선택이 여러 개면 selection center gizmo와 같은 집합을 움직인다.
 - Proxy Object Move 모드에서 Proxy 표면을 직접 drag하면 camera-facing plane을 따라 root object가 이동한다. FFD/Edit에서 drag되지 않은 click은 Scene object 선택으로 전달해 다른 Proxy 선택을 막지 않는다.
 - Direct drag 도중 Esc/pointer cancel은 시작 snapshot으로 되돌리고 History entry를 취소한다.
+
+## 표시 계층 소유권
+
+| 표시/입력 | 소유 상태 | OFF 또는 숨김 의미 |
+| --- | --- | --- |
+| 기본 XYZ 화살표·평면·회전 링 | Three.js `TransformControls` helper | 선택/모드/편집 가능 여부가 없을 때만 숨김 |
+| 긴 XYZ 제약선 | `axisGuideGroup`, `axisGuideLines`, `axisGuidesEnabled` | `Axis Lines` OFF에서 선과 raycast만 비활성화 |
+| FFD lattice | 선택 Proxy의 active modifier | FFD mode·modifier ON·Proxy editable 조건이 없으면 숨김 |
+| Reference Plane gizmo | `referenceImageTransformControls` | Plane tool `none` 또는 다른 편집 mode에서 숨김 |
+
+`Axis Lines`는 기본 TransformControls의 master switch가 아니다. `shouldShowTransformHelper()`는 translate/rotate/scale operation만 판단하고, `axisGuidesEnabled`는 `syncAxisGuides()`와 `canInteractWithAxisGuides()`에만 전달한다. 이 경계를 합치면 Axis OFF에서 기본 XYZ 화살표까지 사라지는 회귀가 생긴다.
+
+## Pointer routing 회귀 계약
+
+| 현재 mode/시작 대상 | click | drag |
+| --- | --- | --- |
+| `orbit`의 Curve/Proxy | root object 선택 | 카메라가 LMB를 소비하지 않으며 object drag 없음 |
+| `transform` + `W`의 Proxy 표면 | Proxy 선택 유지/전환 | View Plane root Move, 한 History 단계 |
+| `ffd`의 lattice Control | 단일 또는 Ctrl/Alt membership | 선택 Control 집합 직접 Move |
+| `ffd`의 Proxy/Curve 표면 | `finishSelectionRegion()`이 Scene picking으로 전달 | 빈 영역이면 FFD Window/Crossing Region |
+| `edit`의 Anchor | 단일 또는 Ctrl/Alt membership | 선택 Point 집합 직접 Move |
+| `edit`의 Scene object 표면 | click-only 입력을 Scene picking으로 전달 | 빈 영역이면 Curve Point Window/Crossing Region |
+
+Region은 pointerdown에서 잠정 시작하므로 click/drag 분기는 반드시 release 시 이동 임계값으로 결정합니다. `finishSelectionRegion()`에서 click fallback을 제거하면 FFD/Edit mode가 Scene object selection을 삼키며, Proxy 표면 직접 Move 경로를 Control 전용으로 제한하면 `W`에서 Proxy drag가 다시 사라집니다.
 
 ## Camera projection 계약
 
@@ -104,4 +128,5 @@ Reference Plane은 Curve mode와 별개의 `translate | rotate | scale | none` �
 ## 검증
 
 - Self-test: visible-control pick policy, axis guide enabled/visible interaction policy, axis vector/plane/scalar.
+- 자동 Browser regression: `npm run test:viewport`가 `?selftest=1` 진단, Axis Lines OFF/기본 XYZ helper 분리, Proxy 표면 drag와 한 단계 Undo, FFD→다른 Proxy click-through, 1024×768 overflow와 runtime error를 검사한다.
 - Browser: 각 mode 전이, Curve/Proxy object·point·handle·FFD control·axis·Reference Plane picking, Window/Crossing/Ctrl/Alt region, FFD/Curve multi direct/gizmo Move, MMB Pan·Alt+MMB Orbit·Ctrl+Alt+MMB Zoom, drag cancel, input focus shortcut, hidden/locked protection, 객체별 Modify 전환, rollout 기본 닫힘·탭 왕복·페이지 재초기화, narrow viewport layout. Display 변경은 `viewport-display.md`의 수용 시나리오를 추가한다.
