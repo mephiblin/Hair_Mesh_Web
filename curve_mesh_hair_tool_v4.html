@@ -49,6 +49,7 @@ input[type=checkbox]{accent-color:var(--accent)}
 .rollout{margin:0 0 4px;border:1px solid #2a2a2a;background:#494949}.rollout-header{width:100%;height:24px;text-align:left;border:0;border-radius:0;background:#3a3a3a;padding:3px 6px;font-weight:600}.rollout-header:before{content:'▾';display:inline-block;width:14px}.rollout.collapsed .rollout-header:before{content:'▸'}.rollout.collapsed .rollout-body{display:none}.rollout-body{padding:7px}.rollout-body label{display:block;margin:5px 0 2px;color:#ddd}.checkrow{display:flex!important;align-items:center;gap:5px;margin:4px 0!important;color:#eee!important}.checkrow input{margin:0}.section-label{font-size:10px;color:#c9c9c9;margin:6px 0 2px}.selected-label{min-height:19px;padding:4px 5px;background:#373737;border:1px solid #666;color:var(--accent-strong);margin-bottom:5px}.primary{background:#4d7377;border-color:#9ccfd0;font-weight:600}.danger:hover{border-color:var(--danger)}.ok{color:var(--ok)}.warning{color:#ffd08a}.stat{margin-top:6px;padding:5px;border:1px solid #666;background:#363636;color:#ccc;font-size:10px;line-height:1.4}.scroll-list{max-height:150px;overflow:auto;background:#3a3a3a;border:1px solid #616161;padding:3px}.brush-item{display:block;width:100%;text-align:left;margin:1px 0}.brush-item.selected{background:#557071;border-color:var(--accent)}
 .kbd{display:inline-block;min-width:20px;text-align:center;padding:0 3px;border:1px solid #777;background:#2e2e2e}.live{font-size:10px;color:var(--ok);margin-top:5px}.statusbar{display:flex;align-items:center;padding:0 8px;background:#343434;border-top:1px solid #1f1f1f;color:#ddd;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.status-mode{margin-left:auto;color:var(--accent-strong);padding-left:12px}.mini-separator{height:1px;background:#2a2a2a;margin:7px 0}.point-nav{display:grid;grid-template-columns:30px 1fr 30px;gap:3px;margin-bottom:5px}.point-nav .index{display:flex;align-items:center;justify-content:center;background:#373737;border:1px solid #666}.range-header{display:flex!important;align-items:center;justify-content:space-between}.range-value{min-width:38px;text-align:right;color:var(--accent-strong);font-variant-numeric:tabular-nums}.range-control{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:6px;color:var(--muted);font-size:10px}
 .material-picker{display:grid;grid-template-columns:38px minmax(0,1fr);gap:7px;align-items:center;margin:5px 0;padding:5px;background:#3d3d3d;border:1px solid #626262}.material-picker label{margin:0!important}.material-preview{width:32px;height:32px;border-radius:50%;border:1px solid rgba(255,255,255,.35);box-shadow:inset -6px -8px 12px rgba(0,0,0,.42),0 1px 0 #1d1d1d;justify-self:center}.material-picker small{display:block;margin-top:3px;color:var(--muted);font-size:10px}
+.reference-object-list{max-height:150px;overflow:auto;background:#363636;border:1px solid #616161;padding:3px}.reference-object-row{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:3px;align-items:center;margin:1px 0}.reference-object-row.selected .reference-object-select{background:#557071;border-color:#9bcaca}.reference-object-row.hidden-object{opacity:.55}.reference-object-select{min-width:0;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.reference-object-mode{max-width:92px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:10px}.texture-status{min-height:34px;display:flex;align-items:center;gap:7px;padding:5px;margin-top:5px;background:#363636;border:1px solid #616161;color:var(--muted);overflow:hidden}.texture-swatch{width:28px;height:28px;flex:0 0 28px;background:linear-gradient(135deg,#595959 25%,#303030 25% 50%,#595959 50% 75%,#303030 75%);background-size:12px 12px;border:1px solid #777;object-fit:cover}.texture-status span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media(max-width:1080px){.editor-shell{grid-template-rows:72px minmax(0,1fr) 24px}.topbar{height:72px;align-content:center;flex-wrap:wrap;overflow:visible}.workspace{grid-template-columns:200px minmax(300px,1fr) 320px}.brand,.tool-label,.project-state{display:none}.viewport-badge{top:auto;bottom:8px}.hint{max-width:calc(100% - 16px)}}
 @media(max-width:820px){html,body{overflow:auto}.editor-shell{height:auto;min-height:100vh;grid-template-rows:auto 1fr auto}.topbar{flex-wrap:wrap}.workspace{grid-template-columns:1fr;grid-template-rows:240px 62vh auto}.scene-panel{border-right:0}.command-panel{border-left:0}.viewport-wrap{grid-row:2}.command-panel{grid-row:3;height:650px}}
 </style>
@@ -248,7 +249,7 @@ input[type=checkbox]{accent-color:var(--accent)}
               </div>
               <div class="material-picker">
                 <div id="referenceMaterialPreview" class="material-preview" aria-hidden="true"></div>
-                <label>Reference Model<select id="referenceMaterialPreset"><option value="original" selected>Original Imported</option><option value="studio-clay">MatCap · Studio Clay</option><option value="red-wax">MatCap · Red Wax</option><option value="silver">MatCap · Silver</option><option value="normal-check">Normal Check</option><option value="classic-teal">Classic Teal</option></select><small>Import한 OBJ / FBX / GLB / GLTF 표시</small></label>
+                <label>Reference Model<select id="referenceMaterialPreset"><option value="auto" selected>Auto · Imported / Default Lit</option><option value="original">Original Imported</option><option value="default-lit">Default Lit</option><option value="studio-clay">MatCap · Studio Clay</option><option value="red-wax">MatCap · Red Wax</option><option value="silver">MatCap · Silver</option><option value="normal-check">Normal Check</option><option value="classic-teal">Classic Teal</option></select><small>텍스처 원본은 유지하고, 텍스처 없는 검은 재질은 밝게 보정</small></label>
               </div>
               <p id="materialPresetHelp" class="muted">MatCap은 조명과 무관하게 형태를 또렷하게 보여줍니다. Export 형상에는 영향을 주지 않습니다.</p>
             </div>
@@ -263,21 +264,23 @@ input[type=checkbox]{accent-color:var(--accent)}
             </div>
           </div>
           <div class="rollout">
-            <button class="rollout-header" type="button">Lighting</button>
-            <div class="rollout-body">
-              <div class="coords2">
-                <label>Horizontal · Azimuth<input id="lightAzimuth" type="number" min="-180" max="180" step="1" value="37" /></label>
-                <label>Vertical · Elevation<input id="lightElevation" type="number" min="-89" max="89" step="1" value="45" /></label>
-              </div>
-              <label>Directional Intensity<input id="lightIntensity" type="number" min="0" max="20" step="0.1" value="2.2" /></label>
-              <button id="resetLightingBtn" class="wide" type="button" style="margin-top:5px">Reset Directional Light</button>
-              <p class="muted">Classic Teal과 Original Imported에 적용됩니다. MatCap은 자체 조명을 사용합니다.</p>
-            </div>
-          </div>
-          <div class="rollout">
             <button class="rollout-header" type="button">Reference Display</button>
             <div class="rollout-body">
               <label>Reference Opacity<input id="modelOpacity" type="number" min="0" max="1" step="0.05" value="1" /></label>
+            </div>
+          </div>
+          <div class="rollout">
+            <button class="rollout-header" type="button">Reference Objects</button>
+            <div class="rollout-body">
+              <div id="referenceObjectList" class="reference-object-list muted">Reference 모델을 불러오면 Mesh별로 표시됩니다.</div>
+              <div id="referenceObjectInspector" style="margin-top:6px">
+                <div id="referenceObjectSelection" class="selected-label">No object selected</div>
+                <label>Object Material<select id="referenceObjectMaterialMode" disabled><option value="inherit">Use Global Reference Material</option><option value="auto">Auto · Imported / Default Lit</option><option value="original">Original Imported</option><option value="default-lit">Default Lit</option><option value="studio-clay">MatCap · Studio Clay</option><option value="red-wax">MatCap · Red Wax</option><option value="silver">MatCap · Silver</option><option value="normal-check">Normal Check</option><option value="classic-teal">Classic Teal</option><option value="texture">Texture File</option></select></label>
+                <label>Color Texture<input id="referenceTextureFile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,.png,.jpg,.jpeg,.webp,.svg" disabled /></label>
+                <div class="row"><button id="clearReferenceTextureBtn" type="button" disabled>Clear Texture</button><button id="frameReferenceObjectBtn" type="button" disabled>Frame Object</button></div>
+                <div class="texture-status"><img id="referenceTexturePreview" class="texture-swatch hidden" alt="선택한 텍스처 미리보기" /><span id="referenceTextureStatus">선택된 오브젝트가 없습니다.</span></div>
+                <p class="muted">오브젝트별 표시와 재질은 현재 Import 세션에 적용됩니다. 이미지 텍스처에는 UV가 필요합니다.</p>
+              </div>
             </div>
           </div>
           <div class="rollout">
@@ -289,9 +292,25 @@ input[type=checkbox]{accent-color:var(--accent)}
             </div>
           </div>
           <div class="rollout">
-            <button class="rollout-header" type="button">Grid</button>
+            <button class="rollout-header" type="button">Viewport</button>
             <div class="rollout-body">
+              <div class="coords2">
+                <label>Background<input id="viewportBackground" type="color" value="#101317" /></label>
+                <label>Camera FOV<input id="cameraFov" type="number" min="15" max="120" step="1" value="45" /></label>
+              </div>
               <label class="checkrow"><input id="gridVisible" type="checkbox" checked /> Show Ground Grid</label>
+              <div class="mini-separator"></div>
+              <div class="section-label">Lighting</div>
+              <div class="coords2">
+                <label>Horizontal · Azimuth<input id="lightAzimuth" type="number" min="-180" max="180" step="1" value="37" /></label>
+                <label>Vertical · Elevation<input id="lightElevation" type="number" min="-89" max="89" step="1" value="45" /></label>
+              </div>
+              <div class="coords2">
+                <label>Directional<input id="lightIntensity" type="number" min="0" max="20" step="0.1" value="2.2" /></label>
+                <label>Environment Fill<input id="fillLightIntensity" type="number" min="0" max="20" step="0.1" value="2.2" /></label>
+              </div>
+              <button id="resetLightingBtn" class="wide" type="button" style="margin-top:5px">Reset Lighting</button>
+              <p class="muted">Standard/Original 재질에 적용됩니다. MatCap은 자체 조명을 사용합니다.</p>
             </div>
           </div>
         </section>
@@ -348,10 +367,18 @@ import {
   viewportMaterialDefinition
 } from './src/viewport/material-presets.js';
 import {
+  normalizeReferenceObjectMaterialMode,
+  referenceOriginalNeedsFallback,
+  resolveReferenceMaterialMode
+} from './src/viewport/reference-object-policy.js';
+import {
   DEFAULT_DIRECTIONAL_LIGHT,
   directionalLightPosition,
   normalizeDirectionalLightSettings
 } from './src/viewport/lighting.js';
+import {
+  normalizeViewportSettings
+} from './src/viewport/viewport-settings.js';
 import {
   REFERENCE_WIRE_DEFAULTS,
   normalizeReferenceWireColor,
@@ -395,7 +422,8 @@ transformControls.setSpace('local');
 scene.add(transformControls.getHelper());
 transformControls.getHelper().visible = false;
 
-scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 2.2));
+const fillLight = new THREE.HemisphereLight(0xffffff, 0x444444, DEFAULT_DIRECTIONAL_LIGHT.fillIntensity);
+scene.add(fillLight);
 const keyLight = new THREE.DirectionalLight(0xffffff, 2.2);
 keyLight.position.set(3, 5, 4);
 scene.add(keyLight);
@@ -415,9 +443,15 @@ const RECOVERY_KEY = 'hair-mesh-web:recovery:v1';
 const REFERENCE_ORIGINAL_MATERIAL = 'hairMeshOriginalMaterial';
 const REFERENCE_OVERRIDE_MATERIAL = 'hairMeshOverrideMaterial';
 const REFERENCE_OVERRIDE_PRESET = 'hairMeshOverridePreset';
+const REFERENCE_OBJECT_MATERIAL_MODE = 'hairMeshObjectMaterialMode';
+const REFERENCE_TEXTURE = 'hairMeshColorTexture';
+const REFERENCE_TEXTURE_MATERIAL = 'hairMeshTextureMaterial';
+const REFERENCE_TEXTURE_NAME = 'hairMeshTextureName';
+const REFERENCE_OBJECT_ID = 'hairMeshObjectId';
 const REFERENCE_WIRE_OBJECT = 'hairMeshWireObject';
 const matcapTextureCache = new Map();
 const referenceSurfaceDepthState = new WeakMap();
+const referenceMaterialSurfaceState = new WeakMap();
 const axisGuideGroup = new THREE.Group();
 axisGuideGroup.name = 'MoveAxisGuides';
 axisGuideGroup.visible = false;
@@ -434,6 +468,8 @@ const axisGuideLines = Object.entries(AXIS_COLORS).map(([axis, color]) => {
   return line;
 });
 let surfaceMeshes = [];
+let selectedReferenceMesh = null;
+let nextReferenceObjectId = 1;
 let modelDiagonal = 1;
 let handleRadius = .015;
 let curves = [];
@@ -532,11 +568,22 @@ function disposeMaterial(material, disposed = new Set()) {
 }
 function disposeTree(obj) {
   const disposed = new Set();
+  const disposedTextures = new Set();
   obj?.traverse?.(child => {
     child.geometry?.dispose?.();
+    [child.material, child.userData?.[REFERENCE_ORIGINAL_MATERIAL], child.userData?.[REFERENCE_OVERRIDE_MATERIAL], child.userData?.[REFERENCE_TEXTURE_MATERIAL]].forEach(material => {
+      materialList(material).forEach(item => {
+        Object.values(item || {}).forEach(value => {
+          if (!value?.isTexture || disposedTextures.has(value) || [...matcapTextureCache.values()].includes(value)) return;
+          disposedTextures.add(value);
+          value.dispose?.();
+        });
+      });
+    });
     disposeMaterial(child.material, disposed);
     disposeMaterial(child.userData?.[REFERENCE_ORIGINAL_MATERIAL], disposed);
     disposeMaterial(child.userData?.[REFERENCE_OVERRIDE_MATERIAL], disposed);
+    disposeMaterial(child.userData?.[REFERENCE_TEXTURE_MATERIAL], disposed);
   });
 }
 function clearGroup(group) { while (group.children.length) { const c = group.children[group.children.length - 1]; group.remove(c); disposeTree(c); } }
@@ -613,9 +660,13 @@ function updateMaterialPreview(element, preset, options = {}) {
 }
 function applyMaterialSurfaceOptions(material, opacity) {
   materialList(material).forEach(item => {
-    item.opacity = opacity;
-    item.transparent = opacity < .999;
-    item.depthWrite = opacity >= .999;
+    if (!referenceMaterialSurfaceState.has(item)) {
+      referenceMaterialSurfaceState.set(item, { opacity:item.opacity, transparent:item.transparent, depthWrite:item.depthWrite });
+    }
+    const original = referenceMaterialSurfaceState.get(item);
+    item.opacity = original.opacity * opacity;
+    item.transparent = original.transparent || item.opacity < .999 || item.alphaTest > 0;
+    item.depthWrite = item.opacity >= .999 ? original.depthWrite : false;
     if ('wireframe' in item) item.wireframe = false;
     item.needsUpdate = true;
   });
@@ -642,7 +693,7 @@ function selectedHairMaterialPreset() {
   return preset;
 }
 function selectedReferenceMaterialPreset() {
-  const preset = normalizeViewportMaterialPreset($('referenceMaterialPreset')?.value, { allowOriginal:true, fallback:REFERENCE_MATERIAL_FALLBACK });
+  const preset = normalizeViewportMaterialPreset($('referenceMaterialPreset')?.value, { allowOriginal:true, allowAuto:true, fallback:REFERENCE_MATERIAL_FALLBACK });
   if ($('referenceMaterialPreset')) $('referenceMaterialPreset').value = preset;
   return preset;
 }
@@ -689,11 +740,13 @@ function currentDirectionalLightSettings() {
     azimuth: $('lightAzimuth')?.value,
     elevation: $('lightElevation')?.value,
     intensity: $('lightIntensity')?.value,
+    fillIntensity: $('fillLightIntensity')?.value,
     distance: DEFAULT_DIRECTIONAL_LIGHT.distance
   });
   $('lightAzimuth').value = String(settings.azimuth);
   $('lightElevation').value = String(settings.elevation);
   $('lightIntensity').value = String(settings.intensity);
+  $('fillLightIntensity').value = String(settings.fillIntensity);
   return settings;
 }
 function applyLightingDisplay() {
@@ -701,6 +754,7 @@ function applyLightingDisplay() {
   const position = directionalLightPosition(settings);
   keyLight.position.set(position.x, position.y, position.z);
   keyLight.intensity = settings.intensity;
+  fillLight.intensity = settings.fillIntensity;
   keyLight.target.position.set(0,0,0);
   keyLight.updateMatrixWorld(true);
   keyLight.target.updateMatrixWorld(true);
@@ -709,9 +763,26 @@ function resetLightingDisplay() {
   $('lightAzimuth').value = String(DEFAULT_DIRECTIONAL_LIGHT.azimuth);
   $('lightElevation').value = String(DEFAULT_DIRECTIONAL_LIGHT.elevation);
   $('lightIntensity').value = String(DEFAULT_DIRECTIONAL_LIGHT.intensity);
+  $('fillLightIntensity').value = String(DEFAULT_DIRECTIONAL_LIGHT.fillIntensity);
   applyLightingDisplay();
   markProjectChanged();
-  setStatus('Directional Light를 기본 방향과 강도로 초기화했습니다.');
+  setStatus('Directional Light와 Environment Fill을 기본값으로 초기화했습니다.');
+}
+function currentViewportSettings() {
+  const settings = normalizeViewportSettings({
+    background: $('viewportBackground')?.value,
+    cameraFov: $('cameraFov')?.value
+  });
+  $('viewportBackground').value = settings.background;
+  $('cameraFov').value = String(settings.cameraFov);
+  return settings;
+}
+function applyViewportDisplay() {
+  const settings = currentViewportSettings();
+  scene.background = new THREE.Color(settings.background);
+  camera.fov = settings.cameraFov;
+  camera.updateProjectionMatrix();
+  grid.visible = $('gridVisible').checked;
 }
 function applyHairMaterialDisplay() {
   const preset = selectedHairMaterialPreset();
@@ -752,6 +823,128 @@ function fitObject(object) {
 }
 
 
+function referenceMaterialDescriptors(material) {
+  return materialList(material).map(item => {
+    const color = item?.color;
+    const emissive = item?.emissive;
+    return {
+      hasColorTexture: !!item?.map,
+      hasEmissiveTexture: !!item?.emissiveMap,
+      colorLuminance: color ? color.r * .2126 + color.g * .7152 + color.b * .0722 : 1,
+      emissiveLuminance: emissive ? (emissive.r * .2126 + emissive.g * .7152 + emissive.b * .0722) * (item.emissiveIntensity ?? 1) : 0
+    };
+  });
+}
+function referenceMeshName(mesh, index = surfaceMeshes.indexOf(mesh)) {
+  return mesh?.name?.trim() || mesh?.parent?.name?.trim() || `Mesh ${index + 1}`;
+}
+function referenceObjectModeLabel(mesh) {
+  const mode = normalizeReferenceObjectMaterialMode(mesh?.userData?.[REFERENCE_OBJECT_MATERIAL_MODE]);
+  if (mode === 'inherit') return 'Global';
+  if (mode === 'texture') return mesh.userData[REFERENCE_TEXTURE_NAME] || 'Texture';
+  return viewportMaterialDefinition(mode, { allowOriginal:true, allowAuto:true }).label;
+}
+function selectedReferenceObjectMode() {
+  return normalizeReferenceObjectMaterialMode(selectedReferenceMesh?.userData?.[REFERENCE_OBJECT_MATERIAL_MODE]);
+}
+function updateReferenceObjectInspector() {
+  const mesh = surfaceMeshes.includes(selectedReferenceMesh) ? selectedReferenceMesh : null;
+  const controls = [$('referenceObjectMaterialMode'), $('referenceTextureFile'), $('clearReferenceTextureBtn'), $('frameReferenceObjectBtn')];
+  controls.forEach(control => { control.disabled = !mesh; });
+  $('referenceObjectSelection').textContent = mesh ? referenceMeshName(mesh) : 'No object selected';
+  $('referenceObjectMaterialMode').value = mesh ? selectedReferenceObjectMode() : 'inherit';
+  const textureName = mesh?.userData?.[REFERENCE_TEXTURE_NAME];
+  const previewData = mesh?.userData?.hairMeshTexturePreview;
+  $('referenceTextureStatus').textContent = mesh
+    ? textureName ? `${textureName}${mesh.geometry?.getAttribute('uv') ? '' : ' · UV 없음'}` : '텍스처를 선택하거나 Import 원본을 사용하세요.'
+    : '선택된 오브젝트가 없습니다.';
+  $('referenceTexturePreview').classList.toggle('hidden', !previewData);
+  if (previewData) $('referenceTexturePreview').src = previewData;
+  else $('referenceTexturePreview').removeAttribute('src');
+  $('clearReferenceTextureBtn').disabled = !mesh || !mesh.userData[REFERENCE_TEXTURE];
+}
+function refreshReferenceObjectUI() {
+  const list = $('referenceObjectList');
+  list.replaceChildren();
+  if (!surfaceMeshes.length) {
+    list.textContent = 'Reference 모델을 불러오면 Mesh별로 표시됩니다.';
+    list.classList.add('muted');
+    selectedReferenceMesh = null;
+    updateReferenceObjectInspector();
+    return;
+  }
+  list.classList.remove('muted');
+  surfaceMeshes.forEach((mesh, index) => {
+    const row = document.createElement('div');
+    row.className = `reference-object-row${mesh === selectedReferenceMesh ? ' selected' : ''}${mesh.visible ? '' : ' hidden-object'}`;
+    const visibility = document.createElement('button');
+    visibility.type = 'button'; visibility.textContent = mesh.visible ? '●' : '○'; visibility.title = mesh.visible ? 'Hide object' : 'Show object';
+    visibility.dataset.referenceVisibility = String(mesh.userData[REFERENCE_OBJECT_ID]);
+    const select = document.createElement('button');
+    select.type = 'button'; select.className = 'reference-object-select'; select.textContent = referenceMeshName(mesh, index); select.title = select.textContent;
+    select.dataset.referenceObject = String(mesh.userData[REFERENCE_OBJECT_ID]);
+    const material = document.createElement('span');
+    material.className = 'reference-object-mode'; material.textContent = referenceObjectModeLabel(mesh); material.title = material.textContent;
+    row.append(visibility, select, material); list.appendChild(row);
+  });
+  updateReferenceObjectInspector();
+}
+function selectReferenceMesh(mesh) {
+  selectedReferenceMesh = surfaceMeshes.includes(mesh) ? mesh : null;
+  refreshReferenceObjectUI();
+}
+function clearReferenceTexture(mesh, { refresh = true } = {}) {
+  if (!mesh) return;
+  disposeMaterial(mesh.userData[REFERENCE_TEXTURE_MATERIAL]);
+  mesh.userData[REFERENCE_TEXTURE]?.dispose?.();
+  mesh.userData[REFERENCE_TEXTURE] = null;
+  mesh.userData[REFERENCE_TEXTURE_MATERIAL] = null;
+  mesh.userData[REFERENCE_TEXTURE_NAME] = '';
+  mesh.userData.hairMeshTexturePreview = '';
+  if (normalizeReferenceObjectMaterialMode(mesh.userData[REFERENCE_OBJECT_MATERIAL_MODE]) === 'texture') {
+    mesh.userData[REFERENCE_OBJECT_MATERIAL_MODE] = 'inherit';
+  }
+  applyModelDisplay();
+  if (refresh) refreshReferenceObjectUI();
+}
+async function loadReferenceTexture(file) {
+  const mesh = selectedReferenceMesh;
+  if (!mesh || !file) return;
+  const url = URL.createObjectURL(file);
+  try {
+    const texture = await new THREE.TextureLoader().loadAsync(url);
+    if (!surfaceMeshes.includes(mesh)) { texture.dispose(); return; }
+    clearReferenceTexture(mesh, { refresh:false });
+    texture.name = `ReferenceTexture_${file.name}`;
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+    texture.needsUpdate = true;
+    const material = new THREE.MeshStandardMaterial({
+      color:0xffffff, map:texture, roughness:.65, metalness:0, side:THREE.DoubleSide,
+      transparent:true, alphaTest:.01
+    });
+    material.name = `ReferenceTextureMaterial_${file.name}`;
+    mesh.userData[REFERENCE_TEXTURE] = texture;
+    mesh.userData[REFERENCE_TEXTURE_MATERIAL] = material;
+    mesh.userData[REFERENCE_TEXTURE_NAME] = file.name;
+    mesh.userData[REFERENCE_OBJECT_MATERIAL_MODE] = 'texture';
+    const reader = new FileReader();
+    reader.addEventListener('load', () => {
+      if (surfaceMeshes.includes(mesh)) { mesh.userData.hairMeshTexturePreview = String(reader.result || ''); updateReferenceObjectInspector(); }
+    }, { once:true });
+    reader.readAsDataURL(file);
+    applyModelDisplay(); refreshReferenceObjectUI();
+    const uvNote = mesh.geometry?.getAttribute('uv') ? '' : ' 단, 이 Mesh에는 UV가 없어 올바르게 매핑되지 않습니다.';
+    setStatus(`${referenceMeshName(mesh)}에 ${file.name} 텍스처를 적용했습니다.${uvNote}`);
+  } catch (error) {
+    console.error(error);
+    setStatus(`텍스처 로드 실패: ${error.message}`);
+  } finally {
+    URL.revokeObjectURL(url);
+    $('referenceTextureFile').value = '';
+  }
+}
+
 function normalizeMaterials(root) {
   root.traverse(child => {
     if (!child.isMesh) return;
@@ -760,6 +953,11 @@ function normalizeMaterials(root) {
     child.userData[REFERENCE_ORIGINAL_MATERIAL] = child.material;
     child.userData[REFERENCE_OVERRIDE_MATERIAL] = null;
     child.userData[REFERENCE_OVERRIDE_PRESET] = null;
+    child.userData[REFERENCE_OBJECT_MATERIAL_MODE] = 'inherit';
+    child.userData[REFERENCE_TEXTURE] = null;
+    child.userData[REFERENCE_TEXTURE_MATERIAL] = null;
+    child.userData[REFERENCE_TEXTURE_NAME] = '';
+    child.userData[REFERENCE_OBJECT_ID] = nextReferenceObjectId++;
   });
 }
 
@@ -776,7 +974,7 @@ function updateDrawTargetUI(preferSurface = false) {
 }
 
 async function loadModel(file) {
-  clearGroup(modelRoot); surfaceMeshes = [];
+  clearGroup(modelRoot); surfaceMeshes = []; selectedReferenceMesh = null; refreshReferenceObjectUI();
   const ext = file.name.split('.').pop().toLowerCase(), url = URL.createObjectURL(file);
   try {
     let object;
@@ -785,7 +983,7 @@ async function loadModel(file) {
     else if (ext === 'glb' || ext === 'gltf') {
       const gltf = await new Promise((res, rej) => new GLTFLoader().load(url, res, undefined, rej)); object = gltf.scene;
     } else throw new Error('지원하지 않는 형식입니다.');
-    normalizeMaterials(object); modelRoot.add(object); fitObject(modelRoot); applyModelDisplay(); updateDrawTargetUI(true);
+    normalizeMaterials(object); modelRoot.add(object); selectedReferenceMesh = surfaceMeshes[0] || null; fitObject(modelRoot); applyModelDisplay(); refreshReferenceObjectUI(); updateDrawTargetUI(true);
     $('modelStatus').textContent = `${file.name} · Mesh ${surfaceMeshes.length}개`;
     setStatus('기준 모델 로드 완료. 새 커브를 만든 뒤 표면을 클릭하세요.');
   } catch (err) {
@@ -947,6 +1145,8 @@ function captureAppState() {
       hairMaterialPreset: selectedHairMaterialPreset(),
       referenceMaterialPreset: selectedReferenceMaterialPreset(),
       directionalLight: currentDirectionalLightSettings(),
+      viewportBackground: currentViewportSettings().background,
+      cameraFov: currentViewportSettings().cameraFov,
       referenceWireMode: selectedReferenceWireMode(),
       referenceWireColor: selectedReferenceWireColor(),
       showPoints: $('showPoints').checked,
@@ -1039,11 +1239,15 @@ function restoreAppState(state) {
   const display = state.display || {};
   if (display.viewMode) $('viewMode').value = display.viewMode;
   $('hairMaterialPreset').value = normalizeViewportMaterialPreset(display.hairMaterialPreset, { fallback:HAIR_MATERIAL_FALLBACK });
-  $('referenceMaterialPreset').value = normalizeViewportMaterialPreset(display.referenceMaterialPreset, { allowOriginal:true, fallback:REFERENCE_MATERIAL_FALLBACK });
+  $('referenceMaterialPreset').value = normalizeViewportMaterialPreset(display.referenceMaterialPreset, { allowOriginal:true, allowAuto:true, fallback:REFERENCE_MATERIAL_FALLBACK });
   const directionalLight = normalizeDirectionalLightSettings(display.directionalLight);
   $('lightAzimuth').value = String(directionalLight.azimuth);
   $('lightElevation').value = String(directionalLight.elevation);
   $('lightIntensity').value = String(directionalLight.intensity);
+  $('fillLightIntensity').value = String(directionalLight.fillIntensity);
+  const viewportSettings = normalizeViewportSettings({ background:display.viewportBackground, cameraFov:display.cameraFov });
+  $('viewportBackground').value = viewportSettings.background;
+  $('cameraFov').value = String(viewportSettings.cameraFov);
   $('referenceWireMode').value = normalizeReferenceWireMode(display.referenceWireMode ?? (display.modelWireframe ? 'wire' : 'off'));
   $('referenceWireColor').value = normalizeReferenceWireColor(display.referenceWireColor);
   if (typeof display.showPoints === 'boolean') $('showPoints').checked = display.showPoints;
@@ -1053,7 +1257,7 @@ function restoreAppState(state) {
   if (typeof display.modelVisible === 'boolean') $('modelVisible').checked = display.modelVisible;
   if (display.modelOpacity != null) $('modelOpacity').value = display.modelOpacity;
   if (typeof display.gridVisible === 'boolean') $('gridVisible').checked = display.gridVisible;
-  grid.visible = $('gridVisible').checked;
+  applyViewportDisplay();
   applyLightingDisplay();
   applyModelDisplay();
   applyHairMaterialDisplay();
@@ -1566,7 +1770,11 @@ function pointerNDC(event) {
 }
 function pointOnSurface(event) {
   if (!surfaceMeshes.length) return null; pointerNDC(event);
-  return raycaster.intersectObjects(surfaceMeshes, false)[0]?.point?.clone() || null;
+  const visibleMeshes = surfaceMeshes.filter(mesh => {
+    for (let current = mesh; current; current = current.parent) if (!current.visible) return false;
+    return true;
+  });
+  return raycaster.intersectObjects(visibleMeshes, false)[0]?.point?.clone() || null;
 }
 function pointInFreePlane(event) {
   pointerNDC(event); const curve = drawingCurve;
@@ -2545,22 +2753,33 @@ function applyModelDisplay() {
   modelRoot.visible = $('modelVisible').checked;
   const opacity = THREE.MathUtils.clamp(parseFloat($('modelOpacity').value) || 0, 0, 1);
   const preset = selectedReferenceMaterialPreset();
-  updateMaterialPreview($('referenceMaterialPreview'), preset, { allowOriginal:true });
+  updateMaterialPreview($('referenceMaterialPreview'), preset, { allowOriginal:true, allowAuto:true });
   modelRoot.traverse(child => {
     if (!child.isMesh) return;
     const original = child.userData[REFERENCE_ORIGINAL_MATERIAL] || child.material;
     child.userData[REFERENCE_ORIGINAL_MATERIAL] = original;
-    if (preset === 'original') {
+    const materialMode = resolveReferenceMaterialMode({
+      objectMode: child.userData[REFERENCE_OBJECT_MATERIAL_MODE],
+      globalPreset: preset,
+      hasTexture: !!child.userData[REFERENCE_TEXTURE_MATERIAL],
+      originalNeedsFallback: referenceOriginalNeedsFallback(referenceMaterialDescriptors(original))
+    });
+    if (materialMode === 'original') {
       child.material = original;
+      disposeMaterial(child.userData[REFERENCE_OVERRIDE_MATERIAL]);
+      child.userData[REFERENCE_OVERRIDE_MATERIAL] = null;
+      child.userData[REFERENCE_OVERRIDE_PRESET] = null;
+    } else if (materialMode === 'texture') {
+      child.material = child.userData[REFERENCE_TEXTURE_MATERIAL];
       disposeMaterial(child.userData[REFERENCE_OVERRIDE_MATERIAL]);
       child.userData[REFERENCE_OVERRIDE_MATERIAL] = null;
       child.userData[REFERENCE_OVERRIDE_PRESET] = null;
     } else {
       const activePreset = child.userData[REFERENCE_OVERRIDE_PRESET];
-      if (!child.userData[REFERENCE_OVERRIDE_MATERIAL] || activePreset !== preset) {
+      if (!child.userData[REFERENCE_OVERRIDE_MATERIAL] || activePreset !== materialMode) {
         disposeMaterial(child.userData[REFERENCE_OVERRIDE_MATERIAL]);
-        child.userData[REFERENCE_OVERRIDE_MATERIAL] = createViewportMaterial(preset);
-        child.userData[REFERENCE_OVERRIDE_PRESET] = preset;
+        child.userData[REFERENCE_OVERRIDE_MATERIAL] = createViewportMaterial(materialMode);
+        child.userData[REFERENCE_OVERRIDE_PRESET] = materialMode;
       }
       child.material = child.userData[REFERENCE_OVERRIDE_MATERIAL];
     }
@@ -2842,8 +3061,35 @@ $('hairMaterialPreset').addEventListener('change', () => {
 $('referenceMaterialPreset').addEventListener('change', () => {
   applyModelDisplay();
   markProjectChanged();
-  setStatus(`Reference 재질: ${viewportMaterialDefinition(selectedReferenceMaterialPreset(), { allowOriginal:true }).label}`);
+  setStatus(`Reference 재질: ${viewportMaterialDefinition(selectedReferenceMaterialPreset(), { allowOriginal:true, allowAuto:true }).label}`);
 });
+$('referenceObjectList').addEventListener('click', event => {
+  const visibilityId = Number(event.target.closest('[data-reference-visibility]')?.dataset.referenceVisibility);
+  const selectionId = Number(event.target.closest('[data-reference-object]')?.dataset.referenceObject);
+  if (visibilityId) {
+    const mesh = surfaceMeshes.find(item => item.userData[REFERENCE_OBJECT_ID] === visibilityId);
+    if (mesh) { mesh.visible = !mesh.visible; refreshReferenceObjectUI(); setStatus(`${referenceMeshName(mesh)} ${mesh.visible ? '표시' : '숨김'}`); }
+    return;
+  }
+  if (selectionId) selectReferenceMesh(surfaceMeshes.find(item => item.userData[REFERENCE_OBJECT_ID] === selectionId));
+});
+$('referenceObjectMaterialMode').addEventListener('change', () => {
+  if (!selectedReferenceMesh) return;
+  selectedReferenceMesh.userData[REFERENCE_OBJECT_MATERIAL_MODE] = normalizeReferenceObjectMaterialMode($('referenceObjectMaterialMode').value);
+  applyModelDisplay(); refreshReferenceObjectUI();
+  const mode = selectedReferenceObjectMode();
+  setStatus(mode === 'texture' && !selectedReferenceMesh.userData[REFERENCE_TEXTURE]
+    ? 'Texture File을 선택하세요. 선택 전까지 Default Lit로 표시됩니다.'
+    : `${referenceMeshName(selectedReferenceMesh)} 재질: ${referenceObjectModeLabel(selectedReferenceMesh)}`);
+});
+$('referenceTextureFile').addEventListener('change', event => { const file = event.target.files?.[0]; if (file) loadReferenceTexture(file); });
+$('clearReferenceTextureBtn').addEventListener('click', () => {
+  if (!selectedReferenceMesh) return;
+  const name = referenceMeshName(selectedReferenceMesh);
+  clearReferenceTexture(selectedReferenceMesh);
+  setStatus(`${name}의 수동 텍스처를 제거하고 Global 재질로 복귀했습니다.`);
+});
+$('frameReferenceObjectBtn').addEventListener('click', () => { if (selectedReferenceMesh) fitObject(selectedReferenceMesh); });
 $('viewMode').addEventListener('change', () => { applyViewModeAll(); markProjectChanged(); });
 $('showPoints').addEventListener('change', () => { updateControlVisibility(); markProjectChanged(); });
 $('showTangents').addEventListener('change', () => { updateControlVisibility(); markProjectChanged(); });
@@ -2852,7 +3098,7 @@ $('xrayControls').addEventListener('change', () => { updateControlVisibility(); 
 $('modelVisible').addEventListener('change', () => { applyModelDisplay(); markProjectChanged(); });
 $('modelOpacity').addEventListener('change', () => { applyModelDisplay(); markProjectChanged(); });
 $('modelOpacity').addEventListener('input', applyModelDisplay);
-['lightAzimuth','lightElevation','lightIntensity'].forEach(id => {
+['lightAzimuth','lightElevation','lightIntensity','fillLightIntensity'].forEach(id => {
   $(id).addEventListener('input', applyLightingDisplay);
   $(id).addEventListener('change', () => { applyLightingDisplay(); markProjectChanged(); });
 });
@@ -2869,7 +3115,11 @@ $('referenceWireColor').addEventListener('change', () => {
   markProjectChanged();
   setStatus(`Reference Wireframe color: ${selectedReferenceWireColor()}`);
 });
-$('gridVisible').addEventListener('change', () => { grid.visible = $('gridVisible').checked; markProjectChanged(); });
+$('viewportBackground').addEventListener('input', applyViewportDisplay);
+$('viewportBackground').addEventListener('change', () => { applyViewportDisplay(); markProjectChanged(); });
+$('cameraFov').addEventListener('input', applyViewportDisplay);
+$('cameraFov').addEventListener('change', () => { applyViewportDisplay(); markProjectChanged(); });
+$('gridVisible').addEventListener('change', () => { applyViewportDisplay(); markProjectChanged(); });
 $('clearGeneratedBtn').addEventListener('click', () => { history.begin('모든 Live Mesh 비활성화'); curves.forEach(c => { c.meshEnabled = false; removeCurveMesh(c); }); refreshCurveList(); syncModifierUIFromCurve(selectedCurve); updateControlVisibility(); setStatus('모든 Live Mesh 비활성화 · 커브와 Modifier 값은 유지'); history.commit(); });
 $('fitBtn').addEventListener('click', () => { if (surfaceMeshes.length) fitObject(modelRoot); else if (curves.length) fitObject(curvesRoot); });
 $('fitSelectedBtn').addEventListener('click', frameSelected);
@@ -3005,7 +3255,7 @@ initNumericScrubbers(document, {
 });
 animate();
 refreshCurveList(); refreshBrushUI(); syncModifierUIFromCurve(null); updateControlVisibility(); updatePointPanel();
-updateAverageAmountOutput(); updateObjectTransformButtons(); updateHint(); updateSelectionBadge(); updateMeshTypeUI(); updateDrawTargetUI(); applyLightingDisplay(); applyHairMaterialDisplay(); applyModelDisplay(); setMode('orbit');
+updateAverageAmountOutput(); updateObjectTransformButtons(); updateHint(); updateSelectionBadge(); updateMeshTypeUI(); updateDrawTargetUI(); refreshReferenceObjectUI(); applyViewportDisplay(); applyLightingDisplay(); applyHairMaterialDisplay(); applyModelDisplay(); setMode('orbit');
 const recoveredProject = restoreRecovery();
 if (!recoveredProject) { activateCommandTab('create'); updateProjectStatus('saved', 'Empty'); }
 projectLifecycleReady = true;

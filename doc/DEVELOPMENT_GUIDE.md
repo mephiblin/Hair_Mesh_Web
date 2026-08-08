@@ -53,6 +53,8 @@ curl -I http://127.0.0.1:8080/curve_mesh_hair_tool_v4.html
 
 Scene 객체를 JSON에 직접 넣지 않습니다. 새 기능을 저장하려면 최소 데이터만 직렬화 상태에 넣고 Scene 객체는 복원 시 다시 만드십시오.
 
+Reference 파일 자체와 Mesh별 표시/재질/수동 텍스처는 Import 세션 상태이며 프로젝트에 넣지 않습니다. 전역 Reference preset과 Viewport 배경/FOV/Grid/조명만 `display` snapshot으로 저장합니다. Reference 기능은 `normalizeMaterials()` → `refreshReferenceObjectUI()` → `applyModelDisplay()` 경로를 함께 확인하고, 순수 모드 결정은 `src/viewport/reference-object-policy.js`에 둡니다.
+
 ## 4. 주요 불변 조건
 
 - Line은 Point가 2개 이상일 때만 완료할 수 있습니다.

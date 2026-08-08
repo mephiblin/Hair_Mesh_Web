@@ -23,6 +23,15 @@ import {
   normalizeDirectionalLightSettings
 } from '../src/viewport/lighting.js';
 import {
+  normalizeReferenceObjectMaterialMode,
+  referenceOriginalNeedsFallback,
+  resolveReferenceMaterialMode
+} from '../src/viewport/reference-object-policy.js';
+import {
+  DEFAULT_VIEWPORT_SETTINGS,
+  normalizeViewportSettings
+} from '../src/viewport/viewport-settings.js';
+import {
   REFERENCE_WIRE_DEFAULTS,
   normalizeReferenceWireColor,
   normalizeReferenceWireMode,
@@ -90,18 +99,40 @@ test('viewport material presets keep hair and imported reference fallbacks disti
   assert.equal(normalizeViewportMaterialPreset('red-wax'), 'red-wax');
   assert.equal(normalizeViewportMaterialPreset('original'), HAIR_MATERIAL_FALLBACK);
   assert.equal(normalizeViewportMaterialPreset('unknown'), HAIR_MATERIAL_FALLBACK);
-  assert.equal(normalizeViewportMaterialPreset('original', { allowOriginal: true }), REFERENCE_MATERIAL_FALLBACK);
+  assert.equal(REFERENCE_MATERIAL_FALLBACK, 'auto');
+  assert.equal(normalizeViewportMaterialPreset('auto', { allowOriginal: true, allowAuto: true }), 'auto');
+  assert.equal(normalizeViewportMaterialPreset('original', { allowOriginal: true, allowAuto: true }), 'original');
+  assert.equal(viewportMaterialDefinition('default-lit').kind, 'standard');
   assert.equal(viewportMaterialDefinition('silver').kind, 'matcap');
   assert.equal(viewportMaterialDefinition('normal-check').kind, 'normal');
 });
 
 test('directional lighting clamps controls and maps default angles near the legacy position', () => {
   const normalized = normalizeDirectionalLightSettings({ azimuth: 900, elevation: -200, intensity: -4 });
-  assert.deepEqual(normalized, { azimuth: 180, elevation: -89, intensity: 0, distance: DEFAULT_DIRECTIONAL_LIGHT.distance });
+  assert.deepEqual(normalized, { azimuth: 180, elevation: -89, intensity: 0, fillIntensity: DEFAULT_DIRECTIONAL_LIGHT.fillIntensity, distance: DEFAULT_DIRECTIONAL_LIGHT.distance });
   const position = directionalLightPosition(DEFAULT_DIRECTIONAL_LIGHT);
   assert.ok(Math.abs(position.x - 3) < 0.02);
   assert.ok(Math.abs(position.y - 5) < 0.001);
   assert.ok(Math.abs(position.z - 4) < 0.02);
+});
+
+test('reference object material policy keeps textured originals and brightens untextured black materials', () => {
+  assert.equal(normalizeReferenceObjectMaterialMode('texture'), 'texture');
+  assert.equal(normalizeReferenceObjectMaterialMode('invalid'), 'inherit');
+  assert.equal(referenceOriginalNeedsFallback([{ colorLuminance:0, emissiveLuminance:0 }]), true);
+  assert.equal(referenceOriginalNeedsFallback([{ colorLuminance:0, hasColorTexture:true }]), false);
+  assert.equal(referenceOriginalNeedsFallback([{ colorLuminance:.4 }]), false);
+  assert.equal(resolveReferenceMaterialMode({ objectMode:'inherit', globalPreset:'auto', originalNeedsFallback:true }), 'default-lit');
+  assert.equal(resolveReferenceMaterialMode({ objectMode:'inherit', globalPreset:'auto', originalNeedsFallback:false }), 'original');
+  assert.equal(resolveReferenceMaterialMode({ objectMode:'texture', hasTexture:true }), 'texture');
+  assert.equal(resolveReferenceMaterialMode({ objectMode:'texture', hasTexture:false }), 'default-lit');
+  assert.equal(resolveReferenceMaterialMode({ objectMode:'silver', globalPreset:'original' }), 'silver');
+});
+
+test('viewport settings normalize background color and clamp camera FOV', () => {
+  assert.deepEqual(normalizeViewportSettings({ background:'#A0b1C2', cameraFov:200 }), { background:'#a0b1c2', cameraFov:120 });
+  assert.deepEqual(normalizeViewportSettings({ background:'black', cameraFov:'bad' }), DEFAULT_VIEWPORT_SETTINGS);
+  assert.equal(normalizeViewportSettings({ cameraFov:5 }).cameraFov, 15);
 });
 
 test('reference wireframe accepts only owned modes and six-digit colors', () => {

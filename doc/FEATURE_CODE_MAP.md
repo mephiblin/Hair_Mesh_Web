@@ -46,10 +46,10 @@ launch_server.py
 | Live 오류/해제 | `failCurveMesh()`, `removeCurveMesh()` | topology/Scene 자원 정리와 `disabled/error/ready` 상태 관리 | `hasReadyMesh()` 정책 테스트 |
 | Solid/Wire 표시 | `#viewMode`, `applyViewModeToCurve()` | Solid Mesh/Wire Mesh visibility 전환 | 브라우저 QA |
 | Hair Viewport 재질 | `#hairMaterialPreset`, `applyHairMaterialDisplay()` | Live Mesh의 MatCap / Normal / Standard 재질 교체 | `src/viewport/material-presets.js`, Node/브라우저 QA |
-| Reference Viewport 재질 | `#referenceMaterialPreset`, `applyModelDisplay()` | Import 원본 재질 보존, override 적용, Original 복귀 | `src/viewport/material-presets.js`, `doc/features/io-export.md` |
-| 방향광 조정 | `#lightAzimuth`, `#lightElevation`, `#lightIntensity`, `#resetLightingBtn` | `applyLightingDisplay()`, `resetLightingDisplay()` | `src/viewport/lighting.js`, Node/브라우저 QA |
+| Reference Viewport 재질 | `#referenceMaterialPreset`, `applyModelDisplay()` | Auto/Original/Default Lit/MatCap 전역 적용 | `material-presets.js`, `reference-object-policy.js` |
+| Reference Mesh 관리 | `#referenceObjectList`, `refreshReferenceObjectUI()` | Mesh별 숨김/표시, 재질 override, 이미지 texture/UV 경고 | `src/viewport/reference-object-policy.js`, 다중 OBJ fixture |
+| Viewport 환경/조명 | `#viewportBackground`, `#cameraFov`, `#gridVisible`, `#light*`, `#fillLightIntensity` | `applyViewportDisplay()`, `applyLightingDisplay()` | `viewport-settings.js`, `lighting.js` |
 | Reference Wireframe | `#referenceWireMode`, `#referenceWireColor` | `ensureReferenceWireObject()`, `applyReferenceWireframeDisplay()`로 독립 `LineSegments` 관리 | `src/viewport/reference-wireframe.js`, 브라우저 QA |
-| Ground Grid | `#gridVisible` | `grid.visible` 별도 전환 | Display state/Recovery 브라우저 QA |
 | 프로젝트 저장 | `#saveProjectBtn`, `saveProject()` | 앱 상태 캡처 → versioned document → JSON 다운로드 | `src/state/project-format.js`, Node round-trip 테스트 |
 | 프로젝트 열기 | `#projectFileInput`, `openProjectFile()` | JSON 검증 → state restore → History 초기화 | future/unrelated document 거부 테스트 |
 | 자동 복구 | `RECOVERY_KEY`, `scheduleRecovery()`, `restoreRecovery()` | localStorage에 debounce 저장하고 시작 시 복원 | 브라우저 reload QA |

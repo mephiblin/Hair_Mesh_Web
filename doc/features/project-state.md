@@ -43,9 +43,9 @@ open/recovery/undo/redo
 
 ## 저장 경계
 
-저장됨: Curve/Point/Brush, Curve transform/settings/live flag, selection, mode, Hair/Reference material preset, 방향광 azimuth/elevation/intensity, Reference wire mode/color, Grid visibility를 포함한 display 설정과 ID counter.
+저장됨: Curve/Point/Brush, Curve transform/settings/live flag, selection, mode, Hair/Reference material preset, 방향광 azimuth/elevation/intensity, Environment Fill, Viewport background/FOV, Reference wire mode/color, Grid visibility를 포함한 display 설정과 ID counter.
 
-저장되지 않음: Reference model binary/scene, camera/orbit position, transient pointer/gizmo drag, GPU objects, Object URL.
+저장되지 않음: Reference model binary/scene, Reference Mesh별 visibility/material/수동 texture, camera/orbit position, transient pointer/gizmo drag, GPU objects, Object URL.
 
 ## 스키마 변경 규칙
 
@@ -71,7 +71,7 @@ open/recovery/undo/redo
 - Brush topology와 ID reference가 함께 복원되는가?
 - 선택 ID/index가 없는 객체를 가리킬 때 안전한 fallback이 있는가?
 - Recovery 실패가 앱 부팅을 막지 않는가?
-- 이전 프로젝트에 material preset 필드가 없어도 Hair는 Studio Clay, Reference는 Original로 복원되는가?
+- 이전 프로젝트에 material preset 필드가 없어도 Hair는 Studio Clay, Reference는 Auto로 복원되고 명시적 Original 값은 유지되는가?
 - 이전 `modelWireframe: true`는 `referenceWireMode: wire`로 복원되고, 새 display 필드가 없으면 조명/Wire/Grid 기본값을 쓰는가?
 - 명시 저장과 자동 복구의 상태 라벨이 혼동되지 않는가?
 - `beforeunload` 경고가 Dirty일 때만 작동하는가?

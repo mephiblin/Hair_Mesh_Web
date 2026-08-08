@@ -2,6 +2,7 @@ export const DEFAULT_DIRECTIONAL_LIGHT = Object.freeze({
   azimuth: 37,
   elevation: 45,
   intensity: 2.2,
+  fillIntensity: 2.2,
   distance: Math.sqrt(50)
 });
 
@@ -19,6 +20,7 @@ export function normalizeDirectionalLightSettings(settings = {}) {
     azimuth: clamp(finiteNumber(settings.azimuth, DEFAULT_DIRECTIONAL_LIGHT.azimuth), -180, 180),
     elevation: clamp(finiteNumber(settings.elevation, DEFAULT_DIRECTIONAL_LIGHT.elevation), -89, 89),
     intensity: clamp(finiteNumber(settings.intensity, DEFAULT_DIRECTIONAL_LIGHT.intensity), 0, 20),
+    fillIntensity: clamp(finiteNumber(settings.fillIntensity, DEFAULT_DIRECTIONAL_LIGHT.fillIntensity), 0, 20),
     distance: Math.max(0.001, finiteNumber(settings.distance, DEFAULT_DIRECTIONAL_LIGHT.distance))
   };
 }

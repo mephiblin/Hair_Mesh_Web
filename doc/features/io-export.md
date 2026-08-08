@@ -10,7 +10,8 @@ Reference model Import, Mesh Brush Import, 프로젝트 파일 I/O, OBJ와 FBX �
 | --- | --- | --- |
 | Reference import | `#modelFile`, `loadModel()`, `normalizeMaterials()` | OBJ, FBX, GLB, GLTF |
 | Reference framing/display | `fitObject()`, `applyModelDisplay()`, `updateDrawTargetUI()` | Three.js Object3D |
-| Reference material | `normalizeMaterials()`, `createViewportMaterial()`, `applyModelDisplay()` | Original / MatCap / Normal / Standard |
+| Reference material | `normalizeMaterials()`, `createViewportMaterial()`, `applyModelDisplay()` | Auto / Original / Default Lit / MatCap / Normal |
+| Reference object/texture | `refreshReferenceObjectUI()`, `loadReferenceTexture()`, `clearReferenceTexture()` | Mesh별 session override |
 | Reference wire layer | `ensureReferenceWireObject()`, `applyReferenceWireframeDisplay()` | `LineSegments`, Wire Only / Surface + Wire |
 | Brush import dispatch | `#brushFiles`, `loadBrushFile()`, `loadBrushFiles()` | OBJ, FBX, GLB, GLTF |
 | OBJ Brush parser | `parseOBJTopology()` | text OBJ faces/UV |
@@ -26,9 +27,13 @@ Reference model Import, Mesh Brush Import, 프로젝트 파일 I/O, OBJ와 FBX �
 
 - Reference model은 raycast/display용이며 프로젝트에 포함하지 않는다.
 - Import한 material 또는 material 배열은 `REFERENCE_ORIGINAL_MATERIAL`에 보존한다. Viewport override를 제거하면 같은 원본 객체로 복귀한다.
+- Loader가 복원한 `material.map`은 Auto/Original에서 유지된다. Blob URL로 해석할 수 없는 외부 sidecar image는 Mesh별 `Color Texture`로 수동 지정한다.
+- 하나의 FBX/OBJ/GLTF root에 포함된 Mesh는 `surfaceMeshes`와 `Reference Objects` 목록에 개별 항목으로 유지하며 visibility/material/texture를 따로 관리한다.
+- 숨긴 Reference Mesh는 렌더뿐 아니라 `pointOnSurface()` raycast 후보에서도 제외한다.
 - Reference MatCap은 표시 전용이며 Reference binary나 Mesh Export에 bake하지 않는다.
 - Reference Wireframe은 material의 `wireframe` flag를 쓰지 않는 독립 `LineSegments`이다. 선 색상은 Original/MatCap과 독립적이며 Export에 포함되지 않는다.
 - 새 Reference를 불러오면 이전 `modelRoot` 자원을 dispose하고 `surfaceMeshes`를 다시 수집한다.
+- 수동 texture/material과 imported material texture도 교체 시 dispose하며, texture용 Object URL은 성공/실패와 관계없이 revoke한다.
 - Brush는 cross-section topology로 정규화하고 프로젝트 snapshot에 포함한다.
 - OBJ negative index와 optional UV를 처리한다.
 - Object3D는 Mesh의 indexed/non-indexed BufferGeometry를 논리 topology로 변환한다.
@@ -51,7 +56,8 @@ Export는 Live 관계를 bake한다. Curve/Point/Modifier 편집성은 OBJ/FBX�
 
 - 지원하지 않는 확장자와 parser 오류가 사용자 status에 표시되는가?
 - Import 실패 후 이전/부분 Scene과 Object URL이 누수되지 않는가?
-- OBJ/FBX/GLB/GLTF가 같은 Reference material override 경로를 사용하고 Original로 복귀하는가?
+- OBJ/FBX/GLB/GLTF가 같은 Reference material override 경로를 사용하고 Auto/Original로 복귀하는가?
+- 다중 Mesh 이름/수/visibility가 유지되고 한 Mesh의 material/texture 변경이 다른 Mesh에 영향을 주지 않는가?
 - Reference Wire Only에서 surface가 숨고, Surface + Wire에서 원본/override surface와 독립 색상의 선이 같이 보이는가?
 - override 교체/원본 복귀/새 모델 Import에서 원본과 임시 Material을 중복 없이 dispose하는가?
 - Brush face index와 `faceUvs` 길이가 일치하는가?
@@ -63,7 +69,7 @@ Export는 Live 관계를 bake한다. Curve/Point/Modifier 편집성은 OBJ/FBX�
 
 ## 검증
 
-- Fixture: `tests/fixtures/quad-brush.obj`.
+- Fixture: `tests/fixtures/quad-brush.obj`, `multi-object-reference.obj`, `checker-texture.svg`.
 - Browser: 각 Reference/Brush 형식의 성공·실패, 모든 Reference material preset과 Original 복귀, Wire Off/Wire Only/Surface + Wire와 선 색상, 여러 Brush 추가/삭제, 프로젝트 round-trip.
 - OBJ: 여러 Curve, UV on/off, Quad/N-gon, Y-up/Z-up을 Blender/3ds Max에서 Import.
 - FBX: ASCII 7.4를 목표 DCC에서 Import하고 topology, axis, scale, normals, UV를 확인. 실험 상태를 유지한다.

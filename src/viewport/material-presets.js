@@ -1,11 +1,24 @@
 export const HAIR_MATERIAL_FALLBACK = 'studio-clay';
-export const REFERENCE_MATERIAL_FALLBACK = 'original';
+export const REFERENCE_MATERIAL_FALLBACK = 'auto';
 
 const PRESETS = {
+  auto: {
+    label: 'Auto · Imported / Default Lit',
+    kind: 'auto',
+    preview: { highlight: '#eef5ff', base: '#7e95a8', shadow: '#202a34' }
+  },
   original: {
     label: 'Original Imported',
     kind: 'original',
     preview: { highlight: '#f4d98a', base: '#527f8b', shadow: '#242b31' }
+  },
+  'default-lit': {
+    label: 'Default Lit',
+    kind: 'standard',
+    color: '#aeb9c5',
+    roughness: 0.68,
+    metalness: 0,
+    preview: { highlight: '#f1f6fb', base: '#aeb9c5', shadow: '#34404c' }
   },
   'classic-teal': {
     label: 'Classic Teal',
@@ -74,10 +87,11 @@ export const VIEWPORT_MATERIAL_PRESETS = Object.freeze(
   Object.fromEntries(Object.entries(PRESETS).map(([key, value]) => [key, Object.freeze(value)]))
 );
 
-export function normalizeViewportMaterialPreset(value, { allowOriginal = false, fallback } = {}) {
-  const defaultValue = fallback || (allowOriginal ? REFERENCE_MATERIAL_FALLBACK : HAIR_MATERIAL_FALLBACK);
+export function normalizeViewportMaterialPreset(value, { allowOriginal = false, allowAuto = false, fallback } = {}) {
+  const defaultValue = fallback || (allowOriginal || allowAuto ? REFERENCE_MATERIAL_FALLBACK : HAIR_MATERIAL_FALLBACK);
   if (typeof value !== 'string' || !Object.hasOwn(VIEWPORT_MATERIAL_PRESETS, value)) return defaultValue;
   if (!allowOriginal && value === 'original') return defaultValue;
+  if (!allowAuto && value === 'auto') return defaultValue;
   return value;
 }
 
