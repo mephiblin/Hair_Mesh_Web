@@ -1,0 +1,4 @@
+interface:
+  display_name: "Hair Mesh Web Development"
+  short_description: "Hair Mesh Web 기능 탐색·구현·검증 워크플로"
+  default_prompt: "Use $hair-mesh-web-development to inspect and implement a Hair Mesh Web feature safely."

@@ -99,7 +99,7 @@ Hair_Mesh_Web/
 └── docs/product-audit/             # 제품 평가 및 장기 개선 기록
 ```
 
-개발을 시작할 때는 [개발 문서 색인](doc/README.md), [기능별 코드 지도](doc/FEATURE_CODE_MAP.md), [개발 가이드](doc/DEVELOPMENT_GUIDE.md) 순서로 읽는 것이 가장 빠릅니다.
+개발을 시작할 때 사람은 [개발 문서 색인](doc/README.md)을, Codex는 [Codex 작업 색인](doc/CODEX_INDEX.md)을 먼저 읽습니다. 기능 전체 위치는 [기능별 코드 지도](doc/FEATURE_CODE_MAP.md), 구조 변경 절차는 [개발 가이드](doc/DEVELOPMENT_GUIDE.md)에 있습니다. 저장소 전용 Codex Skill은 `.agents/skills/hair-mesh-web-development`에 포함되어 있습니다.
 
 ## 현재 범위와 주의사항
 
