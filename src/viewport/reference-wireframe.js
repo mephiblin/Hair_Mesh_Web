@@ -12,3 +12,7 @@ export function normalizeReferenceWireMode(value, fallback = REFERENCE_WIRE_DEFA
 export function normalizeReferenceWireColor(value, fallback = REFERENCE_WIRE_DEFAULTS.color) {
   return typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value) ? value.toLowerCase() : fallback;
 }
+
+export function referenceWireUsesSurfaceDepthBias(value) {
+  return normalizeReferenceWireMode(value) === 'overlay';
+}

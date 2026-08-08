@@ -34,7 +34,7 @@ launch_server.py
 | Point 평균화 | `averageSelectedGeometry()` | 선택 Point 위치/Handle을 Amount만큼 평균화 | `#averageAmount`, 실제 브라우저 QA |
 | Curve Root Transform | `setObjectTransformMode()`, `handleGizmoChange()` | `curve.group`의 Position/Quaternion/Scale 변경 | TransformControls, History |
 | Point Transform | `setPointTool()`, `applyPointUnitTransform()`, `handleGizmoChange()` | Point, Handle, 단면 Transform을 선택 문맥에 맞게 적용 | `coordinateFrameQuaternion()` |
-| 축 가이드 이동 | `toggleAxisGuides()`, `startAxisGuideDrag()`, `updateAxisGuideDrag()` | 화면 Pick → 제약 평면 → 축 Scalar 적용 | `src/viewport/axis-guide-drag.js`, Self-test |
+| 축 가이드 이동 | `toggleAxisGuides()`, `startAxisGuideDrag()`, `updateAxisGuideDrag()` | 화면 Pick → 제약 평면 → 축 Scalar 적용, OFF 시 Translate gizmo/pick 차단 | `src/viewport/axis-guide-drag.js`, `interaction-policy.js`, Self-test |
 | 단면 수치 편집 | `#applyPointValuesBtn`, `updatePointPanel()` | Position/Offset/Scale/Rotation 입력과 Live rebuild | `src/ui/numeric-scrubber.js` |
 | Tip/단면 초기화 | `#makeTipBtn`, `#resetSectionBtn` | Point의 `scaleX/scaleZ` 또는 단면 Transform 초기화 | History + 브라우저 QA |
 | Sweep 좌표계 | `buildSweepContext()`, `evaluateSweep()` | Curve상의 Point/Tangent/Normal/Binormal 생성 | `src/geometry/sweep-frames.js`, Self-test |

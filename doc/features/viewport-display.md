@@ -43,12 +43,13 @@ target: scene origin
 ```text
 off     : surface on, wire off
 wire    : surface material hidden, independent LineSegments on
-overlay : surface on, depth-tested independent LineSegments on
+overlay : surface on, depth-tested independent LineSegments on, surface depth bias on
 ```
 
 - `MeshStandardMaterial.wireframe`과 같은 material flag를 쓰지 않는다.
 - 각 Import Mesh의 geometry로 `THREE.WireframeGeometry` + `THREE.LineSegments`를 한 번 생성해 child로 소유한다.
 - Line material은 Reference Original/MatCap과 분리되므로 `#referenceWireColor`가 재질 전환 후에도 유지된다.
+- Surface + Wire는 active surface material에만 polygon depth bias를 적용해 카메라 이동 중 z-fighting을 막고, 다른 모드로 전환하면 material의 원래 polygon-offset 값을 복원한다.
 - Reference visibility는 `modelRoot.visible`, Grid visibility는 `grid.visible`이 각각 소유한다.
 - Reference 교체 시 Wire geometry/material도 `disposeTree()` 경로로 해제되어야 한다.
 
@@ -72,7 +73,8 @@ gridVisible
 - Preset/lighting/wire 입력을 정규화한 후 UI에 정규화된 값을 돌려쓰는가?
 - Hair/Reference material 변경이 topology를 다시 만들지 않고 즉시 표시되는가?
 - Reference Original 복귀와 override 교체에서 원본 material을 dispose하지 않는가?
-- Wire mode/color 변경이 active surface material을 변조하지 않는가?
+- Wire color가 active surface material을 변조하지 않고, Overlay의 임시 depth bias 외 material 속성은 원래 값을 유지하는가?
+- Surface + Wire 카메라 이동 중 면/선이 깜빡이지 않고, Off/Wire Only에서 원래 depth 설정으로 복귀하는가?
 - 조명 Reset이 정확한 기본값으로 복귀하고 Dirty/Recovery에 반영되는가?
 - Reference/Wire/Grid의 visibility가 서로 독립적인가?
 - 1024px 폭에서 재질 선택기와 모든 rollout에 스크롤로 접근할 수 있고 가로 overflow가 없는가?

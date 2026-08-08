@@ -7,3 +7,11 @@ export function canPickVisibleControl(mode) {
 export function modeAfterControlPick() {
   return 'edit';
 }
+
+export function canInteractWithAxisGuides({ enabled, visible, dragging, operation }) {
+  return Boolean(enabled && visible && !dragging && operation === 'translate');
+}
+
+export function shouldShowTransformHelper({ axisGuidesEnabled, operation }) {
+  return operation !== 'translate' || Boolean(axisGuidesEnabled);
+}

@@ -339,7 +339,7 @@ import {
   setAveragedHandleTypes
 } from './src/geometry/bezier-handles.js';
 import { buildSweepFrames } from './src/geometry/sweep-frames.js';
-import { canPickVisibleControl, modeAfterControlPick } from './src/viewport/interaction-policy.js';
+import { canInteractWithAxisGuides, canPickVisibleControl, modeAfterControlPick, shouldShowTransformHelper } from './src/viewport/interaction-policy.js';
 import { axisDragScalar, axisVector, createAxisDragPlane } from './src/viewport/axis-guide-drag.js';
 import {
   HAIR_MATERIAL_FALLBACK,
@@ -355,7 +355,8 @@ import {
 import {
   REFERENCE_WIRE_DEFAULTS,
   normalizeReferenceWireColor,
-  normalizeReferenceWireMode
+  normalizeReferenceWireMode,
+  referenceWireUsesSurfaceDepthBias
 } from './src/viewport/reference-wireframe.js';
 import { runCoreSelfChecks } from './src/diagnostics/core-self-check.js';
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/+esm';
@@ -416,6 +417,7 @@ const REFERENCE_OVERRIDE_MATERIAL = 'hairMeshOverrideMaterial';
 const REFERENCE_OVERRIDE_PRESET = 'hairMeshOverridePreset';
 const REFERENCE_WIRE_OBJECT = 'hairMeshWireObject';
 const matcapTextureCache = new Map();
+const referenceSurfaceDepthState = new WeakMap();
 const axisGuideGroup = new THREE.Group();
 axisGuideGroup.name = 'MoveAxisGuides';
 axisGuideGroup.visible = false;
@@ -618,6 +620,22 @@ function applyMaterialSurfaceOptions(material, opacity) {
     item.needsUpdate = true;
   });
 }
+function applyReferenceSurfaceDepthBias(material, enabled) {
+  materialList(material).forEach(item => {
+    if (!referenceSurfaceDepthState.has(item)) {
+      referenceSurfaceDepthState.set(item, {
+        polygonOffset:item.polygonOffset,
+        polygonOffsetFactor:item.polygonOffsetFactor,
+        polygonOffsetUnits:item.polygonOffsetUnits
+      });
+    }
+    const original = referenceSurfaceDepthState.get(item);
+    item.polygonOffset = enabled ? true : original.polygonOffset;
+    item.polygonOffsetFactor = enabled ? 1 : original.polygonOffsetFactor;
+    item.polygonOffsetUnits = enabled ? 1 : original.polygonOffsetUnits;
+    item.needsUpdate = true;
+  });
+}
 function selectedHairMaterialPreset() {
   const preset = normalizeViewportMaterialPreset($('hairMaterialPreset')?.value, { fallback:HAIR_MATERIAL_FALLBACK });
   if ($('hairMaterialPreset')) $('hairMaterialPreset').value = preset;
@@ -654,6 +672,7 @@ function ensureReferenceWireObject(mesh) {
 function applyReferenceWireframeDisplay() {
   const mode = selectedReferenceWireMode();
   const color = selectedReferenceWireColor();
+  const surfaceDepthBias = referenceWireUsesSurfaceDepthBias(mode);
   surfaceMeshes.forEach(mesh => {
     const wire = ensureReferenceWireObject(mesh);
     wire.visible = mode !== 'off';
@@ -662,6 +681,7 @@ function applyReferenceWireframeDisplay() {
     wire.material.depthWrite = false;
     wire.material.needsUpdate = true;
     materialList(mesh.material).forEach(material => { material.visible = mode !== 'wire'; });
+    applyReferenceSurfaceDepthBias(mesh.material, surfaceDepthBias);
   });
 }
 function currentDirectionalLightSettings() {
@@ -2170,6 +2190,7 @@ function updateAxisGuideTransform() {
 function syncAxisGuides() {
   const visible = axisGuidesEnabled && gizmoContext?.operation === 'translate' && transformControls.getHelper().visible;
   axisGuideGroup.visible = !!visible;
+  axisGuideLines.forEach(line => { line.visible = !!visible; });
   if (visible) updateAxisGuideTransform();
   const button = $('axisGuidesToggleBtn');
   button.classList.toggle('active', axisGuidesEnabled);
@@ -2186,12 +2207,17 @@ function setAxisGuideHighlight(axis = null) {
 function toggleAxisGuides() {
   axisGuidesEnabled = !axisGuidesEnabled;
   if (!axisGuidesEnabled && axisGuideDrag) finishAxisGuideDrag();
-  syncAxisGuides();
+  if (transformDragging) syncAxisGuides(); else syncGizmo();
   setStatus(`Move 축 가이드 ${axisGuidesEnabled ? 'ON' : 'OFF'} · Shift+G`);
 }
 
 function findAxisGuide(event) {
-  if (!axisGuideGroup.visible || axisGuideDrag || gizmoContext?.operation !== 'translate') return null;
+  if (!canInteractWithAxisGuides({
+    enabled:axisGuidesEnabled,
+    visible:axisGuideGroup.visible && axisGuideLines.some(line => line.visible),
+    dragging:Boolean(axisGuideDrag),
+    operation:gizmoContext?.operation
+  })) return null;
   pointerNDC(event);
   const previousThreshold = raycaster.params.Line.threshold;
   raycaster.params.Line.threshold = Math.max(handleRadius * 1.5, camera.position.distanceTo(gizmoProxy.position) * .009);
@@ -2261,13 +2287,15 @@ function finishAxisGuideDrag(event = null) {
 
 function syncGizmo() {
   if (transformDragging) return;
-  gizmoContext = null; transformControls.detach(); transformControls.getHelper().visible = false;
+  gizmoContext = null; transformControls.detach(); transformControls.enabled = false; transformControls.getHelper().visible = false;
   syncAxisGuides();
   if (mode === 'transform' && curveIsEditable()) {
     const worldPos = curveRootWorldPosition(selectedCurve);
     const q = coordinateFrameQuaternion($('transformSpace').value, selectedCurve);
     setProxyTransform(worldPos, q); transformControls.attach(gizmoProxy); transformControls.setMode(objectTransformMode); transformControls.showX = transformControls.showY = transformControls.showZ = true;
-    transformControls.getHelper().visible = true; gizmoContext = { type:'object', curve:selectedCurve, operation:objectTransformMode }; syncAxisGuides(); return;
+    const helperVisible = shouldShowTransformHelper({ axisGuidesEnabled, operation:objectTransformMode });
+    transformControls.enabled = helperVisible; transformControls.getHelper().visible = helperVisible;
+    gizmoContext = { type:'object', curve:selectedCurve, operation:objectTransformMode }; syncAxisGuides(); return;
   }
   if (mode === 'edit' && selectedControl && curveIsEditable()) {
     const p = selectedPoint(); if (!p) return;
@@ -2282,7 +2310,8 @@ function syncGizmo() {
     const q = coordinateFrameQuaternion($('transformSpace').value, selectedCurve, selectedControl.pointIndex);
     setProxyTransform(position, q); transformControls.attach(gizmoProxy); transformControls.setMode(operation);
     transformControls.showX = true; transformControls.showY = pointTool !== 'sectionScale'; transformControls.showZ = true;
-    transformControls.getHelper().visible = true;
+    const helperVisible = shouldShowTransformHelper({ axisGuidesEnabled, operation });
+    transformControls.enabled = helperVisible; transformControls.getHelper().visible = helperVisible;
     gizmoContext = { type:'point', curve:selectedCurve, pointIndex:selectedControl.pointIndex, kind:selectedControl.kind, tool:tangent ? 'tangentMove' : pointTool, operation };
     syncAxisGuides();
   }
@@ -2607,6 +2636,23 @@ function handleViewportClick(event) {
 renderer.domElement.addEventListener('pointerdown', event => {
   if (event.button !== 0) return;
   if (startAxisGuideDrag(event)) return;
+  if (!axisGuidesEnabled && transformControls.axis && canPickVisibleControl(mode)) {
+    const control = findControl(event);
+    const isCurrent = control
+      && selectedControl
+      && selectedCurve?.id === control.userData.curveId
+      && selectedControl.pointIndex === control.userData.pointIndex
+      && selectedControl.kind === control.userData.kind;
+    if (control && !isCurrent) {
+      event.preventDefault(); event.stopImmediatePropagation();
+      const curve = curves.find(c => c.id === control.userData.curveId);
+      if (curve) {
+        if (mode !== 'edit') setMode(modeAfterControlPick());
+        selectControl(curve, control.userData.pointIndex, control.userData.kind);
+      }
+      return;
+    }
+  }
   if (transformControls.axis) return;
   pointerDownState = { x:event.clientX, y:event.clientY, controlHit:false };
   if (mode === 'draw') {
@@ -2622,7 +2668,7 @@ renderer.domElement.addEventListener('pointerdown', event => {
     const control = findControl(event);
     if (!control) return;
     pointerDownState.controlHit = true;
-    event.preventDefault(); event.stopPropagation();
+    event.preventDefault(); event.stopImmediatePropagation();
     const curve = curves.find(c => c.id === control.userData.curveId);
     if (curve) {
       if (mode !== 'edit') setMode(modeAfterControlPick());

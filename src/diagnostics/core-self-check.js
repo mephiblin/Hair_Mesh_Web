@@ -10,7 +10,7 @@ import {
 } from '../geometry/bezier-handles.js';
 import { buildSweepFrames } from '../geometry/sweep-frames.js';
 import { normalizeMeshBudget } from '../geometry/mesh-limits.js';
-import { canPickVisibleControl, modeAfterControlPick } from '../viewport/interaction-policy.js';
+import { canInteractWithAxisGuides, canPickVisibleControl, modeAfterControlPick, shouldShowTransformHelper } from '../viewport/interaction-policy.js';
 import { canFinishLine, lineCreationExitAction } from '../state/line-creation-policy.js';
 import { allPointIndices, normalizePointSelection, selectedPointIndices } from '../state/point-selection.js';
 import { canEditCurve, hasReadyMesh } from '../state/curve-policy.js';
@@ -89,6 +89,18 @@ export function runCoreSelfChecks(THREE) {
   check(
     'Axis guide scalar ignores off-axis pointer motion',
     axisDragScalar(new THREE.Vector3(3, 9, -4), new THREE.Vector3(), xAxis) === 3
+  );
+  check(
+    'Disabled axis guides cannot remain interactive',
+    canInteractWithAxisGuides({ enabled:true, visible:true, dragging:false, operation:'translate' })
+      && !canInteractWithAxisGuides({ enabled:false, visible:true, dragging:false, operation:'translate' })
+      && !canInteractWithAxisGuides({ enabled:true, visible:false, dragging:false, operation:'translate' })
+  );
+  check(
+    'Axis Lines OFF hides Translate helper but keeps Rotate and Scale helpers',
+    !shouldShowTransformHelper({ axisGuidesEnabled:false, operation:'translate' })
+      && shouldShowTransformHelper({ axisGuidesEnabled:false, operation:'rotate' })
+      && shouldShowTransformHelper({ axisGuidesEnabled:false, operation:'scale' })
   );
   const clampedBudget = normalizeMeshBudget({ segments: 999999, radial: -40 });
   check(

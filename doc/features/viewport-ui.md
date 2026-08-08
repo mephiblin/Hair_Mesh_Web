@@ -49,11 +49,12 @@ transform: Curve root transform
 - `isTypingTarget()`이 text/number 입력 단축키 충돌을 막는가?
 - Mode 전환 시 stale gizmo 또는 axis drag가 남지 않는가?
 - Pointer cancel/up이 History transaction과 OrbitControls를 복구하는가?
+- Axis Lines OFF가 parent/child guide visibility, guide raycast, Translate gizmo 표시/입력을 모두 차단하고 다른 Point 선택을 막지 않는가? Rotate/Scale gizmo는 유지되어야 한다.
 - Control x-ray/depth 설정과 visibility checkbox가 일치하는가?
 - 1024px 폭에서도 topbar와 양쪽 panel의 기능에 접근 가능한가?
 - 새 단축키가 README 및 도움말과 일치하는가?
 
 ## 검증
 
-- Self-test: visible-control pick policy, axis vector/plane/scalar.
+- Self-test: visible-control pick policy, axis guide enabled/visible interaction policy, axis vector/plane/scalar.
 - Browser: 각 mode 전이, object/point/handle/axis picking, drag cancel, input focus shortcut, hidden/locked protection, narrow viewport layout. Display 변경은 `viewport-display.md`의 수용 시나리오를 추가한다.

@@ -25,8 +25,10 @@ import {
 import {
   REFERENCE_WIRE_DEFAULTS,
   normalizeReferenceWireColor,
-  normalizeReferenceWireMode
+  normalizeReferenceWireMode,
+  referenceWireUsesSurfaceDepthBias
 } from '../src/viewport/reference-wireframe.js';
+import { canInteractWithAxisGuides, shouldShowTransformHelper } from '../src/viewport/interaction-policy.js';
 
 const tests = [];
 function test(name, run) { tests.push({ name, run }); }
@@ -107,6 +109,21 @@ test('reference wireframe accepts only owned modes and six-digit colors', () => 
   assert.equal(normalizeReferenceWireMode('material-wire'), REFERENCE_WIRE_DEFAULTS.mode);
   assert.equal(normalizeReferenceWireColor('#A0b1C2'), '#a0b1c2');
   assert.equal(normalizeReferenceWireColor('red'), REFERENCE_WIRE_DEFAULTS.color);
+  assert.equal(referenceWireUsesSurfaceDepthBias('overlay'), true);
+  assert.equal(referenceWireUsesSurfaceDepthBias('wire'), false);
+  assert.equal(referenceWireUsesSurfaceDepthBias('off'), false);
+});
+
+test('disabled axis guides cannot render an interactive pick target', () => {
+  assert.equal(canInteractWithAxisGuides({ enabled:true, visible:true, dragging:false, operation:'translate' }), true);
+  assert.equal(canInteractWithAxisGuides({ enabled:false, visible:true, dragging:false, operation:'translate' }), false);
+  assert.equal(canInteractWithAxisGuides({ enabled:true, visible:false, dragging:false, operation:'translate' }), false);
+  assert.equal(canInteractWithAxisGuides({ enabled:true, visible:true, dragging:true, operation:'translate' }), false);
+  assert.equal(canInteractWithAxisGuides({ enabled:true, visible:true, dragging:false, operation:'rotate' }), false);
+  assert.equal(shouldShowTransformHelper({ axisGuidesEnabled:false, operation:'translate' }), false);
+  assert.equal(shouldShowTransformHelper({ axisGuidesEnabled:true, operation:'translate' }), true);
+  assert.equal(shouldShowTransformHelper({ axisGuidesEnabled:false, operation:'rotate' }), true);
+  assert.equal(shouldShowTransformHelper({ axisGuidesEnabled:false, operation:'scale' }), true);
 });
 
 let passed = 0;
