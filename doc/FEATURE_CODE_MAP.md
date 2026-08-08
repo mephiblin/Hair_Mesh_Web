@@ -25,7 +25,7 @@ launch_server.py
 | 기준 모델 Import | `#modelFile`, `loadModel()` | `normalizeMaterials()`, `fitObject()`, `applyModelDisplay()` | OBJ/FBX/GLTF Loader, 실제 브라우저 QA |
 | 표면/평면 Point 배치 | `#drawTarget`, `pointOnSurface()`, `pointInFreePlane()` | Raycaster로 모델 표면 또는 카메라 평면 좌표 계산 | `src/state/line-creation-policy.js` |
 | Line 생성/완료/취소 | `#newCurveBtn`, `beginLineCreation()`, `finishLineCreation()`, `cancelLineCreation()` | Draft curve 생성, 최소 Point 검사, 이전 선택 복원 | Node의 `line creation requires two points` |
-| Curve/Point 선택 | `selectCurve()`, `selectControl()`, `#curveList` | 선택 상태, Point 다중 선택, UI/Gizmo 동기화 | `src/state/point-selection.js` |
+| Curve/Point 선택 | `selectCurve()`, `toggleCurveSelection()`, `selectControl()`, `#curveList` | Ctrl/⌘ 토글, 활성 Curve/Point, UI/Gizmo 동기화 | `curve-selection.js`, `point-selection.js` |
 | Curve 표시/잠금 | `setCurveVisible()`, `setCurveLocked()` | Scene row와 편집 가능 상태 동기화 | `src/state/curve-policy.js` 및 정책 테스트 |
 | Curve 복제/삭제 | `#duplicateCurveBtn`, `deleteSelectedCurve()` | Curve state 복제/폐기와 History transaction | 브라우저 QA + Undo/Redo |
 | Bézier 곡선 평가 | `BezierChainCurve` | `getPoint()`, `getTangent()`이 Cubic Bézier 계산 | `src/geometry/bezier-handles.js` |
@@ -67,6 +67,7 @@ launch_server.py
 | --- | --- | --- |
 | `curves` | 편집 중인 Curve record 배열 | `makeCurveRecord()`, `captureAppState()` |
 | `selectedCurve` | 현재 UI/Transform 대상 Curve | `selectCurve()`, `restoreAppState()` |
+| `selectedCurveIds` | Scene Explorer 다중 선택 Curve ID Set | `toggleCurveSelection()`, `captureAppState()` |
 | `selectedControl` | Point 또는 in/out Handle 선택 | `selectControl()`, `captureAppState()` |
 | `selectedPointIndices` | 다중 Point 선택 Set | `src/state/point-selection.js`로 정규화 |
 | `drawingCurve` | 아직 완료하지 않은 Line draft | `beginLineCreation()`/`finishLineCreation()` |

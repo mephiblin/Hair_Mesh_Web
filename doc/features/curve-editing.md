@@ -12,7 +12,7 @@ Line 생성, Curve/Point/Handle 선택, Bézier 계산, Point topology 변경, �
 | Point record | `makePointRecord()`, `clonePointRecord()`, `pointState()`, `pointFromState()` | `geometry/bezier-handles.js` | `curve.points[]` |
 | Bézier 평가 | `BezierChainCurve.getPoint()`, `.getTangent()` | `geometry/bezier-handles.js` | Point position/tangents |
 | Line 생성 | `beginLineCreation()`, `addPoint()`, `finishLineCreation()`, `cancelLineCreation()` | `state/line-creation-policy.js` | `drawingCurve`, `creationPreviousCurve`, `mode` |
-| Curve 선택 | `selectCurve()`, `refreshCurveList()` | `state/curve-policy.js` | `selectedCurve`, `lastControl` |
+| Curve 선택 | `selectCurve()`, `toggleCurveSelection()`, `refreshCurveList()` | `state/curve-selection.js` | `selectedCurve`, `selectedCurveIds`, `lastControl` |
 | Control 선택 | `selectControl()`, `selectAllCurvePoints()` | `state/point-selection.js` | `selectedControl`, `selectedPointIndices` |
 | Point split/insert | `splitCurveSegment()`, `insertPointAtRawParameter()`, `insertRelativeToSelected()` | — | `curve.points[]` |
 | Point 제거 | `#deletePointBtn`, `finishPointTopologyChange()` | line minimum policy | selection + points |
@@ -59,10 +59,21 @@ point/handle transform
   → UI + gizmo sync
 ```
 
+## 다중 선택 계약
+
+- 일반 Point 클릭은 기존 Point 선택을 지우고 해당 Point 하나를 활성화한다.
+- 활성 Curve의 Anchor를 `Ctrl/⌘` 클릭하면 `selectedPointIndices` membership을 토글한다. Handle 클릭은 단일 활성 Handle 선택을 유지한다.
+- 마지막 Point도 해제할 수 있으며 이때 `selectedControl = null`, Gizmo detach, Point 편집 command disabled 상태가 된다. 일반 Anchor 클릭으로 다시 단일 선택한다.
+- 일반 Scene Explorer Curve 행 클릭은 해당 Curve 하나만 선택한다.
+- Curve 행 `Ctrl/⌘` 클릭은 `selectedCurveIds` membership을 토글한다. 새로 추가한 Curve가 `selectedCurve` 활성 대상이며, 활성 Curve를 해제하면 남은 선택 중 마지막 Curve가 활성화된다.
+- 여러 Curve가 선택되어도 Modifier/Gizmo 명령은 활성 `selectedCurve` 하나만 대상으로 한다. 다중 Curve 삭제/변환은 이 계약의 범위가 아니다.
+
 ## 변경 체크리스트
 
 - 숨김/잠금 Curve에서 모든 진입 경로가 차단되는가?
 - Point index 변경 후 `selectedControl`, `selectedPointIndices`, `lastControl`이 유효한가?
+- Point 선택 0개와 Curve 선택 0개 상태에서 stale Gizmo/command가 남지 않는가?
+- Scene 다중 선택에서 `selectedCurve`가 항상 `selectedCurveIds` 안의 활성 Curve인가?
 - Point topology 변경 후 Control object와 curve line이 재구성되는가?
 - Handle 이동 후 aligned/automatic 의존 Handle이 갱신되는가?
 - Live Mesh가 켜져 있으면 단 한 번의 의미 있는 rebuild가 일어나는가?
@@ -70,6 +81,6 @@ point/handle transform
 
 ## 검증
 
-- Node: line minimum, point selection normalization.
+- Node: line minimum, Point/Curve selection normalize/toggle/active fallback.
 - Self-test: Bézier handle finite/constraint 관련 검사.
-- Browser: create/cancel/finish, split/delete, multi-select average, handle mode, root/point/section transform, Undo/Redo.
+- Browser: create/cancel/finish, Ctrl/⌘ Point 토글과 0개 해제/재선택, Scene Curve 행 다중 선택/활성 전환, split/delete, multi-select average, handle mode, root/point/section transform, Undo/Redo.

@@ -70,6 +70,8 @@ HTML 파일을 직접 더블클릭하는 방식은 ES Module/CORS 제한 때문�
 | `Ctrl/⌘ + Z` | Undo |
 | `Ctrl/⌘ + Shift + Z`, `Ctrl/⌘ + Y` | Redo |
 | `Ctrl/⌘ + A` | 선택 커브의 모든 Point 선택 |
+| `Ctrl/⌘ + Point 클릭` | 활성 Curve 안의 Point를 다중 선택/해제 |
+| `Ctrl/⌘ + Curve 행 클릭` | Scene Explorer Curve를 다중 선택/해제 |
 | `W / E / R` | Move / Rotate / Scale |
 | `I` | Point Insert 모드 |
 | `Q` | Object/Camera 모드 |

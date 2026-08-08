@@ -63,6 +63,8 @@ DOM/pointer/keyboard event
 ```yaml
 line_min_points: 2
 editable_curve: visible == true && locked == false
+point_multi_selection: Ctrl/Cmd + active-curve anchor toggles membership, empty selection allowed
+curve_multi_selection: Ctrl/Cmd + Scene Explorer row toggles membership, latest added is active
 ready_live_mesh: meshEnabled && meshStatus == "ready" && topology exists
 path_segments: 2..512
 tube_sides: 3..64
@@ -93,6 +95,7 @@ resource_cleanup: dispose removed geometry and material
 
 1. 빈 장면에서 Line을 시작하고, 1 Point 상태의 완료 방지와 취소를 확인한다.
 2. 2개 이상 Point Line을 완료하고 Point/Handle 편집을 Undo/Redo한다.
+   - 같은 Curve의 Anchor를 Ctrl/⌘ 클릭해 추가/해제하고, Curve 행도 2개 이상 다중 선택 후 활성 행 전환과 전체 해제를 확인한다.
 3. Ribbon과 Tube를 생성하고 제한 경계에서 Live 상태와 topology를 확인한다.
 4. Brush fixture를 Import하여 Sweep하고 저장 후 다시 연다.
 5. 숨김/잠금 Curve가 포인터, 숫자 입력, 단축키로 수정되지 않는지 확인한다.

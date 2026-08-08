@@ -23,3 +23,12 @@ export function allPointIndices(pointCount) {
 export function selectedPointIndices(selection, pointCount, fallbackIndex = null) {
   return [...normalizePointSelection(selection, pointCount, fallbackIndex)].sort((a, b) => a - b);
 }
+
+export function togglePointSelection(selection, pointIndex, pointCount) {
+  const normalized = normalizePointSelection(selection, pointCount);
+  const index = Number(pointIndex);
+  if (!Number.isInteger(index) || index < 0 || index >= normalizedPointCount(pointCount)) return normalized;
+  if (normalized.has(index)) normalized.delete(index);
+  else normalized.add(index);
+  return normalized;
+}

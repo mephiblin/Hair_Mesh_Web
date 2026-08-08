@@ -12,7 +12,7 @@ Scene 초기화, picking, mode, TransformControls, axis guide, keyboard과 패�
 | Resize/frame | `resize()`, `fitObject()`, `frameSelected()` | — |
 | Control visual | `rebuildControlVisuals()`, `updateControlVisuals()`, `applyControlAppearance()` | curve policy |
 | Visibility | `updateControlVisibility()`, `updateCurveSelectionStyles()` | viewport interaction policy |
-| Picking | `findControl()`, `findCurveAtEvent()`, `handleViewportClick()` | `src/viewport/interaction-policy.js` |
+| Picking | `findControl()`, `selectControl()`, `findCurveAtEvent()`, `handleViewportClick()` | `interaction-policy.js`, `point-selection.js` |
 | Surface/free placement | `pointOnSurface()`, `pointInFreePlane()` | raycaster |
 | Mode | `setMode()`, `leaveLineCreationForMode()`, `updateHint()` | line creation policy |
 | Gizmo | `syncGizmo()`, `beginGizmoDrag()`, `handleGizmoChange()`, `endGizmoDrag()` | TransformControls |
@@ -37,11 +37,12 @@ transform: Curve root transform
 ## Picking 우선순위
 
 1. 현재 mode와 visibility가 Control pick을 허용하는지 검사한다.
-2. Axis guide drag 대상이면 축 제약을 우선 처리한다.
-3. Point/Handle control hit를 검사한다.
-4. Insert mode면 선택 Curve의 근접 segment를 찾는다.
-5. Curve line 또는 generated mesh를 Curve selection으로 해석한다.
-6. 빈 공간은 mode 계약에 따라 deselect 또는 Point placement한다.
+2. `Ctrl/⌘ + Anchor`이면 Transform/Axis Gizmo보다 먼저 Point membership 토글을 처리한다.
+3. Axis guide drag 대상이면 축 제약을 처리한다.
+4. Point/Handle control hit를 검사한다.
+5. Insert mode면 선택 Curve의 근접 segment를 찾는다.
+6. Curve line 또는 generated mesh를 Curve selection으로 해석한다.
+7. 빈 공간은 mode 계약에 따라 deselect 또는 Point placement한다.
 
 ## 변경 체크리스트
 
@@ -50,6 +51,7 @@ transform: Curve root transform
 - Mode 전환 시 stale gizmo 또는 axis drag가 남지 않는가?
 - Pointer cancel/up이 History transaction과 OrbitControls를 복구하는가?
 - Axis Lines OFF가 parent/child guide visibility, guide raycast, Translate gizmo 표시/입력을 모두 차단하고 다른 Point 선택을 막지 않는가? Rotate/Scale gizmo는 유지되어야 한다.
+- Ctrl/⌘ Anchor 토글이 Point 중앙의 Transform Gizmo에 가로막히지 않는가?
 - Control x-ray/depth 설정과 visibility checkbox가 일치하는가?
 - 1024px 폭에서도 topbar와 양쪽 panel의 기능에 접근 가능한가?
 - 새 단축키가 README 및 도움말과 일치하는가?

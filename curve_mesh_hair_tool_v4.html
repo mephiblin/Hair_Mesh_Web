@@ -39,7 +39,7 @@ input[type=checkbox]{accent-color:var(--accent)}
 .panel-title{height:28px;display:flex;align-items:center;padding:0 8px;font-weight:600;background:#3c3c3c;border-bottom:1px solid #262626}
 .scene-section{padding:7px;border-bottom:1px solid #2c2c2c}.scene-section h3{font-size:11px;margin:0 0 5px;color:#ddd}
 .file-status,.muted{color:var(--muted);font-size:11px;line-height:1.4}.wide{width:100%}.row{display:grid;grid-template-columns:1fr 1fr;gap:4px}.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}.row4{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}.coords{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}.coords2{display:grid;grid-template-columns:repeat(2,1fr);gap:4px}
-.scene-list{flex:1;overflow:auto;padding:3px;background:#383838}.scene-row{display:grid;grid-template-columns:25px minmax(0,1fr) 25px;gap:2px;align-items:center;margin:1px 0}.scene-row-main{text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.scene-row.selected .scene-row-main{background:#557071;border-color:#9bcaca}.scene-row-meta{color:#bdbdbd;font-size:10px;margin-left:4px}.scene-eye,.scene-lock{padding:2px;min-width:24px}.scene-row.hidden-object{opacity:.55}.scene-row.locked-object .scene-row-main{font-style:italic}
+.scene-list{flex:1;overflow:auto;padding:3px;background:#383838}.scene-row{display:grid;grid-template-columns:25px minmax(0,1fr) 25px;gap:2px;align-items:center;margin:1px 0}.scene-row-main{text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.scene-row.selected .scene-row-main{background:#475d60;border-color:#7fa5a7}.scene-row.active-selection .scene-row-main{background:#557071;border-color:#b6eded;box-shadow:inset 2px 0 0 var(--accent-strong)}.scene-row-meta{color:#bdbdbd;font-size:10px;margin-left:4px}.scene-eye,.scene-lock{padding:2px;min-width:24px}.scene-row.hidden-object{opacity:.55}.scene-row.locked-object .scene-row-main{font-style:italic}
 .viewport-wrap{position:relative;min-width:0;min-height:0;background:var(--viewport)}.viewport{position:absolute;inset:0;overflow:hidden;background:radial-gradient(circle at 50% 45%,#1b2027,#0d1014 72%)}.viewport canvas{display:block}
 .hint{position:absolute;left:8px;top:8px;z-index:5;background:rgba(42,42,42,.92);border:1px solid #707070;padding:5px 7px;font-size:11px;pointer-events:none;max-width:calc(100% - 16px)}
 .viewport-badge{position:absolute;right:8px;top:8px;z-index:5;background:rgba(42,42,42,.9);border:1px solid #666;padding:4px 7px;font-size:11px;pointer-events:none}
@@ -343,7 +343,8 @@ import { createProjectDocument, parseProjectDocument, serializeProjectDocument }
 import { canEditCurve, hasReadyMesh } from './src/state/curve-policy.js';
 import { normalizeMeshBudget } from './src/geometry/mesh-limits.js';
 import { canFinishLine, lineCreationExitAction, MIN_LINE_POINTS } from './src/state/line-creation-policy.js';
-import { allPointIndices, normalizePointSelection, selectedPointIndices as orderedPointSelection } from './src/state/point-selection.js';
+import { allPointIndices, normalizePointSelection, selectedPointIndices as orderedPointSelection, togglePointSelection } from './src/state/point-selection.js';
+import { activeCurveId, normalizeCurveSelection, selectedCurveIds as orderedCurveSelection, toggleCurveSelection as toggleCurveSelectionIds } from './src/state/curve-selection.js';
 import { initNumericScrubbers } from './src/ui/numeric-scrubber.js';
 import {
   HANDLE_TYPE,
@@ -437,7 +438,7 @@ const modelRoot = new THREE.Group();
 const curvesRoot = new THREE.Group();
 scene.add(modelRoot, curvesRoot);
 
-const COLORS = { accent: 0x6da6ff, curve: 0x9bc1ff, tangent: 0xffb86b, selected: 0xffff8a, wire: 0xe8f1ff };
+const COLORS = { accent: 0x6da6ff, curve: 0x9bc1ff, tangent: 0xffb86b, selected: 0xffff8a, multiSelected: 0x8fc7c7, wire: 0xe8f1ff };
 const AXIS_COLORS = Object.freeze({ X:0xff5a5a, Y:0x65d66e, Z:0x5795ff });
 const RECOVERY_KEY = 'hair-mesh-web:recovery:v1';
 const REFERENCE_ORIGINAL_MATERIAL = 'hairMeshOriginalMaterial';
@@ -474,6 +475,7 @@ let modelDiagonal = 1;
 let handleRadius = .015;
 let curves = [];
 let selectedCurve = null;
+let selectedCurveIds = new Set();
 let selectedControl = null;
 let selectedPointIndices = new Set();
 let drawingCurve = null;
@@ -1051,6 +1053,7 @@ function makeCurveRecord(source = null) {
   }
   curves.push(curve);
   selectedCurve = curve;
+  selectedCurveIds = new Set([curve.id]);
   selectedControl = null;
   selectedPointIndices = new Set();
   rebuildControlVisuals(curve);
@@ -1132,6 +1135,7 @@ function captureAppState() {
     nextBrushId,
     brushes: brushes.map(brushState),
     selectedCurveId: selectedCurve?.id ?? null,
+    selectedCurveIds: orderedCurveSelection(selectedCurveIds, curves.map(curve => curve.id), selectedCurve?.id ?? null),
     drawingCurveId: drawingCurve?.id ?? null,
     creationPreviousCurveId: creationPreviousCurve?.id ?? null,
     selectedControl: selectedControl ? { curveId:selectedControl.curve.id, pointIndex:selectedControl.pointIndex, kind:selectedControl.kind } : null,
@@ -1212,6 +1216,7 @@ function restoreAppState(state) {
   curves.forEach(disposeCurve);
   curves = [];
   selectedCurve = null;
+  selectedCurveIds = new Set();
   selectedControl = null;
   selectedPointIndices = new Set();
   drawingCurve = null;
@@ -1221,7 +1226,9 @@ function restoreAppState(state) {
   refreshBrushUI();
   state.curves.forEach(curveFromState);
   nextCurveId = Math.max(state.nextCurveId, ...curves.map(curve => curve.id + 1), 1);
-  selectedCurve = curves.find(curve => curve.id === state.selectedCurveId) || null;
+  selectedCurveIds = normalizeCurveSelection(state.selectedCurveIds, curves.map(curve => curve.id), state.selectedCurveId);
+  const restoredActiveCurveId = activeCurveId(selectedCurveIds, state.selectedCurveId);
+  selectedCurve = curves.find(curve => curve.id === restoredActiveCurveId) || null;
   drawingCurve = curves.find(curve => curve.id === state.drawingCurveId) || null;
   creationPreviousCurve = curves.find(curve => curve.id === state.creationPreviousCurveId) || null;
   if (selectedCurve && state.selectedControl?.curveId === selectedCurve.id && selectedCurve.points.length) {
@@ -1466,7 +1473,7 @@ function updateCurveSelectionStyles() {
   curves.forEach(curve => {
     if (curve.line) {
       curve.line.visible = showLines;
-      curve.line.material.color.setHex(curve === selectedCurve ? COLORS.selected : COLORS.curve);
+      curve.line.material.color.setHex(curve === selectedCurve ? COLORS.selected : selectedCurveIds.has(curve.id) ? COLORS.multiSelected : COLORS.curve);
     }
   });
 }
@@ -1649,14 +1656,20 @@ function updateCommandAvailability() {
 
 function updateSelectionBadge() {
   if (!selectedCurve) { viewportBadge.textContent = 'No Selection'; return; }
+  const curveSelection = orderedCurveSelection(selectedCurveIds, curves.map(curve => curve.id), selectedCurve.id);
   const meshState = curveHasReadyMesh(selectedCurve)
     ? ` · LIVE ${selectedCurve.settings.type.toUpperCase()}`
     : selectedCurve.meshStatus === 'error' ? ' · MESH ERROR' : '';
-  viewportBadge.textContent = `${selectedCurve.name} · ${selectedCurve.points.length} Points${meshState}${selectedCurve.visible ? '' : ' · HIDDEN'}${selectedCurve.locked ? ' · LOCKED' : ''}`;
+  const multiState = curveSelection.length > 1 ? ` · ${curveSelection.length} Curves Selected` : '';
+  viewportBadge.textContent = `${selectedCurve.name} · ${selectedCurve.points.length} Points${multiState}${meshState}${selectedCurve.visible ? '' : ' · HIDDEN'}${selectedCurve.locked ? ' · LOCKED' : ''}`;
 }
 
 function selectCurve(curve, options = {}) {
-  const { enterEdit = true } = options;
+  const { enterEdit = true, preserveCurveSelection = false } = options;
+  if (preserveCurveSelection) {
+    selectedCurveIds = normalizeCurveSelection(selectedCurveIds, curves.map(item => item.id));
+    if (curve) selectedCurveIds.add(curve.id);
+  } else selectedCurveIds = curve ? new Set([curve.id]) : new Set();
   selectedCurve = curve;
   if (curve?.points?.length) {
     const remembered = curve.lastControl || { pointIndex: 0, kind: 'anchor' };
@@ -1680,12 +1693,23 @@ function selectCurve(curve, options = {}) {
   if (curve) setStatus(`${curve.name} 선택${curve.locked ? ' · 잠김' : ' · Point 편집 준비'}`);
 }
 
-function selectControl(curve, pointIndex, kind) {
+function selectControl(curve, pointIndex, kind, options = {}) {
   if (!curveIsEditable(curve)) { if (curve) setStatus(`${curve.name}은 ${curve.visible ? '잠겨' : '숨겨'} 있습니다.`); return; }
+  const toggle = options.toggle === true && kind === 'anchor' && curve === selectedCurve;
+  if (!selectedCurveIds.has(curve.id)) selectedCurveIds = new Set([curve.id]);
   selectedCurve = curve;
-  selectedControl = { curve, pointIndex, kind };
-  selectedPointIndices = new Set([pointIndex]);
-  curve.lastControl = { pointIndex, kind };
+  if (toggle) {
+    selectedPointIndices = togglePointSelection(selectedPointIndices, pointIndex, curve.points.length);
+    if (selectedPointIndices.has(pointIndex)) selectedControl = { curve, pointIndex, kind:'anchor' };
+    else if (selectedControl?.curve === curve && selectedControl.pointIndex === pointIndex) {
+      const nextPointIndex = [...selectedPointIndices].at(-1);
+      selectedControl = Number.isInteger(nextPointIndex) ? { curve, pointIndex:nextPointIndex, kind:'anchor' } : null;
+    }
+  } else {
+    selectedControl = { curve, pointIndex, kind };
+    selectedPointIndices = new Set([pointIndex]);
+  }
+  if (selectedControl) curve.lastControl = { pointIndex:selectedControl.pointIndex, kind:selectedControl.kind };
   refreshCurveList();
   updateCurveSelectionStyles();
   updateControlVisuals(curve);
@@ -1693,8 +1717,31 @@ function selectControl(curve, pointIndex, kind) {
   updatePointPanel();
   updateSelectionBadge();
   syncGizmo();
+  const count = selectedPointIndices.size;
   const label = kind === 'anchor' ? 'Anchor' : kind === 'in' ? 'Bezier In' : 'Bezier Out';
-  setStatus(`${curve.name} · Point ${pointIndex + 1} · ${label}`);
+  setStatus(toggle
+    ? `${curve.name} · ${count ? `${count}개 Point 선택` : 'Point 선택 해제'} · Ctrl/⌘ 클릭 토글`
+    : `${curve.name} · Point ${pointIndex + 1} · ${label}`);
+}
+
+function toggleCurveSelection(curve, options = {}) {
+  if (!curve || !curves.includes(curve)) return;
+  const wasSelected = selectedCurveIds.has(curve.id);
+  selectedCurveIds = toggleCurveSelectionIds(selectedCurveIds, curve.id, curves.map(item => item.id));
+  if (!wasSelected) selectCurve(curve, { enterEdit:options.enterEdit ?? true, preserveCurveSelection:true });
+  else if (curve === selectedCurve) {
+    const nextId = activeCurveId(selectedCurveIds);
+    const nextCurve = curves.find(item => item.id === nextId) || null;
+    selectCurve(nextCurve, { enterEdit:options.enterEdit ?? true, preserveCurveSelection:true });
+  } else {
+    refreshCurveList();
+    updateCurveSelectionStyles();
+    updateSelectionBadge();
+  }
+  const count = selectedCurveIds.size;
+  setStatus(count
+    ? `${count}개 Curve 선택 · Active: ${selectedCurve?.name || '없음'} · Ctrl/⌘ 클릭 토글`
+    : 'Curve 선택을 모두 해제했습니다.');
 }
 
 function setCurveVisible(curve, visible) {
@@ -1737,7 +1784,7 @@ function refreshCurveList() {
   if (!curves.length) { root.textContent = '아직 커브가 없습니다.'; return; }
   curves.forEach(curve => {
     const row = document.createElement('div');
-    row.className = `scene-row${curve === selectedCurve ? ' selected' : ''}${curve.visible ? '' : ' hidden-object'}${curve.locked ? ' locked-object' : ''}`;
+    row.className = `scene-row${selectedCurveIds.has(curve.id) ? ' selected' : ''}${curve === selectedCurve ? ' active-selection' : ''}${curve.visible ? '' : ' hidden-object'}${curve.locked ? ' locked-object' : ''}`;
 
     const eye = document.createElement('button');
     eye.type = 'button'; eye.className = 'scene-eye'; eye.textContent = curve.visible ? '●' : '○'; eye.title = '표시 / 숨김';
@@ -1748,10 +1795,12 @@ function refreshCurveList() {
     const nameText = document.createTextNode(curve.name);
     const meta = document.createElement('span'); meta.className = 'scene-row-meta'; meta.textContent = `${curve.points.length} pts${curveHasReadyMesh(curve) ? ' · LIVE' : curve.meshStatus === 'error' ? ' · ERROR' : ''}`;
     main.append(nameText, meta);
-    main.addEventListener('click', () => {
+    main.addEventListener('click', event => {
       if (curve === drawingCurve) { setStatus('현재 Line 생성 중 · Finish, Finish & Edit 또는 Cancel을 선택하세요.'); return; }
       if (mode === 'draw') cancelLineCreation();
-      if (curves.includes(curve)) selectCurve(curve, { enterEdit: true });
+      if (!curves.includes(curve)) return;
+      if (event.ctrlKey || event.metaKey) toggleCurveSelection(curve, { enterEdit:true });
+      else selectCurve(curve, { enterEdit:true });
     });
 
     const lock = document.createElement('button');
@@ -2286,9 +2335,11 @@ function updatePointPanel() {
     ? selectionCount > 1 ? `All ${selectionCount} · Active ${selectedControl.pointIndex + 1} / ${pointCount}` : `${selectedControl.pointIndex + 1} / ${pointCount}`
     : `— / ${pointCount || '—'}`;
   if (!p || !selectedCurve || !curveIsEditable()) {
-    label.textContent = selectedCurve
-      ? `${selectedCurve.name} · ${selectedCurve.visible ? '잠금됨' : '숨김'} · 편집할 수 없음`
-      : '선택된 포인트 없음';
+    label.textContent = !selectedCurve
+      ? '선택된 포인트 없음'
+      : !curveIsEditable()
+        ? `${selectedCurve.name} · ${selectedCurve.visible ? '잠금됨' : '숨김'} · 편집할 수 없음`
+        : `${selectedCurve.name} · 선택된 Point 없음 · Ctrl/⌘ 클릭으로 다시 선택`;
     ['px','py','pz','ox','oy','oz','sx','sz','rx','ry','rz'].forEach(id => $(id).value = '');
     $('averageAmount').disabled = true;
     ['averagePointBtn','averageHandlesBtn','averageBothBtn'].forEach(id => $(id).disabled = true);
@@ -2638,6 +2689,7 @@ function beginLineCreation() {
   drawingCurve = null;
   creationPreviousCurve = selectedCurve;
   selectedCurve = null;
+  selectedCurveIds = new Set();
   selectedControl = null;
   selectedPointIndices = new Set();
   syncModifierUIFromCurve(null);
@@ -2661,6 +2713,7 @@ function finishLineCreation(enterEdit = false) {
   drawingCurve = null;
   creationPreviousCurve = null;
   selectedCurve = curve;
+  selectedCurveIds = new Set([curve.id]);
   setMode(enterEdit ? 'edit' : 'orbit');
   activateCommandTab(enterEdit ? 'modify' : 'create');
   updateLineCreationUI();
@@ -2685,6 +2738,7 @@ function cancelLineCreation() {
     if (draft.id === nextCurveId - 1) nextCurveId = draft.id;
   }
   selectedCurve = null;
+  selectedCurveIds = new Set();
   selectedControl = null;
   selectedPointIndices = new Set();
   if (previous) selectCurve(previous, { enterEdit:false });
@@ -2854,6 +2908,19 @@ function handleViewportClick(event) {
 
 renderer.domElement.addEventListener('pointerdown', event => {
   if (event.button !== 0) return;
+  if ((event.ctrlKey || event.metaKey) && canPickVisibleControl(mode)) {
+    const control = findControl(event);
+    if (control?.userData.kind === 'anchor') {
+      pointerDownState = null;
+      event.preventDefault(); event.stopImmediatePropagation();
+      const curve = curves.find(c => c.id === control.userData.curveId);
+      if (curve) {
+        if (mode !== 'edit') setMode(modeAfterControlPick());
+        selectControl(curve, control.userData.pointIndex, 'anchor', { toggle:true });
+      }
+      return;
+    }
+  }
   if (startAxisGuideDrag(event)) return;
   if (!axisGuidesEnabled && transformControls.axis && canPickVisibleControl(mode)) {
     const control = findControl(event);
@@ -2867,7 +2934,7 @@ renderer.domElement.addEventListener('pointerdown', event => {
       const curve = curves.find(c => c.id === control.userData.curveId);
       if (curve) {
         if (mode !== 'edit') setMode(modeAfterControlPick());
-        selectControl(curve, control.userData.pointIndex, control.userData.kind);
+        selectControl(curve, control.userData.pointIndex, control.userData.kind, { toggle:(event.ctrlKey || event.metaKey) && control.userData.kind === 'anchor' });
       }
       return;
     }
@@ -2891,7 +2958,7 @@ renderer.domElement.addEventListener('pointerdown', event => {
     const curve = curves.find(c => c.id === control.userData.curveId);
     if (curve) {
       if (mode !== 'edit') setMode(modeAfterControlPick());
-      selectControl(curve, control.userData.pointIndex, control.userData.kind);
+      selectControl(curve, control.userData.pointIndex, control.userData.kind, { toggle:(event.ctrlKey || event.metaKey) && control.userData.kind === 'anchor' });
     }
   }
 }, true);
@@ -2957,8 +3024,11 @@ function deleteSelectedCurve() {
   history.begin('Spline 삭제');
   const c = selectedCurve;
   curves = curves.filter(x => x !== c);
+  selectedCurveIds.delete(c.id);
   disposeCurve(c);
-  selectCurve(curves[0] || null, { enterEdit:true });
+  const nextSelectedId = activeCurveId(selectedCurveIds);
+  const nextSelected = curves.find(curve => curve.id === nextSelectedId) || curves[0] || null;
+  selectCurve(nextSelected, { enterEdit:true, preserveCurveSelection:selectedCurveIds.size > 0 });
   setStatus(`${c.name} 삭제`);
   history.commit();
 }

@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { createHistory } from '../src/state/history.js';
 import { canFinishLine, lineCreationExitAction } from '../src/state/line-creation-policy.js';
-import { allPointIndices, normalizePointSelection, selectedPointIndices } from '../src/state/point-selection.js';
+import { allPointIndices, normalizePointSelection, selectedPointIndices, togglePointSelection } from '../src/state/point-selection.js';
+import { activeCurveId, normalizeCurveSelection, selectedCurveIds, toggleCurveSelection } from '../src/state/curve-selection.js';
 import { normalizeMeshBudget } from '../src/geometry/mesh-limits.js';
 import { canEditCurve, hasReadyMesh } from '../src/state/curve-policy.js';
 import {
@@ -53,6 +54,28 @@ test('point selection normalizes invalid and duplicate indices', () => {
   const selection = normalizePointSelection([3, 1, 3, -1, 99], 4, 0);
   assert.deepEqual(selectedPointIndices(selection, 4), [1, 3]);
   assert.deepEqual(allPointIndices(4), [0, 1, 2, 3]);
+});
+
+test('command-click point selection toggles indices within one curve', () => {
+  let selection = new Set([1]);
+  selection = togglePointSelection(selection, 3, 5);
+  assert.deepEqual(selectedPointIndices(selection, 5), [1, 3]);
+  selection = togglePointSelection(selection, 1, 5);
+  assert.deepEqual(selectedPointIndices(selection, 5), [3]);
+  selection = togglePointSelection(selection, 3, 5);
+  assert.deepEqual(selectedPointIndices(selection, 5), []);
+  assert.deepEqual(selectedPointIndices(togglePointSelection(selection, 9, 5), 5), []);
+});
+
+test('command-click curve selection toggles rows and resolves an active curve', () => {
+  let selection = normalizeCurveSelection([1, 99], [1, 2, 3]);
+  selection = toggleCurveSelection(selection, 2, [1, 2, 3]);
+  assert.deepEqual(selectedCurveIds(selection, [1, 2, 3]), [1, 2]);
+  assert.equal(activeCurveId(selection, 2), 2);
+  selection = toggleCurveSelection(selection, 2, [1, 2, 3]);
+  assert.deepEqual(selectedCurveIds(selection, [1, 2, 3]), [1]);
+  assert.equal(activeCurveId(selection, 2), 1);
+  assert.deepEqual(selectedCurveIds([], [1, 2, 3], 3), [3]);
 });
 
 test('mesh budget clamps direct values and normalizes fallback values', () => {
