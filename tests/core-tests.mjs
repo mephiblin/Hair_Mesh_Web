@@ -41,7 +41,6 @@ import {
 import { canInteractWithAxisGuides, shouldShowTransformHelper } from '../src/viewport/interaction-policy.js';
 import {
   DEFAULT_REFERENCE_IMAGE_SETTINGS,
-  alignedReferenceImageView,
   normalizeReferenceImageSettings,
   referenceImagePlaneLayout
 } from '../src/viewport/reference-images.js';
@@ -191,7 +190,15 @@ test('reference image settings normalize optional project fields without embeddi
     opacity: 9,
     layer: 'overlay',
     frame: { center:[4, 5, 6], size:[2, -4, 0] },
-    views: { front:{ scaleX:0, offsetY:99, rotation:400, mirror:true, fileName:'front.png' } }
+    views: { front:{
+      scaleX:0,
+      offsetY:99,
+      rotation:400,
+      mirror:true,
+      backfaceCulling:false,
+      transform:{ position:[1, 2, 3], rotation:[10, 20, 30], scale:[-2, 3, 99] },
+      fileName:'front.png'
+    } }
   });
   assert.equal(settings.opacity, 1);
   assert.equal(settings.layer, 'overlay');
@@ -199,6 +206,8 @@ test('reference image settings normalize optional project fields without embeddi
   assert.equal(settings.views.front.scaleX, 0.01);
   assert.equal(settings.views.front.offsetY, 10);
   assert.equal(settings.views.front.rotation, 180);
+  assert.equal(settings.views.front.backfaceCulling, false);
+  assert.deepEqual(settings.views.front.transform, { position:[1, 2, 3], rotation:[10, 20, 30], scale:[2, 3, 1] });
   assert.equal(settings.views.front.fileName, 'front.png');
   assert.equal('dataUrl' in settings.views.front, false);
   assert.deepEqual(normalizeReferenceImageSettings(), {
@@ -206,9 +215,9 @@ test('reference image settings normalize optional project fields without embeddi
     layer: DEFAULT_REFERENCE_IMAGE_SETTINGS.layer,
     frame: { center:[0, 0, 0], size:[2, 2, 2] },
     views: {
-      front:{ visible:true, scaleX:1, scaleY:1, offsetX:0, offsetY:0, rotation:0, mirror:false, fileName:'' },
-      left:{ visible:true, scaleX:1, scaleY:1, offsetX:0, offsetY:0, rotation:0, mirror:false, fileName:'' },
-      back:{ visible:true, scaleX:1, scaleY:1, offsetX:0, offsetY:0, rotation:0, mirror:false, fileName:'' }
+      front:{ visible:true, scaleX:1, scaleY:1, offsetX:0, offsetY:0, rotation:0, mirror:false, backfaceCulling:true, transform:null, fileName:'' },
+      left:{ visible:true, scaleX:1, scaleY:1, offsetX:0, offsetY:0, rotation:0, mirror:false, backfaceCulling:true, transform:null, fileName:'' },
+      back:{ visible:true, scaleX:1, scaleY:1, offsetX:0, offsetY:0, rotation:0, mirror:false, backfaceCulling:true, transform:null, fileName:'' }
     }
   });
 });
@@ -234,14 +243,15 @@ test('reference image planes map each screen axis and stay behind the fitted fra
   assert.ok(back.position[2] > 33);
   assert.equal(front.width, 4.8);
   assert.equal(front.height, 6.4);
+  assert.equal(front.backfaceCulling, true);
+  assert.equal(front.transform, null);
 });
 
-test('reference images appear only when camera is aligned to Front, Left, or Back', () => {
-  assert.equal(alignedReferenceImageView([0, 0, 5], [0, 0, 0]), 'front');
-  assert.equal(alignedReferenceImageView([-5, 0, 0], [0, 0, 0]), 'left');
-  assert.equal(alignedReferenceImageView([0, 0, -5], [0, 0, 0]), 'back');
-  assert.equal(alignedReferenceImageView([3, 2, 4], [0, 0, 0]), null);
-  assert.equal(alignedReferenceImageView([0, 5, 0], [0, 0, 0]), null);
+test('reference image layout preserves an arbitrary 3D plane transform for perspective editing', () => {
+  const transform = { position:[3, 4, 5], rotation:[12, 34, 56], scale:[7, 8, 1] };
+  const layout = referenceImagePlaneLayout('left', normalizeReferenceImageSettings({ views:{ left:{ transform } } }), 1.5);
+  assert.deepEqual(layout.transform, transform);
+  assert.equal(layout.visible, true);
 });
 
 let passed = 0;

@@ -59,19 +59,22 @@ gridVisible: boolean
 
 ```yaml
 views: front | left | back
-camera_visibility: matching orthographic direction only
+camera_visibility: perspective and all standard views
 layer: behind | overlay
-per_view: visible, scaleX, scaleY, offsetX, offsetY, rotation, mirror, fileName
+per_view: visible, transform { position, rotation, scale }, mirror, backfaceCulling, fileName
 shared: opacity, fitted frame center/size
 image_payload: session-only
 ```
 
 - `referenceImageRoot`는 Import한 `modelRoot`와 별개인 표시 전용 Scene group이다. Curve 생성, surface raycast, Reference Objects 목록, OBJ/FBX Export에 참여하지 않는다.
-- Front는 `+Z`, Left는 `-X`, Back은 `-Z`에서 보는 화면 축으로 배치한다. `alignedReferenceImageView()`가 해당 방향과 정렬된 경우에만 활성 plane을 표시하므로 Perspective, Top, 궤도 회전 중에는 숨긴다.
-- 이미지 카드를 누르면 활성 이미지를 바꾸고 저장된 frame center를 향한 Front/Left/Back 뷰로 전환한다. 기존 Curve/Point 선택 위치 때문에 이미지 프레임에서 벗어나면 안 된다.
-- 첫 이미지 로드와 `Fit to Model`은 현재 Reference Model bounds를 공통 frame으로 캡처한다. 모델이 없으면 기본 원점 frame을 사용하며 이후 Scale/Offset/Rotation/Mirror로 수동 정렬할 수 있다.
+- Front는 `+Z`, Left는 `-X`, Back은 `-Z`를 향하는 초기 Plane Mesh로 배치한다. 카메라 방향으로 visibility를 제한하지 않으므로 Perspective, Top, 궤도 회전에서도 실제 공간상의 평면으로 보인다.
+- 이미지 카드를 누르면 활성 Plane을 바꾸고 저장된 frame center를 향한 Front/Left/Back 기준 뷰로 전환한다. Viewport에서는 Curve가 잡히지 않은 경우 보이는 Plane을 직접 클릭해 카메라를 바꾸지 않고 선택할 수 있다.
+- 첫 이미지 로드와 `Fit to Model`은 현재 Reference Model bounds를 공통 frame으로 캡처하고 세 Plane의 custom `transform`을 `null`로 되돌려 새 bounds/aspect 기반 초기 배치를 사용한다. 모델이 없으면 기본 원점 frame을 사용한다.
+- `referenceImageTransformControls`는 활성 Plane Mesh에 직접 attach한다. Move/Rotate는 XYZ, Scale은 두 Plane 축만 노출하며 World/Local space, W/E/R/Q와 Position/Rotation/Plane Size 수치 입력을 지원한다.
+- gizmo 또는 수치 편집이 시작되면 과거 `scaleX/scaleY/offsetX/offsetY/rotation` 호환값 대신 실제 `transform.position/rotation/scale`을 저장한다. 이전 프로젝트의 transform 없는 view는 기존 frame/layout 계산을 그대로 사용한다.
 - `Behind Geometry`는 depth test로 모델 뒤에 가려지고, `Overlay on Top`은 depth test 없이 표시한다. 두 모드 모두 depth write를 끄며 다른 material이나 wire color를 바꾸지 않는다.
-- PNG/JPEG/WebP/SVG를 sRGB `MeshBasicMaterial` plane으로 읽는다. 교체·Clear에서 plane geometry, material, texture를 dispose하고 Object URL을 revoke한다.
+- `Back-face Cull`은 `FrontSide`와 `DoubleSide`를 전환한다. `Flip Horizontal`은 Mesh scale을 음수로 만들지 않고 texture repeat/offset으로 UV만 반전해 Scale gizmo의 부호를 안정적으로 유지한다.
+- PNG/JPEG/WebP/SVG를 sRGB `MeshBasicMaterial` plane으로 읽고, 활성 Plane에는 별도 teal `LineLoop` 선택 외곽선을 표시한다. 교체·Clear에서 plane/outline geometry, material, texture를 dispose하고 Object URL을 revoke한다.
 - 프로젝트에는 이미지 binary/data URL을 넣지 않는다. optional `referenceImages` 설정과 `fileName` 힌트만 저장하며 다시 연 뒤 사용자가 같은 로컬 파일을 재선택한다.
 - 프로젝트 복원 시 현재 세션 plane의 파일명과 저장된 힌트가 다르면 `reconcileReferenceImageRuntime()`가 이전 이미지를 폐기한다. 같은 파일명인 이미지만 세션 편의를 위해 유지한다.
 
@@ -120,16 +123,19 @@ gridVisible
 - 조명 Reset이 Directional/Environment 기본값으로 복귀하고 Dirty/Recovery에 반영되는가?
 - Background/FOV/Grid가 즉시 반영되고 이전 프로젝트 누락 필드는 기본값으로 복원되는가?
 - Reference/Wire/Grid의 visibility가 서로 독립적인가?
-- Front/Left/Back plane이 대응 정투상에서만 보이고 Perspective/Top/궤도 회전에서 숨는가?
+- Front/Left/Back plane이 Perspective/Top/궤도 회전에서도 공간상의 실제 Plane Mesh로 보이는가?
 - 이미지 카드 전환이 선택 Curve 위치와 무관하게 저장된 frame center를 바라보는가?
-- Behind는 모델에 가려지고 Overlay는 위에 보이며, Scale/Offset/Rotation/Mirror/Opacity가 view별 또는 공통 소유권대로 반영되는가?
+- Plane Viewport 클릭과 카드 선택이 활성 외곽선/gizmo/UI를 같은 view로 동기화하는가?
+- Move/Rotate/Scale gizmo와 Position/Rotation/Plane Size 수치가 양방향 동기화되고 프로젝트에 실제 transform으로 저장되는가?
+- Back-face Cull ON에서 뒷면이 사라지고 OFF에서 양면이 보이며, Flip Horizontal이 geometry scale 부호 없이 UV만 뒤집는가?
+- Behind는 모델에 가려지고 Overlay는 위에 보이며, Transform/Mirror/Opacity가 view별 또는 공통 소유권대로 반영되는가?
 - 이미지 교체/Clear에서 GPU 자원과 Object URL을 해제하고, 프로젝트 JSON에 binary/data URL이 들어가지 않는가?
 - 이전 프로젝트에 `referenceImages`가 없어도 기본값으로 열리고, 새 프로젝트는 정렬값과 파일명 힌트를 왕복하는가?
 - 1024px 폭에서 재질 선택기와 모든 rollout에 스크롤로 접근할 수 있고 가로 overflow가 없는가?
 
 ## 검증
 
-- Node: material preset fallback/kind, dark-original Auto 정책, object material mode, viewport setting, lighting clamp/position, wire mode/color, reference image 설정/plane/alignment 정규화.
-- Browser: 다중 Mesh Import/숨김/선택, Mesh별 preset/texture/Clear, 모든 Hair/Reference preset, Original 복귀, Directional/Environment 조명/Reset, Wire Off/Wire Only/Surface + Wire, Front/Left/Back 이미지 정렬·표시·Clear, Background/FOV/Grid, 프로젝트 왕복과 Recovery.
+- Node: material preset fallback/kind, dark-original Auto 정책, object material mode, viewport setting, lighting clamp/position, wire mode/color, reference image 설정/초기 plane/custom 3D transform 정규화.
+- Browser: 다중 Mesh Import/숨김/선택, Mesh별 preset/texture/Clear, 모든 Hair/Reference preset, Original 복귀, Directional/Environment 조명/Reset, Wire Off/Wire Only/Surface + Wire, Front/Left/Back Plane의 Perspective 표시·Viewport 선택·gizmo drag·Back-face/Flip·Clear, Background/FOV/Grid, 프로젝트 왕복과 Recovery.
 - Import: 유효한 FBX fixture에 Reference MatCap과 Wire layer를 적용한다.
 - Layout: 1600×900과 1024×768에서 console/page error, 가로 overflow, control 접근성을 확인한다.

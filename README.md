@@ -14,7 +14,7 @@ Hair Mesh Web은 브라우저에서 Bézier 가이드를 그리고, 가이드를
 - 하나의 Reference 파일 안의 여러 Mesh를 개별 표시/숨김하고 재질·이미지 텍스처 지정
 - 원본 텍스처를 유지하면서 텍스처 없는 검은 재질만 밝히는 Reference `Auto` 표시
 - Viewport 배경색, Camera FOV, Ground Grid, 환경광과 방향광 조정
-- AI 처리 없이 Front / Left / Back 이미지를 정투상 모델링 가이드로 표시·정렬
+- AI 처리 없이 Front / Left / Back 이미지를 실제 3D Plane Mesh로 배치하고 Move/Rotate/Scale
 - Reference 전용 Wire Only / Surface + Wire와 독립 선 색상
 - Quad/N-gon OBJ 및 실험적 FBX 7.4 ASCII 출력
 - 편집 가능한 `.hairmesh.json` 저장·열기
@@ -58,7 +58,7 @@ HTML 파일을 직접 더블클릭하는 방식은 ES Module/CORS 제한 때문�
 5. `Live Curve → Mesh`에서 Ribbon, Tube 또는 Imported Mesh Brush를 선택합니다.
 6. `Apply / Rebuild Live Mesh`를 누릅니다.
 7. `Display → Viewport Material`에서 전체 Reference 재질을 고르고, `Reference Objects`에서 Mesh별 표시·재질·텍스처를 조정합니다.
-8. `Display → Viewport Reference Images`에서 Front / Left / Back 이미지를 각각 불러옵니다. 카드를 누르면 해당 정투상 뷰로 전환되며 Scale, Offset, Rotation, Mirror, Opacity와 앞/뒤 레이어를 조정할 수 있습니다.
+8. `Display → Viewport Reference Images`에서 Front / Left / Back 이미지를 각각 불러옵니다. 카드를 누르면 해당 Plane과 기준 뷰를 선택하며 Move/Rotate/Scale gizmo, Position/Rotation/Size 수치, Flip Horizontal, Back-face Cull, Opacity와 앞/뒤 레이어를 조정할 수 있습니다. Plane은 Perspective에서도 그대로 보입니다.
 9. `Display → Viewport`에서 배경색, Camera FOV, Grid와 조명을 조정합니다.
 10. `Save Project`로 편집본을 보존하거나 `Export` 탭에서 OBJ/FBX를 출력합니다.
 
@@ -75,9 +75,9 @@ HTML 파일을 직접 더블클릭하는 방식은 ES Module/CORS 제한 때문�
 | `Ctrl/⌘ + A` | 선택 커브의 모든 Point 선택 |
 | `Ctrl/⌘ + Point 클릭` | 활성 Curve 안의 Point를 다중 선택/해제 |
 | `Ctrl/⌘ + Curve 행 클릭` | Scene Explorer Curve를 다중 선택/해제 |
-| `W / E / R` | Move / Rotate / Scale |
+| `W / E / R` | Curve/Point 또는 활성 Reference Plane의 Move / Rotate / Scale |
+| `Q` | Object/Camera 모드 또는 Reference Plane gizmo 숨김 |
 | `I` | Point Insert 모드 |
-| `Q` | Object/Camera 모드 |
 | `Shift + G` | 축 가이드 표시 전환 |
 | `Esc` | 진행 중인 Line 생성 취소 |
 | `Delete` | 선택 Point 또는 커브 삭제 |
@@ -118,7 +118,7 @@ Hair_Mesh_Web/
 - 앱의 UI와 조립 로직 대부분은 `curve_mesh_hair_tool_v4.html`의 단일 `<script type="module">`에 있습니다.
 - FBX 출력은 ASCII 7.4 실험 기능이므로 대상 DCC에서 반드시 Import 결과를 확인해야 합니다.
 - 기준 모델은 세션 중 표면 배치용이며 `.hairmesh.json`에 직렬화되지 않습니다.
-- Front / Left / Back 참조 이미지는 정면 정투상에만 표시되는 세션 자원입니다. `.hairmesh.json`에는 이미지 데이터 대신 파일명 힌트와 표시·정렬값만 저장됩니다.
+- Front / Left / Back 참조 이미지는 Perspective를 포함한 모든 View에서 보이는 세션 전용 3D Plane Mesh입니다. `.hairmesh.json`에는 이미지 데이터 대신 파일명 힌트와 3D Transform·표시·반전·Back-face Cull 값만 저장됩니다.
 - Viewport Material과 수동 Reference 텍스처는 표시 전용입니다. Import 원본 재질은 보존되며 OBJ/FBX Export 형상에는 포함되지 않습니다.
 - FBX/GLTF Loader가 복원한 내장/해결된 텍스처는 `Original`/`Auto`에서 유지됩니다. 단일 파일 선택으로 찾을 수 없는 외부 sidecar 이미지는 `Reference Objects → Color Texture`에서 Mesh별로 다시 지정하십시오.
 - 메시 예산은 Path Segments `2–512`, Tube Sides `3–64`로 제한됩니다.

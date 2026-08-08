@@ -8,6 +8,8 @@ const DEFAULT_VIEW = Object.freeze({
   offsetY: 0,
   rotation: 0,
   mirror: false,
+  backfaceCulling: true,
+  transform: null,
   fileName: ''
 });
 
@@ -39,6 +41,15 @@ function normalizeVector(value, fallback, { positive = false } = {}) {
   });
 }
 
+function normalizePlaneTransform(value) {
+  if (!value || typeof value !== 'object') return null;
+  return {
+    position: normalizeVector(value.position, [0, 0, 0]),
+    rotation: normalizeVector(value.rotation, [0, 0, 0]),
+    scale: normalizeVector(value.scale, [1, 1, 1], { positive:true }).map((component, index) => index === 2 ? 1 : clamp(component, 0.0001, 100000))
+  };
+}
+
 export function normalizeReferenceImageView(value = {}) {
   return {
     visible: value.visible !== false,
@@ -48,6 +59,8 @@ export function normalizeReferenceImageView(value = {}) {
     offsetY: clamp(finiteNumber(value.offsetY, DEFAULT_VIEW.offsetY), -10, 10),
     rotation: clamp(finiteNumber(value.rotation, DEFAULT_VIEW.rotation), -180, 180),
     mirror: value.mirror === true,
+    backfaceCulling: value.backfaceCulling !== false,
+    transform: normalizePlaneTransform(value.transform),
     fileName: typeof value.fileName === 'string' ? value.fileName.slice(0, 512) : ''
   };
 }
@@ -103,24 +116,10 @@ export function referenceImagePlaneLayout(viewName, settings, imageAspect = 1) {
     baseRotationY,
     rollRadians: view.rotation * Math.PI / 180,
     mirror: view.mirror,
+    backfaceCulling: view.backfaceCulling,
+    transform: view.transform,
     opacity: normalized.opacity,
     layer: normalized.layer,
     visible: view.visible
   };
-}
-
-export function alignedReferenceImageView(cameraPosition, target, minimumDot = 0.9995) {
-  const position = Array.isArray(cameraPosition) ? cameraPosition : [cameraPosition?.x, cameraPosition?.y, cameraPosition?.z];
-  const center = Array.isArray(target) ? target : [target?.x, target?.y, target?.z];
-  const offset = position.slice(0, 3).map((value, index) => finiteNumber(value, 0) - finiteNumber(center[index], 0));
-  const length = Math.hypot(...offset);
-  if (length < 1e-8) return null;
-  const direction = offset.map(value => value / length);
-  const candidates = [
-    ['front', direction[2]],
-    ['left', -direction[0]],
-    ['back', -direction[2]]
-  ];
-  const best = candidates.reduce((current, candidate) => candidate[1] > current[1] ? candidate : current);
-  return best[1] >= clamp(finiteNumber(minimumDot, 0.9995), -1, 1) ? best[0] : null;
 }
