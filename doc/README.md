@@ -17,6 +17,7 @@
 
 - [Curve 편집](features/curve-editing.md)
 - [Mesh 생성](features/mesh-generation.md)
+- [Proxy Mesh](features/proxy-mesh.md)
 - [프로젝트·History](features/project-state.md)
 - [Viewport·UI](features/viewport-ui.md)
 - [Viewport Display](features/viewport-display.md)

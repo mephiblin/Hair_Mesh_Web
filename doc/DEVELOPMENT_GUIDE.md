@@ -48,7 +48,7 @@ curl -I http://127.0.0.1:8080/curve_mesh_hair_tool_v4.html
 
 이 앱에는 서로 연결된 두 종류의 상태가 있습니다.
 
-1. **직렬화 상태**: Curve/Point/Brush, 선택, 모드, 표시 설정. `captureAppState()`가 반환하고 JSON/History/Recovery가 사용합니다.
+1. **직렬화 상태**: Curve/Point/Brush, Proxy primitive parameters/transform, 선택, 모드, 표시 설정. `captureAppState()`가 반환하고 JSON/History/Recovery가 사용합니다.
 2. **파생 Scene 상태**: Three.js Group, Control mesh, Line, BufferGeometry, TransformControls. `restoreAppState()`와 각 `rebuild*` 함수가 직렬화 상태로부터 재구성합니다.
 
 Scene 객체를 JSON에 직접 넣지 않습니다. 새 기능을 저장하려면 최소 데이터만 직렬화 상태에 넣고 Scene 객체는 복원 시 다시 만드십시오.
@@ -59,6 +59,8 @@ Reference 파일 자체와 Mesh별 표시/재질/수동 텍스처는 Import 세�
 
 - Line은 Point가 2개 이상일 때만 완료할 수 있습니다.
 - 숨김 또는 잠긴 Curve는 편집할 수 없습니다.
+- 숨김 또는 잠긴 Proxy는 파라미터·이름·Transform·복제/삭제로 편집할 수 없습니다.
+- 활성 root object는 Curve 또는 Proxy 중 하나이며 `syncModifyContext()`가 해당 Modify UI만 표시합니다.
 - Live Mesh는 `meshEnabled`, `meshStatus === 'ready'`, 유효한 `topology`가 모두 충족되어야 Ready입니다.
 - Path Segments는 2–512, Tube Sides는 3–64 범위입니다.
 - Point/Brush의 Vector와 Quaternion은 배열로 변환한 뒤 저장합니다.
@@ -70,7 +72,7 @@ Reference 파일 자체와 Mesh별 표시/재질/수동 텍스처는 Import 세�
 - Front/Left/Back 참조 Plane은 Perspective를 포함한 모든 View에서 보이지만 모델 surface raycast와 Mesh Export에는 참여하지 않습니다.
 - `Persp`는 항상 Perspective Camera이며, Ortho Views ON의 Front/Left/Back/Top은 Orthographic Camera입니다. active camera를 바꾸면 OrbitControls, 두 TransformControls, picking/raycast, resize/frame 경로를 함께 검사하십시오.
 
-관련 정책은 `src/state/curve-policy.js`, `curve-selection.js`, `point-selection.js`, `line-creation-policy.js`, `src/geometry/mesh-limits.js`에 있으며 Node 테스트가 계약을 고정합니다.
+관련 정책은 `src/state/curve-policy.js`, `curve-selection.js`, `point-selection.js`, `line-creation-policy.js`, `src/geometry/mesh-limits.js`, `proxy-primitives.js`에 있으며 Node 테스트가 계약을 고정합니다.
 
 ## 5. 기능 구현 패턴
 
@@ -113,13 +115,15 @@ History 밖에서 표시 옵션처럼 상태를 직접 바꾸는 경우 `markPro
 
 고비용 설정에는 상한을 둡니다. 입력의 HTML `min/max`만 신뢰하지 말고 계산 직전에도 정규화하십시오.
 
+Proxy primitive를 추가/변경할 때는 [`features/proxy-mesh.md`](features/proxy-mesh.md)의 type/default/normalize/topology/UI/record/project/export 전체 경로를 사용합니다. 파생 topology나 Three.js 객체를 snapshot에 넣지 않습니다.
+
 ## 8. Geometry/Three.js 규칙
 
 - 계산 가능한 함수는 입력 객체를 불필요하게 mutate하지 않습니다.
 - Curve상의 방향 프레임은 `buildSweepFrames()`를 사용해 일관된 twist 처리와 퇴화 구간 fallback을 공유합니다.
 - 논리 topology는 `{ positions, faces, uvs, faceUvs }`를 유지합니다.
 - 뷰포트 렌더용 삼각분할은 `topologyToGeometry()`에서 수행하되 Export용 원래 Quad/N-gon face는 보존합니다.
-- World-space Export 전에 `curve.group.matrixWorld`를 적용합니다.
+- World-space Export 전에 Curve/Proxy export entry의 `group.matrixWorld`를 적용합니다.
 - 새 Mesh/Material을 교체할 때 이전 자원을 `disposeTree()` 계열로 해제합니다.
 
 ## 9. UI/모드 규칙
@@ -132,7 +136,7 @@ History 밖에서 표시 옵션처럼 상태를 직접 바꾸는 경우 `markPro
 - `syncGizmo()`와 `updateControlVisibility()`
 - Viewport pointer handler
 - 전역 keydown handler
-- 숨김/잠금 Curve 정책
+- 숨김/잠금 Curve/Proxy 정책과 객체별 Modify 문맥
 
 입력 필드에 포커스가 있을 때 단축키가 값을 가로채지 않도록 `isTypingTarget()`을 거쳐야 합니다. Checkbox 같은 비문자 입력은 기존 전역 선택 단축키 계약을 따릅니다.
 
@@ -171,15 +175,16 @@ globalThis.__CURVE_TOOL_SELF_TEST__
    - Scene Explorer Curve 행을 Ctrl/⌘ 클릭해 다중 선택/활성 전환/전체 해제
 3. Ribbon과 Tube 생성, Segment/Sides 경계값 확인
 4. Brush fixture Import 후 Brush Mesh 생성
-5. 숨김/잠금 Curve가 수정되지 않는지 확인
-6. `.hairmesh.json` 저장 후 다시 열어 Curve/Brush/선택/Live Mesh 확인
+5. Proxy 4종 생성, 크기/Segments/Sides/Rings 변경, Curve↔Proxy Modify 전환과 W/E/R/Frame/Clone/Delete 확인
+6. 숨김/잠금 Curve/Proxy가 수정되지 않는지 확인
+7. `.hairmesh.json` 저장 후 다시 열어 Curve/Brush/Proxy/활성 Modify 문맥/Live Mesh 확인
    - 참조 이미지 정렬값과 파일명 힌트는 복원되고 JSON에 image payload가 없는지 확인
-7. 변경 후 새로고침하여 복구 확인
-8. OBJ/FBX Export 후 대상 DCC Import 확인
-9. Front/Left/Back Plane이 Perspective에서도 보이고 Move/Rotate/Scale, Back-face Cull, Flip Horizontal이 동작하는지 확인
-10. Ortho Views ON의 Front/Left/Back/Top에서 FOV 왜곡이 없고 FOV 입력이 비활성화되는지, OFF/Persp에서 원근 카메라가 복원되는지 확인
-11. 카메라 전환 후 Orbit 줌, Plane/Curve picking, gizmo drag, 프로젝트 설정 왕복 확인
-12. 좁은 뷰포트에서 Toolbar와 패널 접근 확인
+8. 변경 후 새로고침하여 복구 확인
+9. Curve+Proxy OBJ/FBX Export 후 대상 DCC Import 확인
+10. Front/Left/Back Plane이 Perspective에서도 보이고 Move/Rotate/Scale, Back-face Cull, Flip Horizontal이 동작하는지 확인
+11. Ortho Views ON의 Front/Left/Back/Top에서 FOV 왜곡이 없고 FOV 입력이 비활성화되는지, OFF/Persp에서 원근 카메라가 복원되는지 확인
+12. 카메라 전환 후 Orbit 줌, Plane/Curve/Proxy picking, gizmo drag, 프로젝트 설정 왕복 확인
+13. 좁은 뷰포트에서 Toolbar와 패널 접근 확인
 
 ## 11. 알려진 기술 부채와 확장 방향
 

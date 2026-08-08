@@ -13,13 +13,13 @@ Scene 초기화, picking, mode, TransformControls, axis guide, keyboard과 패�
 | Resize/frame | `resize()`, `setOrthographicFrustumHeight()`, `fitObject()`, `frameSelected()` | `matchedOrthographicHeight()` |
 | Control visual | `rebuildControlVisuals()`, `updateControlVisuals()`, `applyControlAppearance()` | curve policy |
 | Visibility | `updateControlVisibility()`, `updateCurveSelectionStyles()` | viewport interaction policy |
-| Picking | `findControl()`, `selectControl()`, `findCurveAtEvent()`, `handleViewportClick()` | `interaction-policy.js`, `point-selection.js` |
+| Picking | `findControl()`, `selectControl()`, `findSceneObjectAtEvent()`, `handleViewportClick()` | `interaction-policy.js`, `point-selection.js` |
 | Surface/free placement | `pointOnSurface()`, `pointInFreePlane()` | raycaster |
 | Mode | `setMode()`, `leaveLineCreationForMode()`, `updateHint()` | line creation policy |
-| Curve/Point Gizmo | `syncGizmo()`, `beginGizmoDrag()`, `handleGizmoChange()`, `endGizmoDrag()` | `transformControls` |
+| Curve/Proxy/Point Gizmo | `activeSceneObject()`, `syncGizmo()`, `beginGizmoDrag()`, `handleGizmoChange()`, `endGizmoDrag()` | `transformControls` |
 | Reference Plane Gizmo | `setReferenceImageTransformTool()`, `syncReferenceImageTransformControls()`, `updateReferenceImageTransformFromPlane()` | `referenceImageTransformControls` |
 | Axis guides | `syncAxisGuides()`, `startAxisGuideDrag()`, `updateAxisGuideDrag()` | `src/viewport/axis-guide-drag.js` |
-| UI availability | `updateCommandAvailability()`, `updatePointToolButtons()` | curve editability policy |
+| UI availability/Modify context | `updateCommandAvailability()`, `syncModifyContext()`, `updatePointToolButtons()` | Curve/Proxy editability policy |
 | Rollout panel | `.rollout`, `setRolloutCollapsed()`, `initializeRollouts()` | DOM session state only |
 | Curve mesh view | `applyViewModeToCurve()`, `#viewMode` | `viewport-display.md` |
 | Keyboard | `isTypingTarget()`, document `keydown` listener | README shortcut table |
@@ -32,7 +32,7 @@ orbit: camera/object selection
 draw: draft Point placement
 edit: Point/Handle/section edit
 insert: nearest curve segment split
-transform: Curve root transform
+transform: active Curve root 또는 Proxy object transform
 ```
 
 모드 변경 시 함께 동기화할 것: select value, toolbar active state, status mode, hint, OrbitControls enabled, TransformControls attachment, control visibility, axis guide, command availability.
@@ -54,19 +54,20 @@ Reference Plane은 Curve mode와 별개의 `translate | rotate | scale | none` �
 3. Axis guide drag 대상이면 축 제약을 처리한다.
 4. Point/Handle control hit를 검사한다.
 5. Insert mode면 선택 Curve의 근접 segment를 찾는다.
-6. Curve line 또는 generated mesh를 Curve selection으로 해석한다.
-7. Orbit mode에서 Curve가 잡히지 않으면 보이는 Front/Left/Back Plane을 선택하고 Move gizmo를 연다.
+6. Curve line/generated mesh 또는 Proxy solid/edge를 `findSceneObjectAtEvent()`에서 가장 가까운 root selection으로 해석한다.
+7. Orbit mode에서 Curve/Proxy가 잡히지 않으면 보이는 Front/Left/Back Plane을 선택하고 Move gizmo를 연다.
 8. 빈 공간은 mode 계약에 따라 deselect 또는 Point placement한다.
 
 ## Rollout 패널 계약
 
-- Create·Modify·Display 탭의 직접 자식 `.rollout`은 새 페이지 로드에서 모두 `collapsed`로 시작한다. Export rollout은 기존처럼 열린 상태다.
+- Create·Display와 활성 Modify 문맥의 `.rollout`은 새 페이지 로드에서 모두 `collapsed`로 시작한다. Export rollout은 기존처럼 열린 상태다.
 - 헤더를 클릭하면 해당 DOM의 `collapsed`, `aria-expanded`, `aria-hidden`만 동기화한다. 탭 전환·mode 전환·프로젝트 복원은 rollout을 재초기화하지 않는다.
 - rollout 열림 상태는 편집 데이터가 아니므로 History, `.hairmesh.json`, Recovery, local/session storage에 저장하지 않는다. 페이지를 새로 초기화하면 마크업 기본값으로 복귀한다.
 
 ## 변경 체크리스트
 
 - 숨김/잠금 객체가 click, gizmo, numeric, shortcut 모든 경로에서 보호되는가?
+- Curve↔Proxy 선택 전환 시 Scene row, badge, `none|curve|proxy` Modify 문맥, gizmo가 같은 frame에 갱신되는가?
 - `isTypingTarget()`이 text/number 입력 단축키 충돌을 막는가?
 - Mode 전환 시 stale gizmo 또는 axis drag가 남지 않는가?
 - Reference Plane과 Curve/Point TransformControls가 동시에 활성화되지 않고, 각 dragging 종료에서 OrbitControls와 Dirty 상태가 복구되는가?
@@ -83,4 +84,4 @@ Reference Plane은 Curve mode와 별개의 `translate | rotate | scale | none` �
 ## 검증
 
 - Self-test: visible-control pick policy, axis guide enabled/visible interaction policy, axis vector/plane/scalar.
-- Browser: 각 mode 전이, object/point/handle/axis/Reference Plane picking, Plane Move/Rotate/Scale drag, drag cancel, input focus shortcut, hidden/locked protection, rollout 기본 닫힘·탭 왕복·페이지 재초기화, narrow viewport layout. Display 변경은 `viewport-display.md`의 수용 시나리오를 추가한다.
+- Browser: 각 mode 전이, Curve/Proxy object·point·handle·axis·Reference Plane picking, Proxy/Plane Move/Rotate/Scale drag, drag cancel, input focus shortcut, hidden/locked protection, 객체별 Modify 전환, rollout 기본 닫힘·탭 왕복·페이지 재초기화, narrow viewport layout. Display 변경은 `viewport-display.md`의 수용 시나리오를 추가한다.

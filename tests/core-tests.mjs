@@ -4,6 +4,12 @@ import { canFinishLine, lineCreationExitAction } from '../src/state/line-creatio
 import { allPointIndices, normalizePointSelection, selectedPointIndices, togglePointSelection } from '../src/state/point-selection.js';
 import { activeCurveId, normalizeCurveSelection, selectedCurveIds, toggleCurveSelection } from '../src/state/curve-selection.js';
 import { normalizeMeshBudget } from '../src/geometry/mesh-limits.js';
+import {
+  buildProxyTopology,
+  defaultProxySettings,
+  normalizeProxySettings,
+  proxyTopologyStats
+} from '../src/geometry/proxy-primitives.js';
 import { canEditCurve, hasReadyMesh } from '../src/state/curve-policy.js';
 import {
   PROJECT_FORMAT,
@@ -90,6 +96,53 @@ test('mesh budget clamps direct values and normalizes fallback values', () => {
   assert.deepEqual(normalizeMeshBudget({ segments: 'bad', radial: undefined }), { segments: 32, radial: 8 });
 });
 
+test('proxy primitive settings clamp dimensions and subdivision budgets', () => {
+  assert.deepEqual(normalizeProxySettings('box', {
+    width:-4,
+    height:'bad',
+    widthSegments:999,
+    heightSegments:0
+  }), {
+    ...defaultProxySettings('box'),
+    width:0.001,
+    widthSegments:128,
+    heightSegments:1
+  });
+  assert.equal(normalizeProxySettings('sphere', { segments:2, rings:999 }).segments, 3);
+  assert.equal(normalizeProxySettings('sphere', { segments:2, rings:999 }).rings, 128);
+  assert.equal(normalizeProxySettings('quad-sphere', { segments:999 }).segments, 64);
+  assert.equal(normalizeProxySettings('cylinder', { sides:2, capSegments:0 }).sides, 3);
+});
+
+test('proxy primitives generate predictable logical polygon topology', () => {
+  const box = proxyTopologyStats(buildProxyTopology('box', { widthSegments:2, heightSegments:3, depthSegments:4 }));
+  assert.deepEqual(box, { vertices:94, faces:52, triangles:104, quads:52 });
+  const sphere = proxyTopologyStats(buildProxyTopology('sphere', { segments:8, rings:4 }));
+  assert.deepEqual(sphere, { vertices:26, faces:32, triangles:48, quads:16 });
+  const quadSphere = buildProxyTopology('quad-sphere', { segments:3 });
+  assert.deepEqual(proxyTopologyStats(quadSphere), { vertices:56, faces:54, triangles:108, quads:54 });
+  assert.equal(quadSphere.faces.every(face => face.length === 4), true);
+  quadSphere.positions.forEach(position => assert.ok(Math.abs(Math.hypot(...position) - .5) < 1e-10));
+  const cylinder = proxyTopologyStats(buildProxyTopology('cylinder', { sides:8, heightSegments:2, capSegments:2 }));
+  assert.deepEqual(cylinder, { vertices:58, faces:48, triangles:80, quads:32 });
+});
+
+test('proxy primitive face winding points away from each primitive center', () => {
+  for (const type of ['box', 'sphere', 'quad-sphere', 'cylinder']) {
+    const topology = buildProxyTopology(type);
+    topology.faces.forEach((face, faceIndex) => {
+      const points = face.map(index => topology.positions[index]);
+      const center = points.reduce((sum, point) => sum.map((value, axis) => value + point[axis]), [0, 0, 0]).map(value => value / points.length);
+      const [a, b, c] = points;
+      const ab = b.map((value, axis) => value - a[axis]);
+      const ac = c.map((value, axis) => value - a[axis]);
+      const normal = [ab[1] * ac[2] - ab[2] * ac[1], ab[2] * ac[0] - ab[0] * ac[2], ab[0] * ac[1] - ab[1] * ac[0]];
+      const outward = normal[0] * center[0] + normal[1] * center[1] + normal[2] * center[2];
+      assert.ok(outward > 0, `${type} face ${faceIndex} must face outward`);
+    });
+  }
+});
+
 test('curve policy rejects hidden/locked edits and dishonest live state', () => {
   assert.equal(canEditCurve({ visible: true, locked: false }), true);
   assert.equal(canEditCurve({ visible: false, locked: false }), false);
@@ -109,7 +162,14 @@ test('history groups a mutation and restores both directions', () => {
 });
 
 test('project document round-trips versioned application state', () => {
-  const appState = { nextCurveId: 2, curves: [{ id: 1, name: 'HairCard' }] };
+  const appState = {
+    nextCurveId:2,
+    nextProxyId:2,
+    selectedObjectKind:'proxy',
+    selectedProxyId:1,
+    curves:[{ id:1, name:'HairCard' }],
+    proxies:[{ id:1, name:'QuadSphere001', type:'quad-sphere', settings:{ radius:.5, segments:4 } }]
+  };
   const encoded = serializeProjectDocument(createProjectDocument(appState, { projectName: 'test' }));
   const decoded = parseProjectDocument(encoded);
   assert.equal(decoded.format, PROJECT_FORMAT);

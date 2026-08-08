@@ -19,7 +19,7 @@ Reference model Import, Mesh Brush Import, 프로젝트 파일 I/O, OBJ와 FBX �
 | Object3D Brush parser | `topologyFromObject3D()` | loaded BufferGeometry |
 | Brush UI/lifecycle | `refreshBrushUI()`, `#removeBrushBtn` | `brushes[]` |
 | Project I/O | `saveProject()`, `openProjectFile()` | `.hairmesh.json` |
-| Export set/world transform | `activeExportMeshes()`, `worldTopology()`, `exportPoint()` | ready Live curves only |
+| Export set/world transform | `activeExportMeshes()`, `worldTopology()`, `exportPoint()` | visible ready Curve Live Mesh + visible Proxy Mesh |
 | OBJ Export | `exportQuadOBJ()`, `#exportQuadObjBtn` | logical Quad/N-gon OBJ |
 | FBX Export | `computeVertexNormals()`, `exportAsciiFBX()`, `#exportFbxBtn` | FBX 7.4 ASCII experimental |
 | 다운로드 | `downloadBlob()` | browser Blob/Object URL |
@@ -45,15 +45,15 @@ Reference model Import, Mesh Brush Import, 프로젝트 파일 I/O, OBJ와 FBX �
 ## Export 경계
 
 ```text
-curves
-  → enabled + valid topology만 선택
-  → curve.group.matrixWorld 적용
+curves + proxies
+  → visible Curve의 enabled + valid topology, visible Proxy topology 선택
+  → entry.group.matrixWorld 적용
   → exportScale 적용
   → Y-up 또는 Z-up 좌표 변환
   → logical faces + optional UV 직렬화
 ```
 
-Export는 Live 관계를 bake한다. Curve/Point/Modifier 편집성은 OBJ/FBX에 포함되지 않는다.
+Export는 Live/Primitive 관계를 bake한다. Curve/Point/Modifier와 Proxy parameter 편집성은 OBJ/FBX에 포함되지 않는다. hidden Curve/Proxy는 출력하지 않는다.
 
 ## 변경 체크리스트
 
@@ -66,14 +66,15 @@ Export는 Live 관계를 bake한다. Curve/Point/Modifier 편집성은 OBJ/FBX�
 - override 교체/원본 복귀/새 모델 Import에서 원본과 임시 Material을 중복 없이 dispose하는가?
 - Brush face index와 `faceUvs` 길이가 일치하는가?
 - Curve root의 position/quaternion/scale이 Export vertex에 정확히 적용되는가?
+- Proxy group transform과 논리 Quad face가 Curve와 같은 export 경로로 적용되고 hidden Proxy가 제외되는가?
 - 축 변환과 scale이 vertex/normal 의미를 일치시키는가?
-- OBJ의 vertex/UV offset이 여러 Curve 사이에서 누적되는가?
+- OBJ의 vertex/UV offset이 여러 Curve/Proxy 사이에서 누적되고 object 이름이 구분되는가?
 - FBX polygon termination negative index와 Normal/UV mapping이 importer에서 유효한가?
-- Export 버튼은 ready topology가 없을 때 파일을 만들지 않는가?
+- Export 버튼은 표시 중인 ready Curve/Proxy topology가 없을 때 파일을 만들지 않는가?
 
 ## 검증
 
 - Fixture: `tests/fixtures/quad-brush.obj`, `multi-object-reference.obj`, `checker-texture.svg`.
 - Browser: 각 Reference/Brush 형식의 성공·실패, 모든 Reference material preset과 Original 복귀, Wire Off/Wire Only/Surface + Wire와 선 색상, Front/Left/Back Plane 로드·transform·Back-face/Flip·교체·Clear, 여러 Brush 추가/삭제, 프로젝트 round-trip.
-- OBJ: 여러 Curve, UV on/off, Quad/N-gon, Y-up/Z-up을 Blender/3ds Max에서 Import.
+- OBJ: 여러 Curve/Proxy, UV on/off, Quad/N-gon, Y-up/Z-up을 Blender/3ds Max에서 Import.
 - FBX: ASCII 7.4를 목표 DCC에서 Import하고 topology, axis, scale, normals, UV를 확인. 실험 상태를 유지한다.

@@ -39,13 +39,13 @@ input[type=checkbox]{accent-color:var(--accent)}
 .panel-title{height:28px;display:flex;align-items:center;padding:0 8px;font-weight:600;background:#3c3c3c;border-bottom:1px solid #262626}
 .scene-section{padding:7px;border-bottom:1px solid #2c2c2c}.scene-section h3{font-size:11px;margin:0 0 5px;color:#ddd}
 .file-status,.muted{color:var(--muted);font-size:11px;line-height:1.4}.wide{width:100%}.row{display:grid;grid-template-columns:1fr 1fr;gap:4px}.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}.row4{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}.coords{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}.coords2{display:grid;grid-template-columns:repeat(2,1fr);gap:4px}
-.scene-list{flex:1;overflow:auto;padding:3px;background:#383838}.scene-row{display:grid;grid-template-columns:25px minmax(0,1fr) 25px;gap:2px;align-items:center;margin:1px 0}.scene-row-main{text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.scene-row.selected .scene-row-main{background:#475d60;border-color:#7fa5a7}.scene-row.active-selection .scene-row-main{background:#557071;border-color:#b6eded;box-shadow:inset 2px 0 0 var(--accent-strong)}.scene-row-meta{color:#bdbdbd;font-size:10px;margin-left:4px}.scene-eye,.scene-lock{padding:2px;min-width:24px}.scene-row.hidden-object{opacity:.55}.scene-row.locked-object .scene-row-main{font-style:italic}
+.scene-collections{flex:1;min-height:0;display:grid;grid-template-rows:auto minmax(82px,1fr) auto minmax(82px,1fr)}.scene-collection-title{padding:6px 7px 4px;background:#414141;border-top:1px solid #2b2b2b;color:#ddd;font-size:11px;font-weight:600}.scene-list{min-height:0;overflow:auto;padding:3px;background:#383838}.scene-row{display:grid;grid-template-columns:25px minmax(0,1fr) 25px;gap:2px;align-items:center;margin:1px 0}.scene-row-main{text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.scene-row.selected .scene-row-main{background:#475d60;border-color:#7fa5a7}.scene-row.active-selection .scene-row-main{background:#557071;border-color:#b6eded;box-shadow:inset 2px 0 0 var(--accent-strong)}.scene-row-meta{color:#bdbdbd;font-size:10px;margin-left:4px}.scene-eye,.scene-lock{padding:2px;min-width:24px}.scene-row.hidden-object{opacity:.55}.scene-row.locked-object .scene-row-main{font-style:italic}
 .viewport-wrap{position:relative;min-width:0;min-height:0;background:var(--viewport)}.viewport{position:absolute;inset:0;overflow:hidden;background:radial-gradient(circle at 50% 45%,#1b2027,#0d1014 72%)}.viewport canvas{display:block}
 .hint{position:absolute;left:8px;top:8px;z-index:5;background:rgba(42,42,42,.92);border:1px solid #707070;padding:5px 7px;font-size:11px;pointer-events:none;max-width:calc(100% - 16px)}
 .viewport-badge{position:absolute;right:8px;top:8px;z-index:5;background:rgba(42,42,42,.9);border:1px solid #666;padding:4px 7px;font-size:11px;pointer-events:none}
 .command-tabs{height:37px;display:grid;grid-template-columns:repeat(4,1fr);gap:1px;padding:3px;background:#383838;border-bottom:1px solid #222}.command-tab{font-size:15px;height:30px}.command-tab.active{background:#5c6f70;border-color:var(--accent)}
 .command-content{flex:1;min-height:0;overflow:hidden}.tab-panel{height:100%;overflow:auto;padding:4px}.hidden{display:none!important}
-.object-header{display:grid;grid-template-columns:minmax(0,1fr) 28px;gap:4px;padding:4px 2px 6px}.color-chip{background:var(--accent);border:1px solid #222}
+.object-header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px;padding:4px 2px 6px}.object-type{display:flex;align-items:center;justify-content:center;min-width:62px;padding:0 6px;border:1px solid #222;background:#42666a;color:var(--accent-strong);font-size:10px;font-weight:700;letter-spacing:.04em}.proxy-parameter-group{padding-top:2px}.proxy-buttons{display:grid;grid-template-columns:1fr 1fr;gap:4px}.proxy-buttons button{min-height:34px}.proxy-empty{padding:18px 10px;text-align:center;color:var(--muted);border:1px dashed #707070;background:#3c3c3c}
 .rollout{margin:0 0 4px;border:1px solid #2a2a2a;background:#494949}.rollout-header{width:100%;height:24px;text-align:left;border:0;border-radius:0;background:#3a3a3a;padding:3px 6px;font-weight:600}.rollout-header:before{content:'▾';display:inline-block;width:14px}.rollout.collapsed .rollout-header:before{content:'▸'}.rollout.collapsed .rollout-body{display:none}.rollout-body{padding:7px}.rollout-body label{display:block;margin:5px 0 2px;color:#ddd}.checkrow{display:flex!important;align-items:center;gap:5px;margin:4px 0!important;color:#eee!important}.checkrow input{margin:0}.section-label{font-size:10px;color:#c9c9c9;margin:6px 0 2px}.selected-label{min-height:19px;padding:4px 5px;background:#373737;border:1px solid #666;color:var(--accent-strong);margin-bottom:5px}.primary{background:#4d7377;border-color:#9ccfd0;font-weight:600}.danger:hover{border-color:var(--danger)}.ok{color:var(--ok)}.warning{color:#ffd08a}.stat{margin-top:6px;padding:5px;border:1px solid #666;background:#363636;color:#ccc;font-size:10px;line-height:1.4}.scroll-list{max-height:150px;overflow:auto;background:#3a3a3a;border:1px solid #616161;padding:3px}.brush-item{display:block;width:100%;text-align:left;margin:1px 0}.brush-item.selected{background:#557071;border-color:var(--accent)}
 .kbd{display:inline-block;min-width:20px;text-align:center;padding:0 3px;border:1px solid #777;background:#2e2e2e}.live{font-size:10px;color:var(--ok);margin-top:5px}.statusbar{display:flex;align-items:center;padding:0 8px;background:#343434;border-top:1px solid #1f1f1f;color:#ddd;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.status-mode{margin-left:auto;color:var(--accent-strong);padding-left:12px}.mini-separator{height:1px;background:#2a2a2a;margin:7px 0}.point-nav{display:grid;grid-template-columns:30px 1fr 30px;gap:3px;margin-bottom:5px}.point-nav .index{display:flex;align-items:center;justify-content:center;background:#373737;border:1px solid #666}.range-header{display:flex!important;align-items:center;justify-content:space-between}.range-value{min-width:38px;text-align:right;color:var(--accent-strong);font-variant-numeric:tabular-nums}.range-control{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:6px;color:var(--muted);font-size:10px}
 .material-picker{display:grid;grid-template-columns:38px minmax(0,1fr);gap:7px;align-items:center;margin:5px 0;padding:5px;background:#3d3d3d;border:1px solid #626262}.material-picker label{margin:0!important}.material-preview{width:32px;height:32px;border-radius:50%;border:1px solid rgba(255,255,255,.35);box-shadow:inset -6px -8px 12px rgba(0,0,0,.42),0 1px 0 #1d1d1d;justify-self:center}.material-picker small{display:block;margin-top:3px;color:var(--muted);font-size:10px}
@@ -83,9 +83,9 @@ input[type=checkbox]{accent-color:var(--accent)}
     </div>
     <div class="toolgroup">
       <button id="duplicateCurveBtn" class="icon-btn" type="button" title="복제">Clone</button>
-      <button id="objectMoveBtn" class="icon-btn" type="button" title="Spline Root Move (W)">Root Move</button>
-      <button id="objectRotateBtn" class="icon-btn" type="button" title="Spline Root Rotate (E)">Root Rotate</button>
-      <button id="objectScaleBtn" class="icon-btn" type="button" title="Spline Root Scale (R)">Root Scale</button>
+      <button id="objectMoveBtn" class="icon-btn" type="button" title="Selected Object Move (W)">Move</button>
+      <button id="objectRotateBtn" class="icon-btn" type="button" title="Selected Object Rotate (E)">Rotate</button>
+      <button id="objectScaleBtn" class="icon-btn" type="button" title="Selected Object Scale (R)">Scale</button>
       <select id="transformSpace" title="변환 기즈모 좌표계 · Local은 현재 선택 대상 기준"><option value="world">World</option><option value="view">View</option><option value="local">Local</option></select>
       <button id="axisGuidesToggleBtn" class="icon-btn active" type="button" title="Move 축 가이드 표시 (Shift+G)" aria-pressed="true">Axis Lines</button>
     </div>
@@ -112,11 +112,12 @@ input[type=checkbox]{accent-color:var(--accent)}
           <label class="checkrow"><input id="modelVisible" type="checkbox" checked /> Visible</label>
         </div>
       </section>
-      <section class="scene-section">
-        <h3>Curve Objects</h3>
-        <div class="muted">행 선택 시 해당 커브의 Point 편집으로 복귀합니다.</div>
-      </section>
-      <div id="curveList" class="scene-list">아직 커브가 없습니다.</div>
+      <div class="scene-collections">
+        <div class="scene-collection-title">Curve Objects</div>
+        <div id="curveList" class="scene-list">아직 커브가 없습니다.</div>
+        <div class="scene-collection-title">Proxy Objects</div>
+        <div id="proxyList" class="scene-list">아직 프록시 메쉬가 없습니다.</div>
+      </div>
     </aside>
 
     <main class="viewport-wrap">
@@ -155,10 +156,24 @@ input[type=checkbox]{accent-color:var(--accent)}
               <p class="muted">브러시 로컬 +Y축이 커브 길이 방향입니다. OBJ는 원래 Quad/N-gon을 보존합니다.</p>
             </div>
           </div>
+          <div class="rollout collapsed">
+            <button class="rollout-header" type="button">Proxy Mesh</button>
+            <div class="rollout-body">
+              <div class="proxy-buttons">
+                <button id="createBoxProxyBtn" class="primary" type="button">Box</button>
+                <button id="createSphereProxyBtn" type="button">Sphere</button>
+                <button id="createQuadSphereProxyBtn" type="button" title="모든 면이 사각형인 구형 프록시">Quad Sphere</button>
+                <button id="createCylinderProxyBtn" type="button">Cylinder</button>
+              </div>
+              <p class="muted">현재 카메라 중심에 생성됩니다. 생성 후 Modify에서 크기와 세그먼트를 비파괴 방식으로 조정합니다.</p>
+            </div>
+          </div>
         </section>
 
         <section class="tab-panel" data-command-panel="modify">
-          <div class="object-header"><input id="curveNameInput" type="text" value="" placeholder="No selection" /><div class="color-chip" title="Curve color"></div></div>
+          <div class="object-header"><input id="curveNameInput" type="text" value="" placeholder="No selection" /><div id="modifyObjectType" class="object-type">NONE</div></div>
+          <div id="emptyModifyContext" class="proxy-empty">Scene Explorer 또는 Viewport에서 Curve / Proxy Object를 선택하세요.</div>
+          <div id="curveModifyContext" class="hidden">
           <div class="rollout collapsed">
             <button class="rollout-header" type="button">Selection / Spline Editing</button>
             <div class="rollout-body">
@@ -238,6 +253,39 @@ input[type=checkbox]{accent-color:var(--accent)}
               <div class="coords"><label>X<input id="rx" type="number" step="1" /></label><label>Y<input id="ry" type="number" step="1" /></label><label>Z<input id="rz" type="number" step="1" /></label></div>
               <button id="applyPointValuesBtn" class="wide" type="button" style="margin-top:5px">Apply Numeric Values</button>
               <div class="row" style="margin-top:4px"><button id="makeTipBtn" type="button">Set Tip · Scale 0</button><button id="resetSectionBtn" type="button">Reset Section</button></div>
+            </div>
+          </div>
+          </div>
+
+          <div id="proxyModifyContext" class="hidden">
+            <div class="rollout collapsed">
+              <button class="rollout-header" type="button">Primitive Parameters</button>
+              <div class="rollout-body">
+                <label>Primitive Type<select id="proxyType"><option value="box">Box</option><option value="sphere">Sphere · UV</option><option value="quad-sphere">Quad Sphere</option><option value="cylinder">Cylinder</option></select></label>
+                <div id="proxyBoxParameters" class="proxy-parameter-group">
+                  <div class="section-label">Dimensions</div>
+                  <div class="coords"><label>Width<input id="proxyBoxWidth" type="number" min="0.001" step="0.1" /></label><label>Height<input id="proxyBoxHeight" type="number" min="0.001" step="0.1" /></label><label>Depth<input id="proxyBoxDepth" type="number" min="0.001" step="0.1" /></label></div>
+                  <div class="section-label">Segments</div>
+                  <div class="coords"><label>Width<input id="proxyBoxWidthSegments" type="number" min="1" max="128" step="1" /></label><label>Height<input id="proxyBoxHeightSegments" type="number" min="1" max="128" step="1" /></label><label>Depth<input id="proxyBoxDepthSegments" type="number" min="1" max="128" step="1" /></label></div>
+                </div>
+                <div id="proxySphereParameters" class="proxy-parameter-group hidden">
+                  <label>Radius<input id="proxySphereRadius" type="number" min="0.001" step="0.1" /></label>
+                  <div class="coords2"><label>Segments<input id="proxySphereSegments" type="number" min="3" max="256" step="1" /></label><label>Rings<input id="proxySphereRings" type="number" min="2" max="128" step="1" /></label></div>
+                </div>
+                <div id="proxyQuadSphereParameters" class="proxy-parameter-group hidden">
+                  <label>Radius<input id="proxyQuadSphereRadius" type="number" min="0.001" step="0.1" /></label>
+                  <label>Face Segments<input id="proxyQuadSphereSegments" type="number" min="1" max="64" step="1" /></label>
+                  <p class="muted">Subdivided Box를 구면에 투영하므로 모든 면이 Quad로 유지됩니다.</p>
+                </div>
+                <div id="proxyCylinderParameters" class="proxy-parameter-group hidden">
+                  <div class="coords2"><label>Radius<input id="proxyCylinderRadius" type="number" min="0.001" step="0.1" /></label><label>Height<input id="proxyCylinderHeight" type="number" min="0.001" step="0.1" /></label></div>
+                  <div class="coords"><label>Sides<input id="proxyCylinderSides" type="number" min="3" max="256" step="1" /></label><label>Height Segs<input id="proxyCylinderHeightSegments" type="number" min="1" max="128" step="1" /></label><label>Cap Segs<input id="proxyCylinderCapSegments" type="number" min="1" max="128" step="1" /></label></div>
+                </div>
+                <div class="mini-separator"></div>
+                <div class="row"><label class="checkrow"><input id="proxySmooth" type="checkbox" /> Smooth Shading</label><label class="checkrow"><input id="proxyShowEdges" type="checkbox" /> Show Edges</label></div>
+                <div class="row" style="margin-top:5px"><button id="proxyResetParametersBtn" type="button">Reset Parameters</button><button id="proxyResetTransformBtn" type="button">Reset Transform</button></div>
+                <div id="proxyStats" class="stat">선택 프록시 없음</div>
+              </div>
             </div>
           </div>
         </section>
@@ -392,7 +440,7 @@ input[type=checkbox]{accent-color:var(--accent)}
               <button id="exportQuadObjBtn" class="wide" type="button" style="margin-top:6px">Export Quad / N-gon OBJ</button>
               <button id="exportFbxBtn" class="wide" type="button" style="margin-top:4px">Export FBX 7.4 ASCII · Experimental</button>
               <button id="clearGeneratedBtn" class="wide danger" type="button" style="margin-top:8px">Disable All Live Mesh</button>
-              <p class="muted">출력은 현재 Curve Object Transform을 적용한 완성 메쉬입니다. 웹 도구의 Live 관계는 베이크됩니다.</p>
+              <p class="muted">출력은 표시 중인 Curve Live Mesh와 Proxy Mesh의 Object Transform을 적용합니다. 비파괴 파라미터 관계는 베이크됩니다.</p>
             </div>
           </div>
         </section>
@@ -408,6 +456,7 @@ import { createHistory } from './src/state/history.js';
 import { createProjectDocument, parseProjectDocument, serializeProjectDocument } from './src/state/project-format.js';
 import { canEditCurve, hasReadyMesh } from './src/state/curve-policy.js';
 import { normalizeMeshBudget } from './src/geometry/mesh-limits.js';
+import { buildProxyTopology, defaultProxySettings, normalizeProxySettings, proxyTopologyStats } from './src/geometry/proxy-primitives.js';
 import { canFinishLine, lineCreationExitAction, MIN_LINE_POINTS } from './src/state/line-creation-policy.js';
 import { allPointIndices, normalizePointSelection, selectedPointIndices as orderedPointSelection, togglePointSelection } from './src/state/point-selection.js';
 import { activeCurveId, normalizeCurveSelection, selectedCurveIds as orderedCurveSelection, toggleCurveSelection as toggleCurveSelectionIds } from './src/state/curve-selection.js';
@@ -519,9 +568,11 @@ scene.add(grid);
 
 const modelRoot = new THREE.Group();
 const curvesRoot = new THREE.Group();
+const proxyRoot = new THREE.Group();
 const referenceImageRoot = new THREE.Group();
 referenceImageRoot.name = 'ViewportReferenceImages';
-scene.add(referenceImageRoot, modelRoot, curvesRoot);
+proxyRoot.name = 'ProxyMeshes';
+scene.add(referenceImageRoot, modelRoot, proxyRoot, curvesRoot);
 
 const COLORS = { accent: 0x6da6ff, curve: 0x9bc1ff, tangent: 0xffb86b, selected: 0xffff8a, multiSelected: 0x8fc7c7, wire: 0xe8f1ff };
 const AXIS_COLORS = Object.freeze({ X:0xff5a5a, Y:0x65d66e, Z:0x5795ff });
@@ -573,6 +624,9 @@ let modelDiagonal = 1;
 let handleRadius = .015;
 let curves = [];
 let selectedCurve = null;
+let proxies = [];
+let selectedProxy = null;
+let nextProxyId = 1;
 let selectedCurveIds = new Set();
 let selectedControl = null;
 let selectedPointIndices = new Set();
@@ -1545,6 +1599,7 @@ function makeCurveRecord(source = null) {
     curve.group.scale.copy(source.group.scale);
   }
   curves.push(curve);
+  selectedProxy = null;
   selectedCurve = curve;
   selectedCurveIds = new Set([curve.id]);
   selectedControl = null;
@@ -1552,7 +1607,7 @@ function makeCurveRecord(source = null) {
   rebuildControlVisuals(curve);
   updateCurveVisual(curve);
   if (curve.meshEnabled) rebuildCurveMesh(curve, false);
-  syncModifierUIFromCurve(curve);
+  syncModifyContext();
   refreshCurveList();
   updatePointPanel();
   syncGizmo();
@@ -1560,6 +1615,102 @@ function makeCurveRecord(source = null) {
   return curve;
 }
 function curveObject(curve) { return curve?.points?.length >= 2 ? new BezierChainCurve(curve.points) : null; }
+
+const PROXY_TYPE_LABELS = Object.freeze({ box:'Box', sphere:'Sphere', 'quad-sphere':'Quad Sphere', cylinder:'Cylinder' });
+function proxyTypeLabel(type) { return PROXY_TYPE_LABELS[type] || 'Proxy'; }
+function proxyTopologyToThree(topology) {
+  return {
+    positions:(topology.positions || []).map(position => new THREE.Vector3().fromArray(position)),
+    faces:(topology.faces || []).map(face => [...face]),
+    uvs:(topology.uvs || []).map(uv => new THREE.Vector2().fromArray(uv)),
+    faceUvs:(topology.faceUvs || []).map(face => face ? [...face] : null),
+    source:topology.source || 'proxy'
+  };
+}
+function proxyState(proxy) {
+  return {
+    id:proxy.id,
+    name:proxy.name,
+    type:proxy.type,
+    visible:proxy.visible,
+    locked:proxy.locked,
+    settings:{ ...proxy.settings },
+    position:proxy.group.position.toArray(),
+    quaternion:proxy.group.quaternion.toArray(),
+    scale:proxy.group.scale.toArray()
+  };
+}
+function makeProxyRecord(type = 'box', source = null) {
+  const id = source?.id ?? nextProxyId++;
+  const proxyType = source?.type || type;
+  const group = new THREE.Group();
+  group.name = source?.name || `${proxyTypeLabel(proxyType).replace(/\s/g, '')}${String(id).padStart(3, '0')}`;
+  group.userData.proxyId = id;
+  proxyRoot.add(group);
+  const proxy = {
+    id,
+    name:group.name,
+    type:proxyType,
+    group,
+    visible:source?.visible !== false,
+    locked:!!source?.locked,
+    settings:normalizeProxySettings(proxyType, source?.settings || defaultProxySettings(proxyType)),
+    meshGroup:null,
+    solidMesh:null,
+    wireMesh:null,
+    topology:null
+  };
+  group.visible = proxy.visible;
+  if (source) {
+    group.position.fromArray(source.position || [0,0,0]);
+    group.quaternion.fromArray(source.quaternion || [0,0,0,1]);
+    group.scale.fromArray(source.scale || [1,1,1]);
+  } else group.position.copy(orbit.target);
+  proxies.push(proxy);
+  rebuildProxyMesh(proxy);
+  return proxy;
+}
+function proxyFromState(state) { return makeProxyRecord(state.type, state); }
+function disposeProxy(proxy) {
+  if (!proxy) return;
+  transformControls.detach();
+  proxyRoot.remove(proxy.group);
+  disposeTree(proxy.group);
+}
+function rebuildProxyMesh(proxy) {
+  if (!proxy) return false;
+  proxy.settings = normalizeProxySettings(proxy.type, proxy.settings);
+  if (proxy.meshGroup) { proxy.group.remove(proxy.meshGroup); disposeTree(proxy.meshGroup); }
+  const topology = proxyTopologyToThree(buildProxyTopology(proxy.type, proxy.settings));
+  const meshGroup = new THREE.Group();
+  meshGroup.name = `ProxyPrimitive_${proxy.id}`;
+  meshGroup.userData.proxyId = proxy.id;
+  const solid = new THREE.Mesh(
+    topologyToGeometry(topology, proxy.settings.smooth),
+    createViewportMaterial('studio-clay', { polygonOffset:true })
+  );
+  solid.name = `ProxyMesh_${proxy.id}`;
+  solid.userData.proxyId = proxy.id;
+  const wire = new THREE.LineSegments(
+    topologyToWireGeometry(topology),
+    new THREE.LineBasicMaterial({ color:proxy === selectedProxy ? COLORS.selected : COLORS.multiSelected, transparent:true, opacity:.9, depthTest:true })
+  );
+  wire.name = `ProxyEdges_${proxy.id}`;
+  wire.userData.proxyId = proxy.id;
+  wire.renderOrder = 14;
+  wire.visible = proxy.settings.showEdges !== false;
+  meshGroup.add(solid, wire);
+  proxy.group.add(meshGroup);
+  proxy.meshGroup = meshGroup;
+  proxy.solidMesh = solid;
+  proxy.wireMesh = wire;
+  proxy.topology = topology;
+  proxy.group.updateMatrixWorld(true);
+  if (proxy === selectedProxy) syncProxyModifierUI(proxy);
+  refreshProxyList();
+  updateSelectionBadge();
+  return true;
+}
 
 function pointState(point) {
   ensureHandleTypes(point);
@@ -1625,9 +1776,12 @@ function brushFromState(state) {
 function captureAppState() {
   return {
     nextCurveId,
+    nextProxyId,
     nextBrushId,
     brushes: brushes.map(brushState),
     selectedCurveId: selectedCurve?.id ?? null,
+    selectedProxyId: selectedProxy?.id ?? null,
+    selectedObjectKind:selectedProxy ? 'proxy' : selectedCurve ? 'curve' : null,
     selectedCurveIds: orderedCurveSelection(selectedCurveIds, curves.map(curve => curve.id), selectedCurve?.id ?? null),
     drawingCurveId: drawingCurve?.id ?? null,
     creationPreviousCurveId: creationPreviousCurve?.id ?? null,
@@ -1668,7 +1822,8 @@ function captureAppState() {
       position: curve.group.position.toArray(),
       quaternion: curve.group.quaternion.toArray(),
       scale: curve.group.scale.toArray()
-    }))
+    })),
+    proxies:proxies.map(proxyState)
   };
 }
 
@@ -1711,8 +1866,11 @@ function restoreAppState(state) {
   transformControls.detach();
   referenceImageTransformControls.detach();
   curves.forEach(disposeCurve);
+  proxies.forEach(disposeProxy);
   curves = [];
+  proxies = [];
   selectedCurve = null;
+  selectedProxy = null;
   selectedCurveIds = new Set();
   selectedControl = null;
   selectedPointIndices = new Set();
@@ -1721,11 +1879,18 @@ function restoreAppState(state) {
   brushes = (state.brushes || []).map(brushFromState);
   nextBrushId = Math.max(state.nextBrushId || 1, ...brushes.map(brush => brush.id + 1), 1);
   refreshBrushUI();
-  state.curves.forEach(curveFromState);
-  nextCurveId = Math.max(state.nextCurveId, ...curves.map(curve => curve.id + 1), 1);
+  (state.curves || []).forEach(curveFromState);
+  (state.proxies || []).forEach(proxyFromState);
+  nextCurveId = Math.max(state.nextCurveId || 1, ...curves.map(curve => curve.id + 1), 1);
+  nextProxyId = Math.max(state.nextProxyId || 1, ...proxies.map(proxy => proxy.id + 1), 1);
   selectedCurveIds = normalizeCurveSelection(state.selectedCurveIds, curves.map(curve => curve.id), state.selectedCurveId);
   const restoredActiveCurveId = activeCurveId(selectedCurveIds, state.selectedCurveId);
   selectedCurve = curves.find(curve => curve.id === restoredActiveCurveId) || null;
+  selectedProxy = state.selectedObjectKind === 'proxy' ? proxies.find(proxy => proxy.id === state.selectedProxyId) || null : null;
+  if (selectedProxy) {
+    selectedCurve = null;
+    selectedCurveIds = new Set();
+  }
   drawingCurve = curves.find(curve => curve.id === state.drawingCurveId) || null;
   creationPreviousCurve = curves.find(curve => curve.id === state.creationPreviousCurveId) || null;
   if (selectedCurve && state.selectedControl?.curveId === selectedCurve.id && selectedCurve.points.length) {
@@ -1778,8 +1943,9 @@ function restoreAppState(state) {
     updateControlVisuals(curve);
     if (curve.meshEnabled) rebuildCurveMesh(curve, false);
   });
-  syncModifierUIFromCurve(selectedCurve);
+  syncModifyContext();
   refreshCurveList();
+  refreshProxyList();
   updateCurveSelectionStyles();
   applyViewModeAll();
   updatePointPanel();
@@ -2157,15 +2323,21 @@ function initializeRollouts() {
 
 function curveIsEditable(curve = selectedCurve) { return canEditCurve(curve); }
 function curveHasReadyMesh(curve) { return hasReadyMesh({ enabled:curve?.meshEnabled, status:curve?.meshStatus, hasTopology:!!curve?.topology }); }
+function proxyIsEditable(proxy = selectedProxy) { return !!proxy && proxy.visible !== false && proxy.locked !== true; }
+function activeSceneObject() { return selectedProxy || selectedCurve || null; }
+function activeObjectGroup() { return activeSceneObject()?.group || null; }
+function activeObjectIsEditable() { return selectedProxy ? proxyIsEditable(selectedProxy) : curveIsEditable(selectedCurve); }
 
 function updateCommandAvailability() {
   const hasCurve = !!selectedCurve;
-  const editable = curveIsEditable();
-  const hasPoint = editable && !!selectedControl && selectedControl.curve === selectedCurve;
-  $('curveNameInput').disabled = !editable;
-  ['duplicateCurveBtn','objectMoveBtn','objectRotateBtn','objectScaleBtn','resetTransformBtn'].forEach(id => { $(id).disabled = !editable; });
+  const curveEditable = curveIsEditable();
+  const objectEditable = activeObjectIsEditable();
+  const hasPoint = curveEditable && !!selectedControl && selectedControl.curve === selectedCurve;
+  $('curveNameInput').disabled = !objectEditable;
+  ['duplicateCurveBtn','objectMoveBtn','objectRotateBtn','objectScaleBtn'].forEach(id => { $(id).disabled = !objectEditable; });
+  $('resetTransformBtn').disabled = !curveEditable;
   ['enableLiveMesh','meshType','widthInput','depthInput','segmentsInput','radialInput','brushScale','brushSelect','generateUV','smoothShading','twistCorrection','capStart','capEnd','generateBtn'].forEach(id => {
-    const element = $(id); if (element) element.disabled = !editable;
+    const element = $(id); if (element) element.disabled = !curveEditable;
   });
   ['pointMoveBtn','pointRotateBtn','pointScaleBtn','sectionMoveBtn','sectionRotateBtn','sectionScaleBtn','insertPointBtn','deletePointBtn','insertBeforeBtn','insertAfterBtn','averageAmount','averagePointBtn','averageHandlesBtn','averageBothBtn','applyPointValuesBtn','makeTipBtn','resetSectionBtn'].forEach(id => {
     const element = $(id); if (element && !hasPoint) element.disabled = true;
@@ -2175,6 +2347,11 @@ function updateCommandAvailability() {
 }
 
 function updateSelectionBadge() {
+  if (selectedProxy) {
+    const stats = proxyTopologyStats(selectedProxy.topology);
+    viewportBadge.textContent = `${selectedProxy.name} · ${proxyTypeLabel(selectedProxy.type)} · ${stats.faces.toLocaleString()} Faces${selectedProxy.visible ? '' : ' · HIDDEN'}${selectedProxy.locked ? ' · LOCKED' : ''}`;
+    return;
+  }
   if (!selectedCurve) { viewportBadge.textContent = 'No Selection'; return; }
   const curveSelection = orderedCurveSelection(selectedCurveIds, curves.map(curve => curve.id), selectedCurve.id);
   const meshState = curveHasReadyMesh(selectedCurve)
@@ -2190,6 +2367,7 @@ function selectCurve(curve, options = {}) {
     selectedCurveIds = normalizeCurveSelection(selectedCurveIds, curves.map(item => item.id));
     if (curve) selectedCurveIds.add(curve.id);
   } else selectedCurveIds = curve ? new Set([curve.id]) : new Set();
+  selectedProxy = null;
   selectedCurve = curve;
   if (curve?.points?.length) {
     const remembered = curve.lastControl || { pointIndex: 0, kind: 'anchor' };
@@ -2200,8 +2378,9 @@ function selectCurve(curve, options = {}) {
     curve.lastControl = { pointIndex, kind };
   } else { selectedControl = null; selectedPointIndices = new Set(); }
   curves.forEach(c => updateControlVisuals(c));
-  syncModifierUIFromCurve(curve);
+  syncModifyContext();
   refreshCurveList();
+  refreshProxyList();
   updateCurveSelectionStyles();
   updatePointPanel();
   updateSelectionBadge();
@@ -2213,10 +2392,40 @@ function selectCurve(curve, options = {}) {
   if (curve) setStatus(`${curve.name} 선택${curve.locked ? ' · 잠김' : ' · Point 편집 준비'}`);
 }
 
+function updateProxySelectionStyles() {
+  proxies.forEach(proxy => {
+    if (proxy.wireMesh?.material?.color) proxy.wireMesh.material.color.setHex(proxy === selectedProxy ? COLORS.selected : COLORS.multiSelected);
+  });
+}
+
+function selectProxy(proxy, options = {}) {
+  if (mode === 'draw') cancelLineCreation();
+  selectedProxy = proxy;
+  selectedCurve = null;
+  selectedCurveIds = new Set();
+  selectedControl = null;
+  selectedPointIndices = new Set();
+  curves.forEach(updateControlVisuals);
+  updateCurveSelectionStyles();
+  updateProxySelectionStyles();
+  refreshCurveList();
+  refreshProxyList();
+  syncModifyContext();
+  updatePointPanel();
+  updateSelectionBadge();
+  activateCommandTab('modify');
+  if (proxy && proxyIsEditable(proxy) && options.enterTransform) setObjectTransformMode(objectTransformMode);
+  else if (['edit','insert'].includes(mode) || (mode === 'transform' && !proxyIsEditable(proxy))) setMode('orbit');
+  else { updateControlVisibility(); syncGizmo(); }
+  updateCommandAvailability();
+  if (proxy) setStatus(`${proxy.name} 선택 · ${proxyTypeLabel(proxy.type)} Parameters 편집 가능`);
+}
+
 function selectControl(curve, pointIndex, kind, options = {}) {
   if (!curveIsEditable(curve)) { if (curve) setStatus(`${curve.name}은 ${curve.visible ? '잠겨' : '숨겨'} 있습니다.`); return; }
   const toggle = options.toggle === true && kind === 'anchor' && curve === selectedCurve;
   if (!selectedCurveIds.has(curve.id)) selectedCurveIds = new Set([curve.id]);
+  selectedProxy = null;
   selectedCurve = curve;
   if (toggle) {
     selectedPointIndices = togglePointSelection(selectedPointIndices, pointIndex, curve.points.length);
@@ -2290,7 +2499,7 @@ function setCurveLocked(curve, locked) {
   updateControlVisibility();
   syncGizmo();
   updatePointPanel();
-  syncModifierUIFromCurve(selectedCurve);
+  syncModifyContext();
   updateCommandAvailability();
   updateSelectionBadge();
   setStatus(`${curve.name}: ${locked ? '편집 잠금' : '잠금 해제'}`);
@@ -2327,6 +2536,57 @@ function refreshCurveList() {
     lock.type = 'button'; lock.className = 'scene-lock'; lock.textContent = curve.locked ? 'L' : 'U'; lock.title = '편집 잠금';
     lock.addEventListener('click', e => { e.stopPropagation(); setCurveLocked(curve, !curve.locked); });
 
+    row.append(eye, main, lock);
+    root.appendChild(row);
+  });
+}
+
+function setProxyVisible(proxy, visible) {
+  history.begin('Proxy 표시 변경');
+  proxy.visible = visible;
+  proxy.group.visible = visible;
+  if (proxy === selectedProxy && !visible && mode === 'transform') setMode('orbit');
+  refreshProxyList();
+  syncModifyContext();
+  syncGizmo();
+  updateSelectionBadge();
+  setStatus(`${proxy.name}: ${visible ? '표시' : '숨김'}`);
+  history.commit();
+}
+
+function setProxyLocked(proxy, locked) {
+  history.begin('Proxy 잠금 변경');
+  proxy.locked = locked;
+  if (proxy === selectedProxy && locked && mode === 'transform') setMode('orbit');
+  refreshProxyList();
+  syncModifyContext();
+  syncGizmo();
+  updateSelectionBadge();
+  setStatus(`${proxy.name}: ${locked ? '편집 잠금' : '잠금 해제'}`);
+  history.commit();
+}
+
+function refreshProxyList() {
+  const root = $('proxyList');
+  if (!root) return;
+  root.innerHTML = '';
+  if (!proxies.length) { root.textContent = '아직 프록시 메쉬가 없습니다.'; return; }
+  proxies.forEach(proxy => {
+    const row = document.createElement('div');
+    row.className = `scene-row${proxy === selectedProxy ? ' selected active-selection' : ''}${proxy.visible ? '' : ' hidden-object'}${proxy.locked ? ' locked-object' : ''}`;
+    const eye = document.createElement('button');
+    eye.type = 'button'; eye.className = 'scene-eye'; eye.textContent = proxy.visible ? '●' : '○'; eye.title = '표시 / 숨김';
+    eye.addEventListener('click', event => { event.stopPropagation(); setProxyVisible(proxy, !proxy.visible); });
+    const main = document.createElement('button');
+    main.type = 'button'; main.className = 'scene-row-main';
+    const nameText = document.createTextNode(proxy.name);
+    const stats = proxyTopologyStats(proxy.topology);
+    const meta = document.createElement('span'); meta.className = 'scene-row-meta'; meta.textContent = `${proxyTypeLabel(proxy.type)} · ${stats.faces} faces`;
+    main.append(nameText, meta);
+    main.addEventListener('click', () => selectProxy(proxy));
+    const lock = document.createElement('button');
+    lock.type = 'button'; lock.className = 'scene-lock'; lock.textContent = proxy.locked ? 'L' : 'U'; lock.title = '편집 잠금';
+    lock.addEventListener('click', event => { event.stopPropagation(); setProxyLocked(proxy, !proxy.locked); });
     row.append(eye, main, lock);
     root.appendChild(row);
   });
@@ -2413,6 +2673,33 @@ function findCurveAtEvent(event) {
     const id = obj.userData?.curveId ?? Number((obj.name || '').match(/_(\d+)$/)?.[1]);
     if (id) return curves.find(c => c.id === id) || null;
     obj = obj.parent;
+  }
+  return null;
+}
+function findSceneObjectAtEvent(event) {
+  pointerNDC(event);
+  raycaster.params.Line.threshold = Math.max(modelDiagonal * .008, .004);
+  const pickables = [];
+  curves.forEach(curve => {
+    if (!curve.visible) return;
+    if (curve.solidMesh?.visible) pickables.push(curve.solidMesh);
+    if (curve.wireMesh?.visible) pickables.push(curve.wireMesh);
+    if (curve.line?.visible) pickables.push(curve.line);
+  });
+  proxies.forEach(proxy => {
+    if (!proxy.visible) return;
+    if (proxy.solidMesh?.visible) pickables.push(proxy.solidMesh);
+    if (proxy.wireMesh?.visible) pickables.push(proxy.wireMesh);
+  });
+  const hit = raycaster.intersectObjects(pickables, false)[0]?.object;
+  if (!hit) return null;
+  let object = hit;
+  while (object && object !== scene) {
+    const proxyId = object.userData?.proxyId;
+    if (proxyId != null) return { kind:'proxy', object:proxies.find(proxy => proxy.id === proxyId) || null };
+    const curveId = object.userData?.curveId;
+    if (curveId != null) return { kind:'curve', object:curves.find(curve => curve.id === curveId) || null };
+    object = object.parent;
   }
   return null;
 }
@@ -2622,6 +2909,93 @@ function updateMeshTypeUI() {
   $('widthInput').disabled = !editable || type === 'brush';
 }
 
+function readProxySettingsFromUI(type = $('proxyType').value) {
+  const common = { smooth:$('proxySmooth').checked, showEdges:$('proxyShowEdges').checked };
+  if (type === 'box') return normalizeProxySettings(type, {
+    width:$('proxyBoxWidth').value,
+    height:$('proxyBoxHeight').value,
+    depth:$('proxyBoxDepth').value,
+    widthSegments:$('proxyBoxWidthSegments').value,
+    heightSegments:$('proxyBoxHeightSegments').value,
+    depthSegments:$('proxyBoxDepthSegments').value,
+    ...common
+  });
+  if (type === 'sphere') return normalizeProxySettings(type, {
+    radius:$('proxySphereRadius').value,
+    segments:$('proxySphereSegments').value,
+    rings:$('proxySphereRings').value,
+    ...common
+  });
+  if (type === 'quad-sphere') return normalizeProxySettings(type, {
+    radius:$('proxyQuadSphereRadius').value,
+    segments:$('proxyQuadSphereSegments').value,
+    ...common
+  });
+  return normalizeProxySettings(type, {
+    radius:$('proxyCylinderRadius').value,
+    height:$('proxyCylinderHeight').value,
+    sides:$('proxyCylinderSides').value,
+    heightSegments:$('proxyCylinderHeightSegments').value,
+    capSegments:$('proxyCylinderCapSegments').value,
+    ...common
+  });
+}
+
+function updateProxyParameterVisibility(type) {
+  $('proxyBoxParameters').classList.toggle('hidden', type !== 'box');
+  $('proxySphereParameters').classList.toggle('hidden', type !== 'sphere');
+  $('proxyQuadSphereParameters').classList.toggle('hidden', type !== 'quad-sphere');
+  $('proxyCylinderParameters').classList.toggle('hidden', type !== 'cylinder');
+}
+
+function syncProxyModifierUI(proxy) {
+  suppressModifierEvents = true;
+  if (!proxy) {
+    $('proxyStats').textContent = '선택 프록시 없음';
+    suppressModifierEvents = false;
+    return;
+  }
+  proxy.settings = normalizeProxySettings(proxy.type, proxy.settings);
+  const s = proxy.settings;
+  $('curveNameInput').value = proxy.name;
+  $('curveNameInput').disabled = !proxyIsEditable(proxy);
+  $('proxyType').value = proxy.type;
+  $('proxyBoxWidth').value = s.width ?? defaultProxySettings('box').width;
+  $('proxyBoxHeight').value = s.height ?? defaultProxySettings('box').height;
+  $('proxyBoxDepth').value = s.depth ?? defaultProxySettings('box').depth;
+  $('proxyBoxWidthSegments').value = s.widthSegments ?? 1;
+  $('proxyBoxHeightSegments').value = s.heightSegments ?? 1;
+  $('proxyBoxDepthSegments').value = s.depthSegments ?? 1;
+  $('proxySphereRadius').value = s.radius ?? .5;
+  $('proxySphereSegments').value = s.segments ?? 24;
+  $('proxySphereRings').value = s.rings ?? 16;
+  $('proxyQuadSphereRadius').value = s.radius ?? .5;
+  $('proxyQuadSphereSegments').value = s.segments ?? 4;
+  $('proxyCylinderRadius').value = s.radius ?? .5;
+  $('proxyCylinderHeight').value = s.height ?? 1;
+  $('proxyCylinderSides').value = s.sides ?? 24;
+  $('proxyCylinderHeightSegments').value = s.heightSegments ?? 1;
+  $('proxyCylinderCapSegments').value = s.capSegments ?? 1;
+  $('proxySmooth').checked = s.smooth !== false;
+  $('proxyShowEdges').checked = s.showEdges !== false;
+  updateProxyParameterVisibility(proxy.type);
+  const stats = proxyTopologyStats(proxy.topology);
+  $('proxyStats').textContent = `Logical Vertices ${stats.vertices.toLocaleString()} · Faces ${stats.faces.toLocaleString()} · Quads ${stats.quads.toLocaleString()} · Render triangles ${stats.triangles.toLocaleString()}`;
+  ['proxyType','proxyBoxWidth','proxyBoxHeight','proxyBoxDepth','proxyBoxWidthSegments','proxyBoxHeightSegments','proxyBoxDepthSegments','proxySphereRadius','proxySphereSegments','proxySphereRings','proxyQuadSphereRadius','proxyQuadSphereSegments','proxyCylinderRadius','proxyCylinderHeight','proxyCylinderSides','proxyCylinderHeightSegments','proxyCylinderCapSegments','proxySmooth','proxyShowEdges','proxyResetParametersBtn','proxyResetTransformBtn'].forEach(id => { $(id).disabled = !proxyIsEditable(proxy); });
+  suppressModifierEvents = false;
+}
+
+function syncModifyContext() {
+  const kind = selectedProxy ? 'proxy' : selectedCurve ? 'curve' : 'none';
+  $('emptyModifyContext').classList.toggle('hidden', kind !== 'none');
+  $('curveModifyContext').classList.toggle('hidden', kind !== 'curve');
+  $('proxyModifyContext').classList.toggle('hidden', kind !== 'proxy');
+  $('modifyObjectType').textContent = kind === 'proxy' ? 'PROXY' : kind === 'curve' ? 'CURVE' : 'NONE';
+  if (kind === 'proxy') syncProxyModifierUI(selectedProxy);
+  else syncModifierUIFromCurve(selectedCurve);
+  updateCommandAvailability();
+}
+
 function syncModifierUIFromCurve(curve) {
   suppressModifierEvents = true;
   if (!curve) {
@@ -2795,7 +3169,7 @@ async function loadBrushFiles(fileList) {
     catch (err) { console.error(err); setStatus(`브러시 ${file.name} 로드 실패: ${err.message}`); }
   }
   if (last && curveIsEditable()) { selectedCurve.settings.brushId = last.id; if (selectedCurve.settings.type === 'brush' && selectedCurve.meshEnabled) rebuildCurveMesh(selectedCurve, false); }
-  refreshBrushUI(); syncModifierUIFromCurve(selectedCurve);
+  refreshBrushUI(); syncModifyContext();
   if (loaded) { history.commit(); setStatus(`Mesh Brush ${loaded}개 추가 완료. OBJ는 원래 polygon topology를 유지합니다.`); }
   else history.cancel();
 }
@@ -2940,12 +3314,12 @@ function resetSelectedTangents() {
   finishKnotEdit('Tangents Reset', indices);
 }
 
-function coordinateFrameQuaternion(space, curve, pointIndex = null) {
+function coordinateFrameQuaternion(space, target, pointIndex = null) {
   if (space === 'world') return new THREE.Quaternion();
   if (space === 'view') return camera.quaternion.clone();
-  if (pointIndex == null) { const q = new THREE.Quaternion(); curve.group.getWorldQuaternion(q); return q; }
-  const evalPoint = evaluateControlPoint(curve, pointIndex); if (!evalPoint) { const q = new THREE.Quaternion(); curve.group.getWorldQuaternion(q); return q; }
-  const groupQ = new THREE.Quaternion(); curve.group.getWorldQuaternion(groupQ);
+  if (pointIndex == null) { const q = new THREE.Quaternion(); target.group.getWorldQuaternion(q); return q; }
+  const evalPoint = evaluateControlPoint(target, pointIndex); if (!evalPoint) { const q = new THREE.Quaternion(); target.group.getWorldQuaternion(q); return q; }
+  const groupQ = new THREE.Quaternion(); target.group.getWorldQuaternion(groupQ);
   return groupQ.multiply(evalPoint.orientation);
 }
 function pointWorldPosition(curve, point) { return curve.group.localToWorld(point.position.clone()); }
@@ -3074,13 +3448,14 @@ function syncGizmo() {
   if (transformDragging) return;
   gizmoContext = null; transformControls.detach(); transformControls.enabled = false; transformControls.getHelper().visible = false;
   syncAxisGuides();
-  if (mode === 'transform' && curveIsEditable()) {
-    const worldPos = curveRootWorldPosition(selectedCurve);
-    const q = coordinateFrameQuaternion($('transformSpace').value, selectedCurve);
+  if (mode === 'transform' && activeObjectIsEditable()) {
+    const target = activeSceneObject();
+    const worldPos = selectedProxy ? selectedProxy.group.getWorldPosition(new THREE.Vector3()) : curveRootWorldPosition(selectedCurve);
+    const q = coordinateFrameQuaternion($('transformSpace').value, target);
     setProxyTransform(worldPos, q); transformControls.attach(gizmoProxy); transformControls.setMode(objectTransformMode); transformControls.showX = transformControls.showY = transformControls.showZ = true;
     const helperVisible = shouldShowTransformHelper({ axisGuidesEnabled, operation:objectTransformMode });
     transformControls.enabled = helperVisible; transformControls.getHelper().visible = helperVisible;
-    gizmoContext = { type:'object', curve:selectedCurve, operation:objectTransformMode }; syncAxisGuides(); return;
+    gizmoContext = { type:'object', target, kind:selectedProxy ? 'proxy' : 'curve', operation:objectTransformMode }; syncAxisGuides(); return;
   }
   if (mode === 'edit' && selectedControl && curveIsEditable()) {
     const p = selectedPoint(); if (!p) return;
@@ -3104,12 +3479,12 @@ function syncGizmo() {
 
 function beginGizmoDrag() {
   if (!gizmoContext) return;
-  const historyLabel = gizmoContext.type === 'object' ? `Spline Root ${gizmoContext.operation}` : gizmoContext.tool === 'tangentMove' ? 'Bezier Handle Move' : gizmoContext.tool.replace('point','Point ').replace('section','Section ');
+  const historyLabel = gizmoContext.type === 'object' ? `${gizmoContext.kind === 'proxy' ? 'Proxy' : 'Spline Root'} ${gizmoContext.operation}` : gizmoContext.tool === 'tangentMove' ? 'Bezier Handle Move' : gizmoContext.tool.replace('point','Point ').replace('section','Section ');
   history.begin(historyLabel);
   transformDragging = true; gizmoProxy.updateMatrixWorld(true);
   gizmoDrag = { context:{...gizmoContext}, proxyStart:gizmoProxy.matrixWorld.clone(), proxyStartInv:gizmoProxy.matrixWorld.clone().invert() };
   const ctx = gizmoDrag.context;
-  if (ctx.type === 'object') { ctx.curve.group.updateMatrixWorld(true); gizmoDrag.targetStart = ctx.curve.group.matrixWorld.clone(); }
+  if (ctx.type === 'object') { ctx.target.group.updateMatrixWorld(true); gizmoDrag.targetStart = ctx.target.group.matrixWorld.clone(); }
   else if (ctx.tool === 'sectionRotate' || ctx.tool === 'sectionScale') gizmoDrag.targetStart = sectionWorldMatrix(ctx.curve, ctx.pointIndex);
   else if (ctx.tool === 'pointRotate' || ctx.tool === 'pointScale') {
     gizmoDrag.pointStart = clonePointRecord(ctx.curve.points[ctx.pointIndex]);
@@ -3163,7 +3538,7 @@ function handleGizmoChange() {
   if (suppressGizmo || !gizmoDrag) return;
   const ctx = gizmoDrag.context, curve = ctx.curve;
   if (ctx.type === 'object') {
-    const nextWorld = currentDeltaMatrix().multiply(gizmoDrag.targetStart); worldMatrixToLocalObject(curve.group, nextWorld); updateMeshStats(); return;
+    const nextWorld = currentDeltaMatrix().multiply(gizmoDrag.targetStart); worldMatrixToLocalObject(ctx.target.group, nextWorld); updateMeshStats(); return;
   }
   const p = curve.points[ctx.pointIndex]; if (!p) return;
   if (ctx.tool === 'tangentMove') {
@@ -3226,11 +3601,12 @@ function beginLineCreation() {
   if (mode === 'draw') { setStatus('이미 Line 생성 중입니다. 포인트를 찍거나 Finish/Cancel을 사용하세요.'); return; }
   drawingCurve = null;
   creationPreviousCurve = selectedCurve;
+  selectedProxy = null;
   selectedCurve = null;
   selectedCurveIds = new Set();
   selectedControl = null;
   selectedPointIndices = new Set();
-  syncModifierUIFromCurve(null);
+  syncModifyContext();
   refreshCurveList();
   updateCurveSelectionStyles();
   updatePointPanel();
@@ -3281,7 +3657,7 @@ function cancelLineCreation() {
   selectedPointIndices = new Set();
   if (previous) selectCurve(previous, { enterEdit:false });
   else {
-    syncModifierUIFromCurve(null);
+    syncModifyContext();
     refreshCurveList();
     updateCurveSelectionStyles();
     updatePointPanel();
@@ -3306,7 +3682,7 @@ function leaveLineCreationForMode(nextMode) {
 }
 
 function setMode(next) {
-  if (!curveIsEditable() && ['edit','insert','transform'].includes(next)) next = 'orbit';
+  if ((!curveIsEditable() && ['edit','insert'].includes(next)) || (!activeObjectIsEditable() && next === 'transform')) next = 'orbit';
   if (next !== 'orbit' && referenceImageTransformTool !== 'none') {
     referenceImageTransformTool = 'none';
     syncReferenceImageTransformControls();
@@ -3321,7 +3697,7 @@ function setMode(next) {
   updateObjectTransformButtons();
   updatePointToolButtons();
   updateHint();
-  $('statusMode').textContent = mode === 'draw' ? (drawCameraOverride ? 'CREATE · CAMERA' : 'CREATE POINTS') : mode === 'edit' ? 'EDIT POINTS' : mode === 'insert' ? 'INSERT POINT' : mode === 'transform' ? 'SPLINE ROOT' : 'SELECT / CAMERA';
+  $('statusMode').textContent = mode === 'draw' ? (drawCameraOverride ? 'CREATE · CAMERA' : 'CREATE POINTS') : mode === 'edit' ? 'EDIT POINTS' : mode === 'insert' ? 'INSERT POINT' : mode === 'transform' ? (selectedProxy ? 'PROXY OBJECT' : 'SPLINE ROOT') : 'SELECT / CAMERA';
   $('insertPointBtn').classList.toggle('active', mode === 'insert');
   $('drawCameraToggleBtn').classList.toggle('active', mode === 'draw' && drawCameraOverride);
   updateLineCreationUI();
@@ -3333,11 +3709,11 @@ function updateHint() {
   else if (mode === 'edit') {
     const tool = selectedControl?.kind !== 'anchor' ? 'Bezier Handle Move' : pointTool === 'pointMove' ? 'Point + Handles Move' : pointTool === 'pointRotate' ? 'Point + Handles Rotate' : pointTool === 'pointScale' ? 'Point + Handles Scale' : pointTool === 'sectionMove' ? 'Section Offset' : pointTool === 'sectionRotate' ? 'Section Rotate' : 'Section Scale / Taper';
     hintEl.textContent = `Point/주황색 Handle 선택 · XYZ Gizmo: ${tool} · Move 축선 드래그 · Shift+G 축선 토글`;
-  } else if (mode === 'transform') hintEl.textContent = `Spline Root ${objectTransformMode === 'translate' ? 'Move · 긴 축선 드래그 · Shift+G 토글' : objectTransformMode === 'rotate' ? 'Rotate' : 'Scale'} · Point 1 Pivot · World / View / Local`;
-  else hintEl.textContent = 'Select · 커브 클릭 후 W/E/R: Root Move/Rotate/Scale · 드래그 회전 / 휠 줌';
+  } else if (mode === 'transform') hintEl.textContent = `${selectedProxy ? 'Proxy Object' : 'Spline Root'} ${objectTransformMode === 'translate' ? 'Move · 긴 축선 드래그 · Shift+G 토글' : objectTransformMode === 'rotate' ? 'Rotate' : 'Scale'} · World / View / Local`;
+  else hintEl.textContent = 'Select · Curve/Proxy 클릭 후 W/E/R: Move/Rotate/Scale · 드래그 회전 / 휠 줌';
 }
 
-function setObjectTransformMode(next) { if (!curveIsEditable()) { setStatus(selectedCurve ? `${selectedCurve.name}은 ${selectedCurve.visible ? '잠겨' : '숨겨'} 있습니다.` : '커브를 먼저 선택하세요.'); return; } objectTransformMode = next; setMode('transform'); updateObjectTransformButtons(); syncGizmo(); updateHint(); }
+function setObjectTransformMode(next) { const object = activeSceneObject(); if (!activeObjectIsEditable()) { setStatus(object ? `${object.name}은 ${object.visible ? '잠겨' : '숨겨'} 있습니다.` : 'Curve 또는 Proxy Object를 먼저 선택하세요.'); return; } objectTransformMode = next; setMode('transform'); updateObjectTransformButtons(); syncGizmo(); updateHint(); }
 function updateObjectTransformButtons() {
   $('objectMoveBtn').classList.toggle('active', mode === 'transform' && objectTransformMode === 'translate');
   $('objectRotateBtn').classList.toggle('active', mode === 'transform' && objectTransformMode === 'rotate');
@@ -3386,15 +3762,17 @@ function applyModelDisplay() {
 }
 
 function frameSelected() {
-  if (selectedCurve?.visible && selectedCurve.points.length) fitObject(selectedCurve.group);
+  if (selectedProxy?.visible) fitObject(selectedProxy.group);
+  else if (selectedCurve?.visible && selectedCurve.points.length) fitObject(selectedCurve.group);
   else if (surfaceMeshes.length) fitObject(modelRoot);
-  else if (curves.length) fitObject(curvesRoot);
+  else if (curves.length || proxies.length) fitObject(curves.length ? curvesRoot : proxyRoot);
 }
 
 function setStandardView(kind, { targetOverride = null } = {}) {
   let target = targetOverride?.clone?.() || orbit.target.clone();
-  if (!targetOverride && selectedCurve?.visible && selectedCurve.points.length) {
-    const box = new THREE.Box3().setFromObject(selectedCurve.group);
+  const selectedGroup = selectedProxy?.visible ? selectedProxy.group : selectedCurve?.visible && selectedCurve.points.length ? selectedCurve.group : null;
+  if (!targetOverride && selectedGroup) {
+    const box = new THREE.Box3().setFromObject(selectedGroup);
     if (!box.isEmpty()) target = box.getCenter(new THREE.Vector3());
   }
   const viewHeight = currentProjectionHeight(orbit.target);
@@ -3463,8 +3841,9 @@ function handleViewportClick(event) {
     return;
   }
   if (mode !== 'draw') {
-    const curve = findCurveAtEvent(event);
-    if (curve && (curve !== selectedCurve || mode === 'orbit')) selectCurve(curve, { enterEdit: mode === 'edit' });
+    const hit = findSceneObjectAtEvent(event);
+    if (hit?.kind === 'proxy' && hit.object && (hit.object !== selectedProxy || mode === 'orbit')) selectProxy(hit.object);
+    else if (hit?.kind === 'curve' && hit.object && (hit.object !== selectedCurve || mode === 'orbit')) selectCurve(hit.object, { enterEdit: mode === 'edit' });
     else if (mode === 'orbit') {
       const referenceImageView = findReferenceImagePlane(event);
       if (referenceImageView) {
@@ -3563,6 +3942,20 @@ $('cancelCurveBtn').addEventListener('click', cancelLineCreation);
 $('drawTarget').addEventListener('change', () => updateDrawTargetUI());
 $('drawCameraToggleBtn').addEventListener('click', toggleDrawCameraOverride);
 
+function createProxyPrimitive(type) {
+  if (mode === 'draw') cancelLineCreation();
+  history.begin(`${proxyTypeLabel(type)} 생성`);
+  const proxy = makeProxyRecord(type);
+  selectProxy(proxy);
+  setObjectTransformMode('translate');
+  setStatus(`${proxy.name} 생성 · Modify > Primitive Parameters에서 폴리곤 수를 조정하세요.`);
+  history.commit();
+}
+$('createBoxProxyBtn').addEventListener('click', () => createProxyPrimitive('box'));
+$('createSphereProxyBtn').addEventListener('click', () => createProxyPrimitive('sphere'));
+$('createQuadSphereProxyBtn').addEventListener('click', () => createProxyPrimitive('quad-sphere'));
+$('createCylinderProxyBtn').addEventListener('click', () => createProxyPrimitive('cylinder'));
+
 $('deletePointBtn').addEventListener('click', () => {
   if (!curveIsEditable() || !selectedControl) return;
   history.begin('Point 제거');
@@ -3581,7 +3974,17 @@ $('prevPointBtn').addEventListener('click', () => cyclePoint(-1));
 $('nextPointBtn').addEventListener('click', () => cyclePoint(1));
 
 $('duplicateCurveBtn').addEventListener('click', () => {
-  if (!curveIsEditable()) { setStatus('복제할 편집 가능 커브를 먼저 선택하세요.'); return; }
+  if (!activeObjectIsEditable()) { setStatus('복제할 편집 가능 Curve 또는 Proxy Object를 먼저 선택하세요.'); return; }
+  if (selectedProxy) {
+    history.begin('Proxy 복제');
+    const source = selectedProxy;
+    const copy = makeProxyRecord(source.type, { ...proxyState(source), id:null, name:null });
+    selectProxy(copy);
+    setObjectTransformMode('translate');
+    setStatus(`${source.name} → ${copy.name} 복제 · 같은 위치에 겹쳐 있음`);
+    history.commit();
+    return;
+  }
   history.begin('Spline 복제');
   const source = selectedCurve, copy = makeCurveRecord(source);
   setObjectTransformMode('translate');
@@ -3601,6 +4004,19 @@ function deleteSelectedCurve() {
   setStatus(`${c.name} 삭제`);
   history.commit();
 }
+function deleteSelectedProxy() {
+  if (!proxyIsEditable()) { if (selectedProxy) setStatus('숨김/잠금 프록시는 삭제하기 전에 표시하고 잠금을 해제하세요.'); return; }
+  history.begin('Proxy 삭제');
+  const proxy = selectedProxy;
+  proxies = proxies.filter(item => item !== proxy);
+  disposeProxy(proxy);
+  selectedProxy = null;
+  const next = proxies[0] || null;
+  if (next) selectProxy(next);
+  else selectCurve(curves[0] || null, { enterEdit:false });
+  setStatus(`${proxy.name} 삭제`);
+  history.commit();
+}
 $('objectMoveBtn').addEventListener('click', () => setObjectTransformMode('translate'));
 $('objectRotateBtn').addEventListener('click', () => setObjectTransformMode('rotate'));
 $('objectScaleBtn').addEventListener('click', () => setObjectTransformMode('scale'));
@@ -3613,15 +4029,67 @@ $('resetTransformBtn').addEventListener('click', () => {
   syncGizmo(); setStatus(`${selectedCurve.name}: Object Transform 초기화`);
   history.commit();
 });
-$('curveNameInput').addEventListener('input', e => {
-  if (!curveIsEditable() || suppressModifierEvents) return;
-  history.begin('Spline 이름 변경');
-  const next = e.target.value.trimStart();
-  selectedCurve.name = next || `Line${String(selectedCurve.id).padStart(3,'0')}`;
-  selectedCurve.group.name = selectedCurve.name;
-  refreshCurveList(); updateSelectionBadge();
+$('proxyResetTransformBtn').addEventListener('click', () => {
+  if (!proxyIsEditable()) return;
+  history.begin('Proxy Transform 초기화');
+  selectedProxy.group.position.set(0,0,0); selectedProxy.group.quaternion.identity(); selectedProxy.group.scale.set(1,1,1); selectedProxy.group.updateMatrixWorld(true);
+  syncGizmo(); setStatus(`${selectedProxy.name}: Object Transform 초기화`);
+  history.commit();
 });
-$('curveNameInput').addEventListener('blur', e => { if (selectedCurve) e.target.value = selectedCurve.name; history.commit(); });
+$('curveNameInput').addEventListener('input', e => {
+  if (!activeObjectIsEditable() || suppressModifierEvents) return;
+  history.begin(`${selectedProxy ? 'Proxy' : 'Spline'} 이름 변경`);
+  const next = e.target.value.trimStart();
+  const object = activeSceneObject();
+  object.name = next || (selectedProxy ? `${proxyTypeLabel(selectedProxy.type).replace(/\s/g, '')}${String(selectedProxy.id).padStart(3,'0')}` : `Line${String(selectedCurve.id).padStart(3,'0')}`);
+  object.group.name = object.name;
+  refreshCurveList(); refreshProxyList(); updateSelectionBadge();
+});
+$('curveNameInput').addEventListener('blur', e => { const object = activeSceneObject(); if (object) e.target.value = object.name; history.commit(); });
+
+const PROXY_PARAMETER_INPUT_IDS = [
+  'proxyBoxWidth','proxyBoxHeight','proxyBoxDepth','proxyBoxWidthSegments','proxyBoxHeightSegments','proxyBoxDepthSegments',
+  'proxySphereRadius','proxySphereSegments','proxySphereRings','proxyQuadSphereRadius','proxyQuadSphereSegments',
+  'proxyCylinderRadius','proxyCylinderHeight','proxyCylinderSides','proxyCylinderHeightSegments','proxyCylinderCapSegments'
+];
+function applyProxyParametersFromUI() {
+  if (!proxyIsEditable() || suppressModifierEvents) return;
+  history.begin('Proxy Parameters');
+  selectedProxy.settings = readProxySettingsFromUI(selectedProxy.type);
+  rebuildProxyMesh(selectedProxy);
+  syncGizmo();
+}
+PROXY_PARAMETER_INPUT_IDS.forEach(id => {
+  $(id).addEventListener('input', applyProxyParametersFromUI);
+  $(id).addEventListener('change', () => { applyProxyParametersFromUI(); history.commit(); });
+});
+$('proxyType').addEventListener('change', event => {
+  if (!proxyIsEditable() || suppressModifierEvents) return;
+  history.begin('Proxy Type 변경');
+  selectedProxy.type = event.target.value;
+  selectedProxy.settings = defaultProxySettings(selectedProxy.type);
+  rebuildProxyMesh(selectedProxy);
+  syncProxyModifierUI(selectedProxy);
+  refreshProxyList();
+  setStatus(`${selectedProxy.name}: ${proxyTypeLabel(selectedProxy.type)}로 변경`);
+  history.commit();
+});
+['proxySmooth','proxyShowEdges'].forEach(id => $(id).addEventListener('change', () => {
+  if (!proxyIsEditable() || suppressModifierEvents) return;
+  history.begin('Proxy Display Parameters');
+  selectedProxy.settings = readProxySettingsFromUI(selectedProxy.type);
+  rebuildProxyMesh(selectedProxy);
+  history.commit();
+}));
+$('proxyResetParametersBtn').addEventListener('click', () => {
+  if (!proxyIsEditable()) return;
+  history.begin('Proxy Parameters 초기화');
+  selectedProxy.settings = defaultProxySettings(selectedProxy.type);
+  rebuildProxyMesh(selectedProxy);
+  syncProxyModifierUI(selectedProxy);
+  setStatus(`${selectedProxy.name}: Primitive Parameters 초기화`);
+  history.commit();
+});
 
 $('pointMoveBtn').addEventListener('click', () => setPointTool('pointMove'));
 $('pointRotateBtn').addEventListener('click', () => setPointTool('pointRotate'));
@@ -3656,7 +4124,7 @@ $('enableLiveMesh').addEventListener('change', () => {
   selectedCurve.meshEnabled = $('enableLiveMesh').checked;
   if (selectedCurve.meshEnabled) rebuildCurveMesh(selectedCurve, true); else removeCurveMesh(selectedCurve);
   $('enableLiveMesh').checked = curveHasReadyMesh(selectedCurve);
-  refreshCurveList(); syncModifierUIFromCurve(selectedCurve); updateControlVisibility();
+  refreshCurveList(); syncModifyContext(); updateControlVisibility();
   history.commit();
 });
 $('generateBtn').addEventListener('click', () => {
@@ -3665,7 +4133,7 @@ $('generateBtn').addEventListener('click', () => {
   selectedCurve.settings = getCurrentSettings(); selectedCurve.meshEnabled = true;
   const built = rebuildCurveMesh(selectedCurve,true);
   $('enableLiveMesh').checked = built;
-  syncModifierUIFromCurve(selectedCurve); refreshCurveList(); updateControlVisibility(); if (built) setMode('edit');
+  syncModifyContext(); refreshCurveList(); updateControlVisibility(); if (built) setMode('edit');
   history.commit();
 });
 ['meshType','widthInput','depthInput','segmentsInput','radialInput','brushScale','generateUV','smoothShading','twistCorrection','capStart','capEnd'].forEach(id => {
@@ -3689,7 +4157,7 @@ $('removeBrushBtn').addEventListener('click', () => {
   history.begin('Mesh Brush 제거');
   const brush = brushes.find(b => b.id === id); brushes = brushes.filter(b => b.id !== id);
   curves.forEach(c => { if (c.settings.brushId === id) { c.settings.brushId = brushes[0]?.id ?? null; if (c.meshEnabled && c.settings.type === 'brush') rebuildCurveMesh(c,false); } });
-  refreshBrushUI(); syncModifierUIFromCurve(selectedCurve); setStatus(`Mesh Brush ${brush?.name || id} 제거`); history.commit();
+  refreshBrushUI(); syncModifyContext(); setStatus(`Mesh Brush ${brush?.name || id} 제거`); history.commit();
 });
 
 $('hairMaterialPreset').addEventListener('change', () => {
@@ -3788,8 +4256,8 @@ $('referenceImageTransformSpace').addEventListener('change', syncReferenceImageT
   $(id).addEventListener('change', () => { updateReferenceImageSettingsFromUI(); syncReferenceImageUI(); markProjectChanged(); });
 });
 orbit.addEventListener('change', applyReferenceImageDisplay);
-$('clearGeneratedBtn').addEventListener('click', () => { history.begin('모든 Live Mesh 비활성화'); curves.forEach(c => { c.meshEnabled = false; removeCurveMesh(c); }); refreshCurveList(); syncModifierUIFromCurve(selectedCurve); updateControlVisibility(); setStatus('모든 Live Mesh 비활성화 · 커브와 Modifier 값은 유지'); history.commit(); });
-$('fitBtn').addEventListener('click', () => { if (surfaceMeshes.length) fitObject(modelRoot); else if (curves.length) fitObject(curvesRoot); });
+$('clearGeneratedBtn').addEventListener('click', () => { history.begin('모든 Live Mesh 비활성화'); curves.forEach(c => { c.meshEnabled = false; removeCurveMesh(c); }); refreshCurveList(); syncModifyContext(); updateControlVisibility(); setStatus('모든 Live Mesh 비활성화 · 커브와 Modifier 값은 유지'); history.commit(); });
+$('fitBtn').addEventListener('click', () => { if (surfaceMeshes.length) fitObject(modelRoot); else if (curves.length || proxies.length) fitObject(curves.length ? curvesRoot : proxyRoot); });
 $('fitSelectedBtn').addEventListener('click', frameSelected);
 $('orthographicViewsToggleBtn').addEventListener('click', toggleOrthographicStandardViews);
 $('viewPerspectiveBtn').addEventListener('click', () => setStandardView('perspective'));
@@ -3807,21 +4275,27 @@ document.querySelectorAll('.rollout-header').forEach(btn => btn.addEventListener
   setRolloutCollapsed(rollout, !rollout.classList.contains('collapsed'));
 }));
 
-function activeExportMeshes() { return curves.filter(c => c.meshEnabled && c.topology); }
+function activeExportMeshes() {
+  return [
+    ...curves.filter(curve => curve.visible && curve.meshEnabled && curve.topology).map(curve => ({ kind:'curve', id:curve.id, name:curve.name, group:curve.group, topology:curve.topology })),
+    ...proxies.filter(proxy => proxy.visible && proxy.topology).map(proxy => ({ kind:'proxy', id:proxy.id, name:proxy.name, group:proxy.group, topology:proxy.topology }))
+  ];
+}
 function exportPoint(point) {
   const scale = parseFloat($('exportScale').value) || 1;
   const p = point.clone().multiplyScalar(scale);
   return $('exportAxis').value === 'zup' ? new THREE.Vector3(p.x, -p.z, p.y) : p;
 }
-function worldTopology(curve) {
-  curve.group.updateMatrixWorld(true);
-  return { positions: curve.topology.positions.map(p => exportPoint(p.clone().applyMatrix4(curve.group.matrixWorld))), faces: curve.topology.faces.map(f => [...f]), uvs: cloneVectorArray(curve.topology.uvs || []), faceUvs: (curve.topology.faceUvs || []).map(f => f ? [...f] : null) };
+function worldTopology(entry) {
+  entry.group.updateMatrixWorld(true);
+  return { positions: entry.topology.positions.map(p => exportPoint(p.clone().applyMatrix4(entry.group.matrixWorld))), faces: entry.topology.faces.map(f => [...f]), uvs: cloneVectorArray(entry.topology.uvs || []), faceUvs: (entry.topology.faceUvs || []).map(f => f ? [...f] : null) };
 }
+function exportObjectName(entry) { return (entry.name || `${entry.kind === 'proxy' ? 'ProxyMesh' : 'CurveMesh'}_${entry.id}`).replace(/[^A-Za-z0-9_.-]+/g, '_'); }
 function fmt(n) { const v = Math.abs(n) < 1e-10 ? 0 : n; return Number(v.toFixed(8)).toString(); }
 function exportQuadOBJ(active) {
   let text = '# Curve Mesh Hair Tool v4\n# Logical Quad/N-gon topology export\n'; let vOffset = 0, vtOffset = 0;
-  active.forEach(curve => {
-    const t = worldTopology(curve); text += `\no CurveMesh_${curve.id}\n`;
+  active.forEach(entry => {
+    const t = worldTopology(entry); text += `\no ${exportObjectName(entry)}\n`;
     t.positions.forEach(p => { text += `v ${fmt(p.x)} ${fmt(p.y)} ${fmt(p.z)}\n`; });
     t.uvs.forEach(uv => { text += `vt ${fmt(uv.x)} ${fmt(uv.y)}\n`; });
     t.faces.forEach((face, fi) => {
@@ -3847,11 +4321,11 @@ function wrapFbxArray(values, indent = '\t\t') {
   return chunks.map((c,i) => `${indent}${i ? '' : 'a: '}${c}${i < chunks.length - 1 ? ',' : ''}`).join('\n');
 }
 function exportAsciiFBX(active) {
-  const now = new Date(), meshes = active.map(c => ({ curve:c, topology:worldTopology(c) }));
+  const now = new Date(), meshes = active.map(entry => ({ entry, topology:worldTopology(entry) }));
   const zUp = $('exportAxis').value === 'zup', upAxis = zUp ? 2 : 1, frontAxis = zUp ? 1 : 2;
   let objects = '', connections = '';
   meshes.forEach((entry, i) => {
-    const idBase = 100000 + i * 10, geometryId = idBase + 1, modelId = idBase + 2, name = `CurveMesh_${entry.curve.id}`, t = entry.topology;
+    const idBase = 100000 + i * 10, geometryId = idBase + 1, modelId = idBase + 2, name = exportObjectName(entry.entry), t = entry.topology;
     const verts = t.positions.flatMap(p => [fmt(p.x),fmt(p.y),fmt(p.z)]);
     const poly = [], uvIndex = [], normalValues = [], normals = computeVertexNormals(t);
     let hasUv = t.uvs.length > 0;
@@ -3873,14 +4347,14 @@ function exportAsciiFBX(active) {
 }
 
 $('exportQuadObjBtn').addEventListener('click', () => {
-  const active = activeExportMeshes(); if (!active.length) { setStatus('출력할 활성 Live Mesh가 없습니다.'); return; }
+  const active = activeExportMeshes(); if (!active.length) { setStatus('출력할 표시 중인 Curve/Proxy Mesh가 없습니다.'); return; }
   downloadBlob(new Blob([exportQuadOBJ(active)], { type:'text/plain;charset=utf-8' }), 'curve_mesh_quad_export.obj');
-  setStatus(`Quad/N-gon OBJ 저장 완료: ${active.length}개 커브 메쉬 · ${$('exportAxis').value.toUpperCase()} · Scale ${$('exportScale').value}.`);
+  setStatus(`Quad/N-gon OBJ 저장 완료: ${active.length}개 메쉬 오브젝트 · ${$('exportAxis').value.toUpperCase()} · Scale ${$('exportScale').value}.`);
 });
 $('exportFbxBtn').addEventListener('click', () => {
-  const active = activeExportMeshes(); if (!active.length) { setStatus('출력할 활성 Live Mesh가 없습니다.'); return; }
+  const active = activeExportMeshes(); if (!active.length) { setStatus('출력할 표시 중인 Curve/Proxy Mesh가 없습니다.'); return; }
   downloadBlob(new Blob([exportAsciiFBX(active)], { type:'application/octet-stream' }), 'curve_mesh_quad_export_ascii.fbx');
-  setStatus(`FBX 7.4 ASCII 저장 완료: ${active.length}개 커브 메쉬 · ${$('exportAxis').value.toUpperCase()} · Scale ${$('exportScale').value}. 3ds Max에서 Import로 검증하세요.`);
+  setStatus(`FBX 7.4 ASCII 저장 완료: ${active.length}개 메쉬 오브젝트 · ${$('exportAxis').value.toUpperCase()} · Scale ${$('exportScale').value}. 3ds Max에서 Import로 검증하세요.`);
 });
 
 document.addEventListener('keydown', e => {
@@ -3913,7 +4387,7 @@ document.addEventListener('keydown', e => {
     return;
   }
   if (e.shiftKey && (e.key === 'g' || e.key === 'G')) { e.preventDefault(); toggleAxisGuides(); return; }
-  if (e.key === 'Delete') { if (mode === 'draw') cancelLineCreation(); else if (mode === 'edit' && selectedControl) $('deletePointBtn').click(); else if (selectedCurve) deleteSelectedCurve(); return; }
+  if (e.key === 'Delete') { if (mode === 'draw') cancelLineCreation(); else if (mode === 'edit' && selectedControl) $('deletePointBtn').click(); else if (selectedProxy) deleteSelectedProxy(); else if (selectedCurve) deleteSelectedCurve(); return; }
   if (e.key === 'i' || e.key === 'I') { if (curveIsEditable() && selectedCurve.points.length >= 2) setMode(mode === 'insert' ? 'edit' : 'insert'); return; }
   if (e.key === 'q' || e.key === 'Q') { if (mode === 'draw') leaveLineCreationForMode('orbit'); else setMode('orbit'); return; }
   if (mode === 'edit') {
@@ -3934,7 +4408,7 @@ initNumericScrubbers(document, {
   onEnd: ({ label, value }) => { history.commit(); setStatus(`${label}: ${value}`); }
 });
 animate();
-refreshCurveList(); refreshBrushUI(); syncModifierUIFromCurve(null); updateControlVisibility(); updatePointPanel();
+refreshCurveList(); refreshProxyList(); refreshBrushUI(); syncModifyContext(); updateControlVisibility(); updatePointPanel();
 updateAverageAmountOutput(); updateObjectTransformButtons(); updateHint(); updateSelectionBadge(); updateMeshTypeUI(); updateDrawTargetUI(); refreshReferenceObjectUI(); syncReferenceImageUI(); applyViewportDisplay(); applyReferenceImageDisplay(); applyLightingDisplay(); applyHairMaterialDisplay(); applyModelDisplay(); setMode('orbit');
 const recoveredProject = restoreRecovery();
 if (!recoveredProject) { activateCommandTab('create'); updateProjectStatus('saved', 'Empty'); }

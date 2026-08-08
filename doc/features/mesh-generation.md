@@ -2,7 +2,7 @@
 
 ## 범위
 
-Curve sampling, sweep frame, Ribbon/Tube/Imported Brush topology, Live Mesh 상태, 렌더 Geometry와 mesh budget을 다룬다.
+Curve sampling, sweep frame, Ribbon/Tube/Imported Brush topology, Live Mesh 상태, 렌더 Geometry와 mesh budget을 다룬다. Box/Sphere/Quad Sphere/Cylinder는 [`proxy-mesh.md`](proxy-mesh.md)가 소유하고 이 문서의 `topologyToGeometry()`/`topologyToWireGeometry()`만 공유한다.
 
 ## 호출 그래프
 
@@ -48,7 +48,7 @@ uvs: Vector2[]
 faceUvs: (number[] | null)[]
 ```
 
-렌더 단계에서 face를 삼각분할해도 `curve.topology.faces`는 Export를 위해 원래 논리 face를 유지한다.
+렌더 단계에서 face를 삼각분할해도 Curve와 Proxy의 `topology.faces`는 Export를 위해 원래 논리 face를 유지한다.
 
 ## Live 상태 머신
 

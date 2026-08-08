@@ -10,6 +10,8 @@ Hair Mesh Web은 브라우저에서 Bézier 가이드를 그리고, 가이드를
 - `Ctrl/⌘` 클릭으로 같은 Curve의 Point와 Scene Explorer의 Curve 행 다중 선택/해제
 - 커브 전체 Transform과 Point별 단면 Offset/Rotate/Scale/Taper
 - Ribbon, Tube, Imported Mesh Brush 방식의 Live Mesh 생성
+- Box, Sphere, 모든 면이 Quad인 Quad Sphere, Cylinder 프록시 생성과 크기·세그먼트 비파괴 조정
+- Scene Explorer에서 Curve/Proxy를 분리 관리하고, 선택 객체 종류에 따라 바뀌는 Modify 패널
 - ZBrush 스타일 MatCap 재질로 Hair Mesh와 Import 모델 표시
 - 하나의 Reference 파일 안의 여러 Mesh를 개별 표시/숨김하고 재질·이미지 텍스처 지정
 - 원본 텍스처를 유지하면서 텍스처 없는 검은 재질만 밝히는 Reference `Auto` 표시
@@ -21,6 +23,7 @@ Hair Mesh Web은 브라우저에서 Bézier 가이드를 그리고, 가이드를
 - 편집 가능한 `.hairmesh.json` 저장·열기
 - 브라우저 자동 복구와 최대 100단계 Undo/Redo
 - 커브 표시/숨김, 잠금, 복제, 삭제
+- 프록시 표시/숨김, 잠금, W/E/R Transform, 복제, 삭제와 프로젝트 저장
 
 ## 요구 환경
 
@@ -64,6 +67,8 @@ HTML 파일을 직접 더블클릭하는 방식은 ES Module/CORS 제한 때문�
 10. `Display → Viewport`에서 배경색, Perspective Camera FOV, Grid와 조명을 조정합니다.
 11. `Save Project`로 편집본을 보존하거나 `Export` 탭에서 OBJ/FBX를 출력합니다.
 
+프록시가 필요하면 `Create → Proxy Mesh`에서 Box, Sphere, Quad Sphere 또는 Cylinder를 만듭니다. 생성 위치는 현재 카메라가 바라보는 Orbit 중심입니다. Scene Explorer의 `Proxy Objects`에서 선택하면 Modify가 `Primitive Parameters`로 바뀌며 크기, 축별 Segments/Sides/Rings, Smooth Shading과 자체 Polygon Edges를 조정할 수 있습니다. 상단 W/E/R, Frame, Clone과 Delete는 활성 Curve 또는 Proxy에 적용됩니다.
+
 Create·Modify·Display 탭의 내부 항목은 처음에 모두 닫힌 상태로 시작합니다. 항목 제목을 눌러 펼치거나 닫으면 탭을 전환하거나 편집하는 동안 그 상태가 유지되며, 페이지를 새로 초기화하면 다시 모두 닫힙니다. Export 탭은 기존처럼 열린 상태로 시작합니다.
 
 프로젝트 자동 복구는 새로고침이나 비정상 종료에 대비한 보조 장치입니다. 중요한 작업은 `.hairmesh.json`으로 직접 저장하십시오. 기준 모델과 참조 이미지 픽셀은 프로젝트 파일에 포함되지 않습니다. 참조 이미지의 파일명 힌트와 정렬값은 저장되므로 프로젝트를 다시 연 뒤 같은 이미지 파일만 재선택하면 됩니다.
@@ -79,12 +84,12 @@ Create·Modify·Display 탭의 내부 항목은 처음에 모두 닫힌 상태�
 | `Ctrl/⌘ + A` | 선택 커브의 모든 Point 선택 |
 | `Ctrl/⌘ + Point 클릭` | 활성 Curve 안의 Point를 다중 선택/해제 |
 | `Ctrl/⌘ + Curve 행 클릭` | Scene Explorer Curve를 다중 선택/해제 |
-| `W / E / R` | Curve/Point 또는 활성 Reference Plane의 Move / Rotate / Scale |
+| `W / E / R` | 활성 Curve/Proxy/Point 또는 Reference Plane의 Move / Rotate / Scale |
 | `Q` | Object/Camera 모드 또는 Reference Plane gizmo 숨김 |
 | `I` | Point Insert 모드 |
 | `Shift + G` | 축 가이드 표시 전환 |
 | `Esc` | 진행 중인 Line 생성 취소 |
-| `Delete` | 선택 Point 또는 커브 삭제 |
+| `Delete` | 선택 Point, Curve 또는 Proxy 삭제 |
 
 ## 검증
 
@@ -105,7 +110,7 @@ Hair_Mesh_Web/
 ├── launch_server.py               # 로컬 HTTP 서버/브라우저 실행기
 ├── 3D_Web_Paint_실행.cmd          # Windows 실행 진입점
 ├── src/
-│   ├── geometry/                  # Bézier·Sweep·메시 제한 계산
+│   ├── geometry/                  # Bézier·Sweep·프록시 primitive·메시 제한 계산
 │   ├── state/                     # History·프로젝트·선택·편집 정책
 │   ├── viewport/                  # Picking/축 드래그 + 재질/조명/Wire 표시 정책
 │   ├── ui/                        # 숫자 입력 Scrubber
@@ -127,6 +132,7 @@ Hair_Mesh_Web/
 - Viewport Material과 수동 Reference 텍스처는 표시 전용입니다. Import 원본 재질은 보존되며 OBJ/FBX Export 형상에는 포함되지 않습니다.
 - FBX/GLTF Loader가 복원한 내장/해결된 텍스처는 `Original`/`Auto`에서 유지됩니다. 단일 파일 선택으로 찾을 수 없는 외부 sidecar 이미지는 `Reference Objects → Color Texture`에서 Mesh별로 다시 지정하십시오.
 - 메시 예산은 Path Segments `2–512`, Tube Sides `3–64`로 제한됩니다.
+- 프록시 예산은 Box 축별 Segments `1–128`, Sphere Segments `3–256`/Rings `2–128`, Quad Sphere `1–64`, Cylinder Sides `3–256`/Height·Cap Segments `1–128`로 제한됩니다.
 - 제품 평가, 안정화 근거와 후속 로드맵은 [재귀 제품 감사 보고서](docs/product-audit/recursive-audit.md)에 있습니다.
 
 원본 프로토타입 기준선은 커밋 `b1b121a84e845d1afd215a63a7f03e9e6533b33a`입니다. 이후 안정화·Viewport·Reference material/texture·다중 선택 작업은 기본 브랜치 `master`에 통합되었고 임시 작업 브랜치는 제거되었습니다.

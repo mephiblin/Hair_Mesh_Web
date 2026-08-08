@@ -12,7 +12,7 @@ launch_server.py
     → Three.js/CDN 모듈 + src/* 정책 모듈 import
       → DOM 이벤트
         → 앱 상태 변경
-          → Curve/Control 시각화 및 Live Mesh 재생성
+          → Curve/Control 또는 Proxy 시각화 및 Mesh 재생성
             → History + 자동 복구
 ```
 
@@ -28,11 +28,16 @@ launch_server.py
 | Curve/Point 선택 | `selectCurve()`, `toggleCurveSelection()`, `selectControl()`, `#curveList` | Ctrl/⌘ 토글, 활성 Curve/Point, UI/Gizmo 동기화 | `src/state/curve-selection.js`, `src/state/point-selection.js` |
 | Curve 표시/잠금 | `setCurveVisible()`, `setCurveLocked()` | Scene row와 편집 가능 상태 동기화 | `src/state/curve-policy.js` 및 정책 테스트 |
 | Curve 복제/삭제 | `#duplicateCurveBtn`, `deleteSelectedCurve()` | Curve state 복제/폐기와 History transaction | 브라우저 QA + Undo/Redo |
+| Proxy 4종 생성 | `#create*ProxyBtn`, `createProxyPrimitive()` | Orbit target에 Box/Sphere/Quad Sphere/Cylinder 생성 | `src/geometry/proxy-primitives.js`, Node topology 테스트 |
+| Proxy 파라미터 | `#proxy*`, `readProxySettingsFromUI()`, `rebuildProxyMesh()` | 크기·축별 segment·Smooth·Edges를 비파괴 재생성 | `normalizeProxySettings()`, 브라우저 QA |
+| 객체별 Modify 문맥 | `syncModifyContext()`, `#curveModifyContext`, `#proxyModifyContext` | 활성 Curve/Proxy에 해당하는 rollout만 표시 | `features/proxy-mesh.md` |
+| Proxy 선택/표시/잠금 | `selectProxy()`, `refreshProxyList()`, `setProxyVisible()`, `setProxyLocked()` | Scene Explorer와 viewport pick, edit policy 동기화 | 브라우저 QA + Project restore |
+| Proxy 복제/삭제 | `#duplicateCurveBtn`, `deleteSelectedProxy()` | 파라미터/transform 복제와 GPU 자원 폐기 | History + 브라우저 QA |
 | Bézier 곡선 평가 | `BezierChainCurve` | `getPoint()`, `getTangent()`이 Cubic Bézier 계산 | `src/geometry/bezier-handles.js` |
 | Handle/Knot 편집 | `setSelectedKnotType()`, `resetSelectedTangents()` | Handle 모드 적용, 인접 Handle 재계산 | `bezier-handles.js`, Self-test |
 | Point 추가/분할/삭제 | `addPoint()`, `splitCurveSegment()`, `insertRelativeToSelected()` | 곡선 형상을 유지하는 Segment split과 selection 갱신 | `line-creation-policy.js`, 브라우저 QA |
 | Point 평균화 | `averageSelectedGeometry()` | 선택 Point 위치/Handle을 Amount만큼 평균화 | `#averageAmount`, 실제 브라우저 QA |
-| Curve Root Transform | `setObjectTransformMode()`, `handleGizmoChange()` | `curve.group`의 Position/Quaternion/Scale 변경 | TransformControls, History |
+| Curve/Proxy Object Transform | `setObjectTransformMode()`, `activeSceneObject()`, `handleGizmoChange()` | 활성 `group`의 Position/Quaternion/Scale 변경 | TransformControls, History |
 | Point Transform | `setPointTool()`, `applyPointUnitTransform()`, `handleGizmoChange()` | Point, Handle, 단면 Transform을 선택 문맥에 맞게 적용 | `coordinateFrameQuaternion()` |
 | 축 가이드 이동 | `toggleAxisGuides()`, `startAxisGuideDrag()`, `updateAxisGuideDrag()` | 화면 Pick → 제약 평면 → 축 Scalar 적용, OFF 시 Translate gizmo/pick 차단 | `src/viewport/axis-guide-drag.js`, `interaction-policy.js`, Self-test |
 | 단면 수치 편집 | `#applyPointValuesBtn`, `updatePointPanel()` | Position/Offset/Scale/Rotation 입력과 Live rebuild | `src/ui/numeric-scrubber.js` |
@@ -56,8 +61,8 @@ launch_server.py
 | 프로젝트 열기 | `#projectFileInput`, `openProjectFile()` | JSON 검증 → state restore → History 초기화 | future/unrelated document 거부 테스트 |
 | 자동 복구 | `RECOVERY_KEY`, `scheduleRecovery()`, `restoreRecovery()` | localStorage에 debounce 저장하고 시작 시 복원 | 브라우저 reload QA |
 | Undo/Redo | `history`, `history.begin()/commit()` | 변경 전 snapshot과 transaction label 관리 | `src/state/history.js`, Node 양방향 복원 테스트 |
-| OBJ Export | `#exportQuadObjBtn`, `exportQuadOBJ()` | World Transform/축/Scale 적용 후 논리 Quad/N-gon 직렬화 | 대상 DCC Import 확인 |
-| FBX Export | `#exportFbxBtn`, `exportAsciiFBX()` | FBX 7.4 ASCII Geometry/Normal/UV 작성 | 실험 기능, 대상 DCC Import 확인 |
+| OBJ Export | `#exportQuadObjBtn`, `activeExportMeshes()`, `exportQuadOBJ()` | 표시 중인 Curve Live/Proxy의 World Transform 적용 후 논리 Quad/N-gon 직렬화 | 대상 DCC Import 확인 |
+| FBX Export | `#exportFbxBtn`, `activeExportMeshes()`, `exportAsciiFBX()` | Curve/Proxy FBX 7.4 ASCII Geometry/Normal/UV 작성 | 실험 기능, 대상 DCC Import 확인 |
 | 단축키 | `document.addEventListener('keydown', ...)` | 저장, History, 선택, 모드, Transform dispatch | README 단축키 표와 함께 갱신 |
 | Command rollout | `.rollout-header`, `setRolloutCollapsed()`, `initializeRollouts()` | Create/Modify/Display 기본 닫힘, 탭 전환 중 DOM 상태 유지, ARIA 동기화 | `features/viewport-ui.md`, 브라우저 QA |
 | 내장 진단 | URL `?selftest=1`, `runCoreSelfChecks()` | 순수 Geometry/Policy smoke test 실행 후 전역 결과 노출 | `src/diagnostics/core-self-check.js` |
@@ -70,6 +75,9 @@ launch_server.py
 | --- | --- | --- |
 | `curves` | 편집 중인 Curve record 배열 | `makeCurveRecord()`, `captureAppState()` |
 | `selectedCurve` | 현재 UI/Transform 대상 Curve | `selectCurve()`, `restoreAppState()` |
+| `proxies` | 파라미터 기반 Proxy record 배열 | `makeProxyRecord()`, `captureAppState()` |
+| `selectedProxy` | 현재 UI/Transform 대상 Proxy, `selectedCurve`와 상호 배타 | `selectProxy()`, `restoreAppState()` |
+| `nextProxyId` | 저장·복원되는 Proxy ID counter | `makeProxyRecord()`, `captureAppState()` |
 | `selectedCurveIds` | Scene Explorer 다중 선택 Curve ID Set | `toggleCurveSelection()`, `captureAppState()` |
 | `selectedControl` | Point 또는 in/out Handle 선택 | `selectControl()`, `captureAppState()` |
 | `selectedPointIndices` | 다중 Point 선택 Set | `src/state/point-selection.js`로 정규화 |
@@ -100,6 +108,8 @@ curve
 ```
 
 Point record의 스키마는 `makePointRecord()`, `pointState()`, `pointFromState()`를 함께 확인합니다. 필드를 추가할 때 세 함수와 `clonePointRecord()`를 동시에 바꾸지 않으면 저장/복제/Undo에서 데이터가 사라질 수 있습니다.
+
+Proxy record와 topology 흐름은 [Proxy Mesh 기능 계약](features/proxy-mesh.md)에 별도로 정리되어 있습니다. Proxy 필드를 추가할 때는 default/normalize, UI read/write, `proxyState()`/`proxyFromState()`, clone과 rebuild 경로를 함께 바꿉니다.
 
 ## Live Mesh 호출 경로
 
