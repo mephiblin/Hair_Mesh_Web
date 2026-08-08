@@ -13,6 +13,9 @@ node_tests: tests/core-tests.mjs
 browser_checks: src/diagnostics/core-self-check.js
 project_format: .hairmesh.json, version 1
 external_runtime: three@0.180.0 via jsDelivr
+default_branch: master
+current_node_contracts: 15
+current_browser_self_checks: 24
 ```
 
 ## 2. 요청 라우터

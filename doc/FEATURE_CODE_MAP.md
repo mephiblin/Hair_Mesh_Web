@@ -1,6 +1,6 @@
 # 기능별 코드 지도
 
-이 문서는 사용자 기능에서 구현 코드로 이동하기 위한 지도입니다. `curve_mesh_hair_tool_v4.html`의 줄 번호는 현재 버전 기준이며, 실제 수정 시에는 함께 적힌 함수명이나 DOM ID를 `rg`로 검색하십시오.
+이 문서는 사용자 기능에서 구현 코드로 이동하기 위한 지도입니다. `curve_mesh_hair_tool_v4.html`은 계속 이동하므로 줄 번호를 계약으로 사용하지 않고 함수명이나 DOM ID를 `rg`로 검색합니다.
 
 Codex는 먼저 [CODEX_INDEX.md](CODEX_INDEX.md)의 요청 라우터를 읽고 관련 `features/*.md`의 동작 계약을 확인합니다. 이 문서는 전체 기능 심볼을 한 화면에서 대조해야 할 때 사용합니다.
 
@@ -21,11 +21,11 @@ launch_server.py
 | 사용자 기능 | 주 진입점/DOM | 핵심 구현 | 보조 모듈·검증 |
 | --- | --- | --- | --- |
 | 앱 실행 | `launch_server.py:main()` | 로컬 서버 생성, 빈 포트 선택, 브라우저 열기 | 수동 HTTP 200 확인 |
-| Three.js 초기화/렌더 | `#viewport`, `animate()` | HTML 약 304–445, 2664 이후의 Scene/Camera/Renderer/Controls | 브라우저 Self-test |
+| Three.js 초기화/렌더 | `#viewport`, `scene`, `camera`, `renderer`, `animate()` | HTML composition root의 Scene/Camera/Renderer/Controls 조립 | 브라우저 Self-test |
 | 기준 모델 Import | `#modelFile`, `loadModel()` | `normalizeMaterials()`, `fitObject()`, `applyModelDisplay()` | OBJ/FBX/GLTF Loader, 실제 브라우저 QA |
 | 표면/평면 Point 배치 | `#drawTarget`, `pointOnSurface()`, `pointInFreePlane()` | Raycaster로 모델 표면 또는 카메라 평면 좌표 계산 | `src/state/line-creation-policy.js` |
 | Line 생성/완료/취소 | `#newCurveBtn`, `beginLineCreation()`, `finishLineCreation()`, `cancelLineCreation()` | Draft curve 생성, 최소 Point 검사, 이전 선택 복원 | Node의 `line creation requires two points` |
-| Curve/Point 선택 | `selectCurve()`, `toggleCurveSelection()`, `selectControl()`, `#curveList` | Ctrl/⌘ 토글, 활성 Curve/Point, UI/Gizmo 동기화 | `curve-selection.js`, `point-selection.js` |
+| Curve/Point 선택 | `selectCurve()`, `toggleCurveSelection()`, `selectControl()`, `#curveList` | Ctrl/⌘ 토글, 활성 Curve/Point, UI/Gizmo 동기화 | `src/state/curve-selection.js`, `src/state/point-selection.js` |
 | Curve 표시/잠금 | `setCurveVisible()`, `setCurveLocked()` | Scene row와 편집 가능 상태 동기화 | `src/state/curve-policy.js` 및 정책 테스트 |
 | Curve 복제/삭제 | `#duplicateCurveBtn`, `deleteSelectedCurve()` | Curve state 복제/폐기와 History transaction | 브라우저 QA + Undo/Redo |
 | Bézier 곡선 평가 | `BezierChainCurve` | `getPoint()`, `getTangent()`이 Cubic Bézier 계산 | `src/geometry/bezier-handles.js` |
@@ -46,9 +46,9 @@ launch_server.py
 | Live 오류/해제 | `failCurveMesh()`, `removeCurveMesh()` | topology/Scene 자원 정리와 `disabled/error/ready` 상태 관리 | `hasReadyMesh()` 정책 테스트 |
 | Solid/Wire 표시 | `#viewMode`, `applyViewModeToCurve()` | Solid Mesh/Wire Mesh visibility 전환 | 브라우저 QA |
 | Hair Viewport 재질 | `#hairMaterialPreset`, `applyHairMaterialDisplay()` | Live Mesh의 MatCap / Normal / Standard 재질 교체 | `src/viewport/material-presets.js`, Node/브라우저 QA |
-| Reference Viewport 재질 | `#referenceMaterialPreset`, `applyModelDisplay()` | Auto/Original/Default Lit/MatCap 전역 적용 | `material-presets.js`, `reference-object-policy.js` |
+| Reference Viewport 재질 | `#referenceMaterialPreset`, `applyModelDisplay()` | Auto/Original/Default Lit/MatCap 전역 적용 | `src/viewport/material-presets.js`, `src/viewport/reference-object-policy.js` |
 | Reference Mesh 관리 | `#referenceObjectList`, `refreshReferenceObjectUI()` | Mesh별 숨김/표시, 재질 override, 이미지 texture/UV 경고 | `src/viewport/reference-object-policy.js`, 다중 OBJ fixture |
-| Viewport 환경/조명 | `#viewportBackground`, `#cameraFov`, `#gridVisible`, `#light*`, `#fillLightIntensity` | `applyViewportDisplay()`, `applyLightingDisplay()` | `viewport-settings.js`, `lighting.js` |
+| Viewport 환경/조명 | `#viewportBackground`, `#cameraFov`, `#gridVisible`, `#light*`, `#fillLightIntensity` | `applyViewportDisplay()`, `applyLightingDisplay()` | `src/viewport/viewport-settings.js`, `src/viewport/lighting.js` |
 | Reference Wireframe | `#referenceWireMode`, `#referenceWireColor` | `ensureReferenceWireObject()`, `applyReferenceWireframeDisplay()`로 독립 `LineSegments` 관리 | `src/viewport/reference-wireframe.js`, 브라우저 QA |
 | 프로젝트 저장 | `#saveProjectBtn`, `saveProject()` | 앱 상태 캡처 → versioned document → JSON 다운로드 | `src/state/project-format.js`, Node round-trip 테스트 |
 | 프로젝트 열기 | `#projectFileInput`, `openProjectFile()` | JSON 검증 → state restore → History 초기화 | future/unrelated document 거부 테스트 |

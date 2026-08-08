@@ -1,6 +1,6 @@
 # Recursive Product Audit
 
-Overall status: COMPLETE
+Overall status: COMPLETE · synchronized with `master` on 2026-08-08
 
 ## Completion contract
 
@@ -8,19 +8,34 @@ Overall status: COMPLETE
 - Top job: 기준 모델 위에 Bézier 가이드를 만들고 편집 가능한 상태를 잃지 않으면서 리본·튜브·브러시 메시로 변환한다.
 - In scope: 평가 문서, 버전형 프로젝트 저장/열기/자동복구, Brush 자산 상태, 숨김·잠금·LIVE 상태 불변 조건, 메시 입력 예산, 핵심 키보드·초기·1024px UI, 회귀 테스트와 실제 브라우저 QA
 - Non-goals: Blender 전체 Hair Curves 호환, Guide 보간, Clump/Curl/Noise, 다중 사용자 편집, 자체 FBX SDK 수준의 호환성
-- Constraints: 정적 웹 앱과 현재 Three.js 구조를 유지하며 원본 `master`를 변경하지 않는 별도 브랜치로 게시한다.
+- Constraints: 정적 ES-module 앱과 현재 Three.js 구조를 유지한다. 완료된 안정화 작업은 기본 브랜치 `master`에 통합하고 임시 작업 브랜치는 제거한다.
 - Completion gates: 모든 `FIX_NOW` 항목이 자동 또는 브라우저 검증을 통과하고, 저장→새로고침 복구·실패한 Brush build·숨김/잠금·상한 입력·1024px 레이아웃이 합의한 상태를 보인다.
 
 ## Product snapshot
 
 - Repository / surface: `mephiblin/Hair_Mesh_Web`, `curve_mesh_hair_tool_v4.html`
-- Baseline revision or date: `b1b121a84e845d1afd215a63a7f03e9e6533b33a`, 2026-08-07
+- Historical baseline: `b1b121a84e845d1afd215a63a7f03e9e6533b33a`, 2026-08-07
+- Current implementation revision reviewed: `2e1128cb8b29b5acf611ed65786eb475e5f09516`, 2026-08-08
 - Runtime / test entry points: `python3 launch_server.py`, `?selftest=1`, `npm test`
 - Existing documentation: `PROJECT_AUDIT.md`, `BLENDER_FEATURE_RESEARCH.md`, `MODULARIZATION.md`
 
 ## Current conclusion
 
-Hair Card MVP의 기본 Bézier 편집과 Curve-to-Mesh 생성에 더해 버전형 프로젝트 저장/열기, 자동복구, Brush topology 영속성, 숨김·잠금·LIVE 상태 정책과 메시 입력 예산이 검증됐다. Reference binary 재연결과 Blender식 Grooming 확장은 명시한 잔여 위험/백로그이며 현재 완료 계약을 막지 않는다.
+Hair Card MVP의 Bézier 편집과 Curve-to-Mesh 생성에 더해 버전형 프로젝트 저장/열기, 자동복구, Brush topology 영속성, 숨김·잠금·LIVE 상태, 메시 입력 예산이 검증됐다. 이후 ZBrush식 MatCap, Reference 독립 Wire, Directional/Environment 조명, Viewport 배경/FOV/Grid, 다중 Reference Mesh 표시·재질·수동 텍스처, Point/Curve Ctrl/⌘ 다중 선택과 Recovery까지 통합됐다. Reference binary 재연결, 다중 Curve 일괄 변환/삭제, Blender식 Grooming 확장은 잔여 백로그이며 현재 Hair Card MVP 완료 계약을 막지 않는다.
+
+## Current verification snapshot
+
+| Check | Current result |
+| --- | --- |
+| Node policy/state regression | `npm run check` · 15/15 tests |
+| Browser core self-check | 24/24 |
+| Reference display acceptance | 공식 Three.js FBX Import → MatCap Silver, 다중 OBJ Mesh별 visibility/material/texture, Wire Overlay 확인 |
+| Selection acceptance | Point 3→2→1→0 Ctrl/⌘ 토글, Curve 2→1→0 행 토글, 일반 클릭 복귀 확인 |
+| Persistence acceptance | Viewport 환경과 다중 Curve/Point 선택을 Recovery 후 복원 |
+| Layout/runtime | 1600×900 및 1024×768, 가로 overflow 없음, console/page error 0 |
+| GitHub | 기본 브랜치 `master` Validate 성공 |
+
+아래 Cycle 1의 7/7·22/22 수치는 당시 안정화 사이클의 역사적 증거이며, 현재 총계는 위 표를 사용한다.
 
 ## Cycle 1
 
@@ -82,6 +97,7 @@ Hair Card MVP의 기본 Bézier 편집과 Curve-to-Mesh 생성에 더해 버전�
 | Risk | Impact | Mitigation / owner | Revisit trigger |
 |---|---|---|---|
 | Reference 모델 binary는 프로젝트 JSON에 포함되지 않는다. | 프로젝트 재개 시 표면 배치 기준을 다시 선택해야 한다. | 파일명과 재연결 안내를 보존하고 향후 asset package 설계 | Reference가 필수 제작 입력이 되는 시점 |
+| Reference Mesh별 visibility/material/수동 texture는 세션 전용이다. | 프로젝트를 다시 열면 Reference를 재Import하고 외부 texture를 다시 지정해야 한다. | 전역 display만 저장하고 UI에 session 경계를 명시 | Reference asset package 설계 시점 |
 | ASCII FBX round-trip이 자동 검증되지 않는다. | 일부 DCC에서 normal/UV 해석 차이 가능 | Experimental 표기 유지, OBJ 우선 사용 | Blender/3ds Max fixture 환경 확보 |
 
 ## Future capability backlog
@@ -89,7 +105,7 @@ Hair Card MVP의 기본 Bézier 편집과 Curve-to-Mesh 생성에 더해 버전�
 | Priority | Capability | User value | Dependency | Revisit trigger | Current disposition |
 |---|---|---|---|---|---|
 | 1 | Surface root attachment와 normal 정렬 | 두피에 붙은 Hair Card 배치 | Reference asset 계약 | 안정화 Cycle 완료 | DEFER |
-| 2 | 다중 Curve 변환·삭제·대칭 | 반복 Hair Card 제작 속도 향상 | 선택 명령 계약 | 단일 Curve 상태 안정화 | DEFER |
+| 2 | 다중 Curve 변환·삭제·대칭 | 반복 Hair Card 제작 속도 향상 | Curve 다중 선택 계약은 완료, group transaction/pivot 정책 필요 | 반복 배치 작업 검증 시 | DEFER |
 | 3 | Guide 보간과 density/clump/curl/noise | Blender식 Grooming 범위 확장 | 성능 Worker, surface attachment | Hair Card MVP 사용성 검증 | DEFER |
 | 4 | OBJ/glTF/FBX round-trip fixture | 출력 신뢰성 향상 | 테스트 자산과 DCC 환경 | 외부 배포 전 | DEFER |
 | 5 | Three.js 오프라인 번들 | 완전한 로컬 실행 | 빌드 파이프라인 | 배포 패키징 시작 | DEFER |

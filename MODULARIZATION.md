@@ -8,16 +8,25 @@
 - 모듈은 표준 `input`/`change` 이벤트만 발생시키며 메쉬나 커브 상태를 직접 알지 않습니다.
 - `src/state/history.js`: 앱 상태 캡처/복원을 주입받는 Undo/Redo 스택을 UI와 분리했습니다.
 - `src/state/line-creation-policy.js`: 빈 생성 세션 취소와 Finish/Finish & Edit 분기를 순수 상태 규칙으로 분리했습니다.
-- `src/state/point-selection.js`: 단일/전체 Point 선택의 정규화와 복원 규칙을 분리해 Ctrl+A 및 Undo/Redo가 같은 선택 불변 조건을 사용합니다.
+- `src/state/point-selection.js`: 단일/전체/Ctrl·⌘ 토글 Point 선택의 정규화와 복원 규칙을 분리해 Ctrl+A, 캔버스 선택, Undo/Redo가 같은 선택 불변 조건을 사용합니다.
+- `src/state/curve-selection.js`: Scene Explorer Curve 다중 선택의 정규화, Ctrl/⌘ 토글, 활성 Curve fallback을 분리했습니다.
+- `src/state/project-format.js`: `.hairmesh.json` envelope, version 검증, serialize/parse를 분리했습니다.
+- `src/state/curve-policy.js`: 숨김/잠금 편집 가능성과 정직한 Live Mesh Ready 판정을 분리했습니다.
+- `src/geometry/mesh-limits.js`: Path Segment와 Tube Side의 계산 경계 clamp를 분리했습니다.
 - `src/geometry/bezier-handles.js`: 3ds Max식 4개 Knot Type과 좌우별 Auto/Vector/Aligned/Free 타입 전이, Reset Tangents 계산을 분리했습니다.
 - `src/geometry/sweep-frames.js`: 회전 최소화 스윕 프레임과 0 접선·180도 반전 fallback을 분리했습니다.
 - `src/diagnostics/core-self-check.js`: `?selftest=1`에서만 핵심 핸들·프레임 불변 조건을 검사합니다.
 - `src/viewport/interaction-policy.js`: 선택/루트 변환 모드에서도 보이는 포인트를 선택할 수 있다는 상호작용 규칙을 DOM 및 Three.js 이벤트에서 분리했습니다.
 - `src/viewport/axis-guide-drag.js`: 긴 Move 축선의 축 벡터, 카메라 기준 드래그 평면, 축 방향 이동량 계산을 Three.js 장면 이벤트에서 분리했습니다.
+- `src/viewport/material-presets.js`: Hair/Reference MatCap·Standard·Normal·Auto preset과 fallback을 분리했습니다.
+- `src/viewport/lighting.js`: Directional/Environment lighting 정규화와 방향 계산을 분리했습니다.
+- `src/viewport/reference-wireframe.js`: Wire Off/Only/Overlay와 독립 선 색상 정책을 분리했습니다.
+- `src/viewport/reference-object-policy.js`: Reference Mesh별 material mode와 어두운 원본의 Auto fallback을 분리했습니다.
+- `src/viewport/viewport-settings.js`: 배경색과 Camera FOV 정규화를 분리했습니다.
 
 ## 다음 분리 경계
 
-1. `src/state/curve-store.js` — 커브/선택 상태와 생성·복제·삭제
+1. `src/state/curve-store.js` — 현재 HTML에 남은 커브 생성·복제·삭제와 활성 상태 조립. 선택 정규화는 이미 `curve-selection.js`/`point-selection.js`로 분리됨
 2. `src/geometry/curve-mesh.js` — 프로파일 토폴로지 생성과 라이브 메쉬 재구성. 프레임 계산은 이미 `sweep-frames.js`로 분리됨
 3. `src/viewport/scene-controller.js` — Three.js 장면, 카메라, 레이캐스트, 기즈모. 모드 판정은 이미 `interaction-policy.js`로 분리됨
 4. `src/ui/panels.js` — 탭, 롤아웃, 폼 동기화, 상태 표시

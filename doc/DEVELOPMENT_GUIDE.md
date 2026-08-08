@@ -65,8 +65,10 @@ Reference 파일 자체와 Mesh별 표시/재질/수동 텍스처는 Import 세�
 - Undo/Redo 복원 중에는 새 History transaction을 만들지 않습니다.
 - GPU 자원을 Scene에서 제거할 때 Geometry와 Material도 dispose합니다.
 - Draft Line을 취소하면 생성 전 Curve 선택을 복원합니다.
+- Point `Ctrl/⌘` 토글은 활성 Curve 안에서만 동작하며 0개 선택을 허용합니다.
+- Scene Curve 다중 선택은 `selectedCurveIds`와 활성 `selectedCurve`를 함께 유지하고, Modifier/Gizmo는 활성 Curve 하나만 편집합니다.
 
-관련 정책은 `src/state/curve-policy.js`, `line-creation-policy.js`, `mesh-limits.js`에 있으며 Node 테스트가 계약을 고정합니다.
+관련 정책은 `src/state/curve-policy.js`, `curve-selection.js`, `point-selection.js`, `line-creation-policy.js`, `src/geometry/mesh-limits.js`에 있으며 Node 테스트가 계약을 고정합니다.
 
 ## 5. 기능 구현 패턴
 
@@ -140,10 +142,12 @@ History 밖에서 표시 옵션처럼 상태를 직접 바꾸는 경우 `markPro
 
 - Line 완료 조건
 - Point 선택 정규화
+- Point/Curve Ctrl/⌘ 토글과 활성 Curve fallback
 - Mesh 예산 제한
 - 숨김/잠금/Live 상태 정책
 - History transaction과 양방향 복원
 - 프로젝트 문서 round-trip/버전 거부
+- Viewport material/light/wire/object/환경 설정 정규화
 
 새 순수 모듈은 이 테스트에 직접 import하여 회귀를 추가합니다.
 
@@ -161,6 +165,8 @@ globalThis.__CURVE_TOOL_SELF_TEST__
 
 1. 빈 장면에서 Line 생성/취소/완료
 2. Point/Handle 이동 후 Undo/Redo
+   - 같은 Curve의 Anchor를 Ctrl/⌘ 클릭해 0개까지 토글하고 일반 클릭으로 복귀
+   - Scene Explorer Curve 행을 Ctrl/⌘ 클릭해 다중 선택/활성 전환/전체 해제
 3. Ribbon과 Tube 생성, Segment/Sides 경계값 확인
 4. Brush fixture Import 후 Brush Mesh 생성
 5. 숨김/잠금 Curve가 수정되지 않는지 확인

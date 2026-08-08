@@ -7,6 +7,7 @@ Hair Mesh Web은 브라우저에서 Bézier 가이드를 그리고, 가이드를
 - 모델 없이 카메라 평면에 커브 생성
 - OBJ, FBX, GLB/GLTF 기준 모델 표면에 커브 생성
 - Bézier Point/Handle 편집과 Point 추가·삭제·분할·평균화
+- `Ctrl/⌘` 클릭으로 같은 Curve의 Point와 Scene Explorer의 Curve 행 다중 선택/해제
 - 커브 전체 Transform과 Point별 단면 Offset/Rotate/Scale/Taper
 - Ribbon, Tube, Imported Mesh Brush 방식의 Live Mesh 생성
 - ZBrush 스타일 MatCap 재질로 Hair Mesh와 Import 모델 표시
@@ -36,7 +37,7 @@ cd Hair_Mesh_Web
 python3 launch_server.py
 ```
 
-Windows에서는 `3D_Web_Paint_실행.cmd`를 더블클릭할 수 있습니다. 브라우저가 자동으로 열리지 않으면 터미널에 출력된 `http://127.0.0.1:<port>/curve_mesh_hair_tool_v4.html` 주소를 여십시오.
+Windows에서는 `3D_Web_Paint_실행.cmd`를 더블클릭할 수 있습니다. `.cmd`가 메모장으로 열리면 명령 프롬프트에서 해당 파일을 직접 실행하십시오. 자세한 내용은 [`사용자 실행용 참고.md`](사용자%20실행용%20참고.md)를 확인합니다. 브라우저가 자동으로 열리지 않으면 터미널에 출력된 `http://127.0.0.1:<port>/curve_mesh_hair_tool_v4.html` 주소를 여십시오.
 
 고정 포트를 사용하거나 브라우저 자동 실행을 끌 수도 있습니다.
 
@@ -120,4 +121,4 @@ Hair_Mesh_Web/
 - 메시 예산은 Path Segments `2–512`, Tube Sides `3–64`로 제한됩니다.
 - 제품 평가, 안정화 근거와 후속 로드맵은 [재귀 제품 감사 보고서](docs/product-audit/recursive-audit.md)에 있습니다.
 
-원본 GitHub 상태는 커밋 `b1b121a84e845d1afd215a63a7f03e9e6533b33a`이며, 안정화 작업은 `agent/stabilization-v1-from-b1b121a` 브랜치에서 분리되어 있습니다.
+원본 프로토타입 기준선은 커밋 `b1b121a84e845d1afd215a63a7f03e9e6533b33a`입니다. 이후 안정화·Viewport·Reference material/texture·다중 선택 작업은 기본 브랜치 `master`에 통합되었고 임시 작업 브랜치는 제거되었습니다.

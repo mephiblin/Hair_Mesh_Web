@@ -1,5 +1,7 @@
 # 개발 문서 색인
 
+> 현재 구현 기준: 기본 브랜치 `master`, 2026-08-08 기능 상태. 문서의 줄 번호보다 함수명·DOM ID·모듈 경로를 우선합니다.
+
 이 폴더는 Hair Mesh Web에서 **수정할 기능의 코드 위치를 빨리 찾고, 주변 상태 흐름과 회귀 위험을 함께 확인**하기 위한 개발자 문서입니다. 사용자 작업 기준으로 찾는 task-first 구조를 사용합니다.
 
 ## 문서 안내
@@ -20,11 +22,13 @@
 - [Viewport Display](features/viewport-display.md)
 - [Import·Export](features/io-export.md)
 
-루트의 기존 분석 자료도 보조 자료로 유지합니다.
+루트의 기존 분석 자료도 보조 자료로 유지합니다. 이 문서들은 현재 계약이 아니라 조사·기준선 기록이며, 각 문서 상단의 현재 상태 안내를 먼저 확인합니다.
 
 - [`PROJECT_AUDIT.md`](../PROJECT_AUDIT.md): 초기 프로젝트 감사
 - [`MODULARIZATION.md`](../MODULARIZATION.md): 모듈 분리 방향
 - [`BLENDER_FEATURE_RESEARCH.md`](../BLENDER_FEATURE_RESEARCH.md): Blender 기능 조사
+
+`Next_Hair_AI/`는 다음 목표를 위한 별도 기획 공간입니다. 현재 구현 계약이나 이번 문서 동기화 범위로 취급하지 않습니다.
 
 ## 가장 빠른 코드 탐색법
 

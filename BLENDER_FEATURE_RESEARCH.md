@@ -4,6 +4,8 @@
 > 대상: `Curve Mesh Hair Tool v4` (`curve_mesh_hair_tool_v4.html`)
 > 목적: 현재 기능을 Blender의 공식 문서와 공개 소스에 대입하고, 불안정 가능성이 있는 부분과 다음 개발 우선순위를 정리한다.
 
+> **구현 동기화 · 2026-08-08:** 이 문서는 Blender 비교 조사 근거를 보존하는 자료입니다. 조사 후 프로젝트 저장/복구, 좌우 Handle Type, 회전 최소화 Sweep Frame, Reference MatCap·재질·텍스처·Wire, Viewport 환경/조명, Point/Curve Ctrl/⌘ 다중 선택이 `master`에 반영되었습니다. 현재 코드 계약은 [`doc/CODEX_INDEX.md`](doc/CODEX_INDEX.md)와 [`doc/features/`](doc/features/)를 우선합니다.
+
 ## 1. 결론 요약
 
 이 프로젝트는 Blender의 다음 세 영역이 합쳐진 도구에 가깝다.
@@ -141,7 +143,7 @@ Blender의 Bézier 선택 모델에서도 중앙 제어점을 선택하면 포�
 - 왼쪽 핸들만 선택
 - 오른쪽 핸들만 선택
 
-다중 선택을 추가할 때 중앙 제어점 전체 선택은 양쪽 핸들을 변환 대상에 포함하고, 개별 핸들 선택은 앵커를 고정해야 한다.
+현재 활성 Curve의 중앙 Anchor는 `Ctrl/⌘` 클릭으로 membership을 토글하고 0개까지 해제할 수 있다. 개별 Handle 클릭은 단일 활성 Handle을 유지한다. 다중 Point에 대한 Knot Type 명령은 구현됐지만 Gizmo 변환·삭제는 아직 활성 Point 하나를 대상으로 하므로, Blender식 다중 변환을 도입할 때 중앙 제어점은 양쪽 핸들을 함께 변환하고 개별 Handle은 앵커를 고정해야 한다.
 
 ## 5. 평균화, 스무딩, 자동 핸들
 
