@@ -44,6 +44,7 @@ input[type=checkbox]{accent-color:var(--accent)}
 .hint{position:absolute;left:8px;top:8px;z-index:5;background:rgba(42,42,42,.92);border:1px solid #707070;padding:5px 7px;font-size:11px;pointer-events:none;max-width:calc(100% - 16px)}
 .viewport-badge{position:absolute;right:8px;top:8px;z-index:5;background:rgba(42,42,42,.9);border:1px solid #666;padding:4px 7px;font-size:11px;pointer-events:none}
 .selection-marquee{position:fixed;z-index:50;display:none;pointer-events:none;border:1px solid #8fc7c7;background:rgba(92,174,182,.12);box-shadow:0 0 0 1px rgba(0,0,0,.3)}.selection-marquee.crossing{border-style:dashed;border-color:#fff174;background:rgba(255,241,116,.09)}
+.viewport-context-menu{position:fixed;z-index:120;width:238px;max-height:calc(100vh - 16px);overflow:auto;padding:4px;background:#323232;border:1px solid #777;box-shadow:0 8px 24px rgba(0,0,0,.52),inset 0 1px rgba(255,255,255,.05);border-radius:3px}.viewport-context-menu[hidden]{display:none}.context-menu-title{padding:5px 7px;color:var(--accent-strong);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.context-menu-section{padding:5px 7px 2px;color:#aaa;font-size:10px;text-transform:uppercase;letter-spacing:.06em;border-top:1px solid #222}.context-menu-section:first-of-type{border-top:0}.context-menu-item{display:grid;grid-template-columns:18px minmax(0,1fr) auto;align-items:center;width:100%;min-height:25px;padding:3px 7px;border:0;background:transparent;text-align:left}.context-menu-item:hover,.context-menu-item:focus-visible{background:#557071;outline:1px solid var(--accent);outline-offset:-1px}.context-menu-item.danger{color:#ffc0c0}.context-menu-item-mark{color:var(--select);text-align:center}.context-menu-shortcut{color:#aaa;margin-left:8px;font-size:10px}.context-menu-item:disabled{background:transparent;color:#888}.context-menu-empty{padding:8px;color:var(--muted)}
 .command-tabs{height:37px;display:grid;grid-template-columns:repeat(4,1fr);gap:1px;padding:3px;background:#383838;border-bottom:1px solid #222}.command-tab{font-size:15px;height:30px}.command-tab.active{background:#5c6f70;border-color:var(--accent)}
 .command-content{flex:1;min-height:0;overflow:hidden}.tab-panel{height:100%;overflow:auto;padding:4px}.hidden{display:none!important}
 .object-header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px;padding:4px 2px 6px}.object-type{display:flex;align-items:center;justify-content:center;min-width:62px;padding:0 6px;border:1px solid #222;background:#42666a;color:var(--accent-strong);font-size:10px;font-weight:700;letter-spacing:.04em}.proxy-parameter-group{padding-top:2px}.proxy-buttons{display:grid;grid-template-columns:1fr 1fr;gap:4px}.proxy-buttons button{min-height:34px}.proxy-empty{padding:18px 10px;text-align:center;color:var(--muted);border:1px dashed #707070;background:#3c3c3c}
@@ -468,6 +469,8 @@ input[type=checkbox]{accent-color:var(--accent)}
   <footer class="statusbar"><span id="status" aria-live="polite">Reference 모델을 불러오거나 새 Line을 생성하세요.</span><span id="statusMode" class="status-mode">OBJECT</span></footer>
 </div>
 
+<div id="viewportContextMenu" class="viewport-context-menu" role="menu" aria-label="Viewport context menu" hidden></div>
+
 <script type="module">
 import { createHistory } from './src/state/history.js';
 import { createProjectDocument, parseProjectDocument, serializeProjectDocument } from './src/state/project-format.js';
@@ -481,6 +484,7 @@ import { activeCurveId, normalizeCurveSelection, selectedCurveIds as orderedCurv
 import { applyControlSelection, controlSelectionOperation, normalizeControlSelection, orderedControlSelection } from './src/state/control-selection.js';
 import { controlsInSelectionRectangle, selectionRectangle } from './src/viewport/region-selection.js';
 import { initNumericScrubbers } from './src/ui/numeric-scrubber.js';
+import { contextMenuPosition } from './src/ui/context-menu.js';
 import {
   HANDLE_TYPE,
   applyHandleMode,
@@ -494,7 +498,7 @@ import {
   setAveragedHandleTypes
 } from './src/geometry/bezier-handles.js';
 import { buildSweepFrames } from './src/geometry/sweep-frames.js';
-import { canInteractWithAxisGuides, canPickVisibleControl, modeAfterControlPick, shouldShowTransformHelper } from './src/viewport/interaction-policy.js';
+import { canInteractWithAxisGuides, canPickViewportObject, canPickVisibleControl, modeAfterControlPick, shouldShowTransformHelper } from './src/viewport/interaction-policy.js';
 import { axisDragScalar, axisVector, createAxisDragPlane } from './src/viewport/axis-guide-drag.js';
 import {
   HAIR_MATERIAL_FALLBACK,
@@ -1756,7 +1760,9 @@ function syncFfdLatticePositions(proxy) {
   const positions = ffdControlPointPositions(input, modifier);
   proxy.latticeControlObjects.forEach((control, index) => {
     control.position.fromArray(positions[index]);
-    control.material.color.setHex(index === selectedFfdControlIndex ? COLORS.selected : selectedFfdControlIndices.has(index) ? COLORS.multiSelected : COLORS.accent);
+    const selected = selectedFfdControlIndices.has(index);
+    control.material.color.setHex(selected ? COLORS.selected : COLORS.accent);
+    control.scale.setScalar(selected ? (index === selectedFfdControlIndex ? 1.35 : 1.18) : 1);
   });
   const attribute = proxy.latticeLine?.geometry?.getAttribute('position');
   if (attribute) {
@@ -1783,7 +1789,7 @@ function rebuildProxyLatticeVisual(proxy) {
   const line = new THREE.LineSegments(geometry, material); line.renderOrder = 36; line.userData.proxyId = proxy.id; line.userData.modifierId = modifier.id;
   group.add(line); proxy.latticeLine = line;
   positions.forEach((position, index) => {
-    const control = createControlMesh(Math.max(handleRadius * .65, .008), index === selectedFfdControlIndex ? COLORS.selected : selectedFfdControlIndices.has(index) ? COLORS.multiSelected : COLORS.accent, 'sphere');
+    const control = createControlMesh(Math.max(handleRadius * .65, .008), selectedFfdControlIndices.has(index) ? COLORS.selected : COLORS.accent, 'sphere');
     control.position.fromArray(position); control.renderOrder = 37;
     control.material.depthTest = false;
     control.userData = { proxyId:proxy.id, modifierId:modifier.id, ffdPointIndex:index };
@@ -2084,6 +2090,7 @@ function restoreAppState(state) {
   updateSelectionBadge();
   updateMeshStats();
   setMode(state.mode);
+  if (selectedProxy) syncFfdLatticePositions(selectedProxy);
   activateCommandTab(state.activeCommandTab);
   if (activeStandardView !== 'perspective') setStandardView(activeStandardView, { targetOverride:orbit.target.clone() });
   else useViewportCamera('perspective', { target:orbit.target });
@@ -2852,7 +2859,7 @@ function findCurveAtEvent(event) {
   raycaster.params.Line.threshold = Math.max(modelDiagonal * .008, .004);
   const pickables = [];
   curves.forEach(curve => {
-    if (!curve.visible) return;
+    if (!canPickViewportObject(curve)) return;
     if (curve.solidMesh?.visible) pickables.push(curve.solidMesh);
     if (curve.wireMesh?.visible) pickables.push(curve.wireMesh);
     if (curve.line?.visible) pickables.push(curve.line);
@@ -2872,13 +2879,13 @@ function findSceneObjectAtEvent(event) {
   raycaster.params.Line.threshold = Math.max(modelDiagonal * .008, .004);
   const pickables = [];
   curves.forEach(curve => {
-    if (!curve.visible) return;
+    if (!canPickViewportObject(curve)) return;
     if (curve.solidMesh?.visible) pickables.push(curve.solidMesh);
     if (curve.wireMesh?.visible) pickables.push(curve.wireMesh);
     if (curve.line?.visible) pickables.push(curve.line);
   });
   proxies.forEach(proxy => {
-    if (!proxy.visible) return;
+    if (!canPickViewportObject(proxy)) return;
     if (proxy.solidMesh?.visible) pickables.push(proxy.solidMesh);
     if (proxy.wireMesh?.visible) pickables.push(proxy.wireMesh);
   });
@@ -3176,6 +3183,8 @@ function refreshProxyModifierUI(proxy = selectedProxy) {
   $('moveProxyModifierDownBtn').disabled = !editable || !modifier || index <= 0;
   $('editFfdPointsBtn').disabled = !editable || !modifier || modifier.enabled === false;
   $('editFfdPointsBtn').classList.toggle('active', mode === 'ffd' && !!modifier);
+  $('editFfdPointsBtn').textContent = mode === 'ffd' && !!modifier ? 'Finish Editing' : 'Edit Control Points';
+  $('editFfdPointsBtn').setAttribute('aria-pressed', String(mode === 'ffd' && !!modifier));
   $('resetFfdBtn').disabled = !editable || !modifier;
   $('removeProxyModifierBtn').disabled = !editable || !modifier;
 }
@@ -3997,10 +4006,10 @@ function updateHint() {
   else if (mode === 'insert') hintEl.textContent = `커브 위 클릭: Bezier Segment 정확히 분할 · ${navigation}`;
   else if (mode === 'edit') {
     const tool = selectedControl?.kind !== 'anchor' ? 'Bezier Handle Move' : pointTool === 'pointMove' ? 'Point + Handles Move' : pointTool === 'pointRotate' ? 'Point + Handles Rotate' : pointTool === 'pointScale' ? 'Point + Handles Scale' : pointTool === 'sectionMove' ? 'Section Offset' : pointTool === 'sectionRotate' ? 'Section Rotate' : 'Section Scale / Taper';
-    hintEl.textContent = `LMB 선택/영역 · Ctrl 추가/토글 · Alt 제외 · Point 직접 드래그 · XYZ Gizmo: ${tool} · ${navigation}`;
-  } else if (mode === 'ffd') hintEl.textContent = `LMB 선택/영역 · Ctrl 추가/토글 · Alt 제외 · 선택 Control 직접 드래그/기즈모 이동 · ${navigation}`;
-  else if (mode === 'transform') hintEl.textContent = `${selectedProxy ? 'Proxy Object' : 'Spline Root'} ${objectTransformMode === 'translate' ? 'Move · 긴 축선 드래그 · Shift+G 토글' : objectTransformMode === 'rotate' ? 'Rotate' : 'Scale'} · World / View / Local · ${navigation}`;
-  else hintEl.textContent = `LMB Select · W/E/R Move/Rotate/Scale · Z Frame Selected · ${navigation}`;
+    hintEl.textContent = `LMB 선택/영역 · Ctrl 추가/토글 · Alt 제외 · Point 직접 드래그 · RMB Object Menu · XYZ Gizmo: ${tool} · ${navigation}`;
+  } else if (mode === 'ffd') hintEl.textContent = `LMB 선택/영역 · Ctrl 추가/토글 · Alt 제외 · 선택 Control 직접 드래그/기즈모 이동 · RMB Proxy Menu · ${navigation}`;
+  else if (mode === 'transform') hintEl.textContent = `${selectedProxy ? 'Proxy Object' : 'Spline Root'} ${objectTransformMode === 'translate' ? 'Move · 긴 축선 드래그 · Shift+G 토글' : objectTransformMode === 'rotate' ? 'Rotate' : 'Scale'} · RMB Object Menu · World / View / Local · ${navigation}`;
+  else hintEl.textContent = `LMB Select · RMB Object Menu · W/E/R Move/Rotate/Scale · Z Frame Selected · ${navigation}`;
 }
 
 function setObjectTransformMode(next) { const object = activeSceneObject(); if (!activeObjectIsEditable()) { setStatus(object ? `${object.name}은 ${object.visible ? '잠겨' : '숨겨'} 있습니다.` : 'Curve 또는 Proxy Object를 먼저 선택하세요.'); return; } objectTransformMode = next; setMode('transform'); updateObjectTransformButtons(); syncGizmo(); updateHint(); }
@@ -4397,10 +4406,160 @@ renderer.domElement.addEventListener('pointercancel', event => {
   finishMaxViewportNavigation(event);
   pointerDownState = null;
 }, true);
+
+const viewportContextMenu = $('viewportContextMenu');
+let viewportContextTarget = null;
+
+function closeViewportContextMenu({ restoreFocus = false } = {}) {
+  if (viewportContextMenu.hidden) return;
+  viewportContextMenu.hidden = true;
+  viewportContextMenu.replaceChildren();
+  viewportContextTarget = null;
+  if (restoreFocus) renderer.domElement.focus?.({ preventScroll:true });
+}
+
+function appendContextMenuTitle(label) {
+  const title = document.createElement('div');
+  title.className = 'context-menu-title';
+  title.textContent = label;
+  viewportContextMenu.appendChild(title);
+}
+
+function appendContextMenuSection(label) {
+  const section = document.createElement('div');
+  section.className = 'context-menu-section';
+  section.textContent = label;
+  viewportContextMenu.appendChild(section);
+}
+
+function appendContextMenuItem(label, command, { checked = null, disabled = false, danger = false, shortcut = '' } = {}) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = `context-menu-item${danger ? ' danger' : ''}`;
+  button.role = 'menuitem';
+  button.disabled = disabled;
+  button.dataset.contextCommand = command;
+  const mark = document.createElement('span'); mark.className = 'context-menu-item-mark'; mark.textContent = checked === true ? '✓' : '';
+  const text = document.createElement('span'); text.textContent = label;
+  const shortcutText = document.createElement('span'); shortcutText.className = 'context-menu-shortcut'; shortcutText.textContent = shortcut;
+  button.append(mark, text, shortcutText);
+  button.addEventListener('click', () => {
+    closeViewportContextMenu();
+    if (command === 'proxy-add-ffd-2') addFfdModifierToSelected(2);
+    else if (command === 'proxy-add-ffd-4') addFfdModifierToSelected(4);
+    else if (command === 'proxy-add-ffd-8') addFfdModifierToSelected(8);
+    else if (command === 'proxy-edit-ffd') toggleFfdControlEditing();
+    else if (command === 'proxy-reset-ffd') $('resetFfdBtn').click();
+    else if (command === 'proxy-remove-ffd') $('removeProxyModifierBtn').click();
+    else if (command === 'proxy-smooth') $('proxySmooth').click();
+    else if (command === 'proxy-show-edges') $('proxyShowEdges').click();
+    else if (command === 'curve-average-point') averageSelectedGeometry({ pointPosition:true });
+    else if (command === 'curve-average-handles') averageSelectedGeometry({ handles:true });
+    else if (command === 'curve-average-both') averageSelectedGeometry({ pointPosition:true, handles:true });
+    else if (command === 'curve-edit-points') setMode(mode === 'edit' ? 'orbit' : 'edit');
+    else if (command === 'curve-object-move') setObjectTransformMode('translate');
+    else if (command === 'curve-object-rotate') setObjectTransformMode('rotate');
+    else if (command === 'curve-object-scale') setObjectTransformMode('scale');
+    else if (command === 'curve-frame') frameSelected();
+    else if (command === 'curve-reset-transform') $('resetTransformBtn').click();
+    else if (command === 'curve-clone') $('duplicateCurveBtn').click();
+    else if (command === 'curve-delete') deleteSelectedCurve();
+    else if (command === 'curve-live-mesh') $('enableLiveMesh').click();
+  });
+  viewportContextMenu.appendChild(button);
+  return button;
+}
+
+function renderProxyContextMenu(proxy) {
+  const editable = proxyIsEditable(proxy);
+  const modifier = activeProxyModifier(proxy);
+  const editing = mode === 'ffd' && selectedProxy === proxy && !!modifier;
+  appendContextMenuTitle(`${proxy.name} · ${proxyTypeLabel(proxy.type)}`);
+  appendContextMenuSection('Add FFD Modifier');
+  appendContextMenuItem('FFD 2×2×2', 'proxy-add-ffd-2', { disabled:!editable });
+  appendContextMenuItem('FFD 4×4×4', 'proxy-add-ffd-4', { disabled:!editable });
+  appendContextMenuItem('FFD 8×8×8', 'proxy-add-ffd-8', { disabled:!editable });
+  appendContextMenuSection('Active Modifier');
+  appendContextMenuItem(editing ? 'Exit Control Point Editing' : 'Edit Control Points', 'proxy-edit-ffd', { checked:editing, disabled:!editable || !modifier || modifier.enabled === false });
+  appendContextMenuItem('Reset FFD', 'proxy-reset-ffd', { disabled:!editable || !modifier });
+  appendContextMenuItem('Remove Modifier', 'proxy-remove-ffd', { disabled:!editable || !modifier, danger:true });
+  appendContextMenuSection('Proxy Display');
+  appendContextMenuItem('Smooth Shading', 'proxy-smooth', { checked:proxy.settings.smooth !== false, disabled:!editable });
+  appendContextMenuItem('Show Edges', 'proxy-show-edges', { checked:proxy.settings.showEdges !== false, disabled:!editable });
+}
+
+function renderCurveContextMenu(curve) {
+  const editable = curveIsEditable(curve);
+  const hasPoint = editable && selectedControl?.curve === curve && Number.isInteger(selectedControl.pointIndex);
+  appendContextMenuTitle(`${curve.name} · ${curve.points.length} Points`);
+  appendContextMenuSection('Average with Connected Points');
+  appendContextMenuItem('Apply Point', 'curve-average-point', { disabled:!hasPoint });
+  appendContextMenuItem('Apply Handles', 'curve-average-handles', { disabled:!hasPoint });
+  appendContextMenuItem('Apply Point + Handles', 'curve-average-both', { disabled:!hasPoint });
+  appendContextMenuSection('Curve Object');
+  appendContextMenuItem(mode === 'edit' ? 'Exit Point Editing' : 'Edit Points', 'curve-edit-points', { checked:mode === 'edit', disabled:!editable });
+  appendContextMenuItem('Move Object', 'curve-object-move', { checked:mode === 'transform' && objectTransformMode === 'translate', disabled:!editable, shortcut:'W' });
+  appendContextMenuItem('Rotate Object', 'curve-object-rotate', { checked:mode === 'transform' && objectTransformMode === 'rotate', disabled:!editable, shortcut:'E' });
+  appendContextMenuItem('Scale Object', 'curve-object-scale', { checked:mode === 'transform' && objectTransformMode === 'scale', disabled:!editable, shortcut:'R' });
+  appendContextMenuItem('Frame Selected', 'curve-frame', { shortcut:'Z' });
+  appendContextMenuItem('Reset Transform', 'curve-reset-transform', { disabled:!editable });
+  appendContextMenuItem('Clone Curve', 'curve-clone', { disabled:!editable });
+  appendContextMenuItem('Delete Curve', 'curve-delete', { disabled:!editable, danger:true, shortcut:'Del' });
+  appendContextMenuSection('Live Curve → Mesh');
+  appendContextMenuItem('Enable in Viewport', 'curve-live-mesh', { checked:curve.meshEnabled, disabled:!editable });
+}
+
+function openViewportContextMenu(event) {
+  closeViewportContextMenu();
+  if (mode === 'draw') { setStatus('Line 생성 중에는 Finish 또는 Cancel 후 Object 메뉴를 사용할 수 있습니다.'); return false; }
+  const hit = findSceneObjectAtEvent(event);
+  if (!hit?.object) return false;
+  const changed = hit.kind === 'proxy' ? hit.object !== selectedProxy : hit.object !== selectedCurve;
+  if (hit.kind === 'proxy') selectProxy(hit.object);
+  else selectCurve(hit.object, { enterEdit:!changed && mode === 'edit' });
+  if (changed && ['edit','insert','ffd'].includes(mode)) setMode('orbit');
+  viewportContextTarget = { kind:hit.kind, object:hit.object };
+  viewportContextMenu.replaceChildren();
+  if (hit.kind === 'proxy') renderProxyContextMenu(hit.object);
+  else renderCurveContextMenu(hit.object);
+  viewportContextMenu.hidden = false;
+  const bounds = viewportContextMenu.getBoundingClientRect();
+  const position = contextMenuPosition({
+    clientX:event.clientX,
+    clientY:event.clientY,
+    menuWidth:bounds.width,
+    menuHeight:bounds.height,
+    viewportWidth:window.innerWidth,
+    viewportHeight:window.innerHeight
+  });
+  viewportContextMenu.style.left = `${position.left}px`;
+  viewportContextMenu.style.top = `${position.top}px`;
+  viewportContextMenu.querySelector('.context-menu-item:not(:disabled)')?.focus({ preventScroll:true });
+  setStatus(`${hit.object.name} · 우클릭 메뉴`);
+  return true;
+}
+
 renderer.domElement.addEventListener('contextmenu', event => {
-  event.preventDefault();
+  event.preventDefault(); event.stopPropagation();
   if (selectionDrag) finishSelectionRegion(null, true);
+  if (directViewportDrag) finishDirectViewportMove(null, true);
+  openViewportContextMenu(event);
 });
+viewportContextMenu.addEventListener('keydown', event => {
+  const items = [...viewportContextMenu.querySelectorAll('.context-menu-item:not(:disabled)')];
+  const current = items.indexOf(document.activeElement);
+  if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); closeViewportContextMenu({ restoreFocus:true }); return; }
+  if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+    event.preventDefault();
+    const delta = event.key === 'ArrowDown' ? 1 : -1;
+    items[(current + delta + items.length) % items.length]?.focus();
+  }
+});
+document.addEventListener('pointerdown', event => {
+  if (!viewportContextMenu.hidden && !viewportContextMenu.contains(event.target)) closeViewportContextMenu();
+}, true);
+window.addEventListener('blur', () => closeViewportContextMenu());
+window.addEventListener('resize', () => closeViewportContextMenu());
 
 $('modelFile').addEventListener('change', e => { const f = e.target.files?.[0]; if (f) loadModel(f); });
 $('saveProjectBtn').addEventListener('click', saveProject);
@@ -4608,16 +4767,22 @@ function moveActiveProxyModifier(direction) {
 }
 $('moveProxyModifierUpBtn').addEventListener('click', () => moveActiveProxyModifier(1));
 $('moveProxyModifierDownBtn').addEventListener('click', () => moveActiveProxyModifier(-1));
-$('editFfdPointsBtn').addEventListener('click', () => {
+function toggleFfdControlEditing() {
   const modifier = activeProxyModifier();
   if (!proxyIsEditable() || !modifier || modifier.enabled === false) return;
+  if (mode === 'ffd') {
+    setMode('orbit');
+    setStatus(`${selectedProxy.name} · ${modifier.name} Control Point 편집 종료 · Lattice 숨김`);
+    return;
+  }
   selectedFfdControlIndices = normalizeControlSelection(selectedFfdControlIndices, modifier.offsets.length);
   if (!selectedFfdControlIndices.size) selectedFfdControlIndices.add(0);
   if (!selectedFfdControlIndices.has(selectedFfdControlIndex)) selectedFfdControlIndex = orderedControlSelection(selectedFfdControlIndices, modifier.offsets.length).at(-1);
   syncProxyFfdSelectionMemory(selectedProxy);
   setMode('ffd'); rebuildProxyLatticeVisual(selectedProxy); syncGizmo();
   setStatus(`${selectedProxy.name} · ${modifier.name} Control Point 편집 · Point 선택 후 Move gizmo`);
-});
+}
+$('editFfdPointsBtn').addEventListener('click', toggleFfdControlEditing);
 $('resetFfdBtn').addEventListener('click', () => {
   const modifier = activeProxyModifier(); if (!proxyIsEditable() || !modifier) return;
   history.begin('FFD 초기화');
@@ -4980,17 +5145,58 @@ updateCommandAvailability();
 if (new URLSearchParams(location.search).has('selftest')) {
   Object.defineProperty(globalThis, '__CURVE_TOOL_RUNTIME_DIAGNOSTICS__', {
     configurable:true,
-    get:() => ({
-      mode,
-      axisGuidesEnabled,
-      axisGuidesVisible:axisGuideGroup.visible && axisGuideLines.some(line => line.visible),
-      transformHelperVisible:transformControls.getHelper().visible,
-      transformHelperEnabled:transformControls.enabled,
-      transformOperation:transformControls.mode,
-      selectedProxyName:selectedProxy?.name || null,
-      selectedProxyPosition:selectedProxy?.group.position.toArray() || null,
-      selectedFfdControlCount:ffdSelectionIndices().length
-    })
+    get:() => {
+      const rect = renderer.domElement.getBoundingClientRect();
+      const screenPoint = object => {
+        const projected = object.getWorldPosition(new THREE.Vector3()).project(camera);
+        return { x:rect.left + (projected.x + 1) * .5 * rect.width, y:rect.top + (1 - projected.y) * .5 * rect.height };
+      };
+      const ffdIndices = ffdSelectionIndices();
+      const modifier = activeProxyModifier();
+      const curvePath = curveObject(selectedCurve);
+      let curveMidpoint = null;
+      if (curvePath && selectedCurve) {
+        selectedCurve.group.updateMatrixWorld(true);
+        const midpoint = curvePath.getPoint(.5).applyMatrix4(selectedCurve.group.matrixWorld).project(camera);
+        curveMidpoint = { x:rect.left + (midpoint.x + 1) * .5 * rect.width, y:rect.top + (1 - midpoint.y) * .5 * rect.height };
+      }
+      return {
+        mode,
+        axisGuidesEnabled,
+        axisGuidesVisible:axisGuideGroup.visible && axisGuideLines.some(line => line.visible),
+        transformHelperVisible:transformControls.getHelper().visible,
+        transformHelperEnabled:transformControls.enabled,
+        transformOperation:transformControls.mode,
+        selectedProxyName:selectedProxy?.name || null,
+        selectedProxyPosition:selectedProxy?.group.position.toArray() || null,
+        selectedProxyLocked:selectedProxy?.locked ?? null,
+        selectedProxyScreenPosition:selectedProxy ? screenPoint(selectedProxy.group) : null,
+        selectedProxySmooth:selectedProxy?.settings.smooth ?? null,
+        selectedProxyShowEdges:selectedProxy?.settings.showEdges ?? null,
+        selectedProxyWireVisible:selectedProxy?.wireMesh?.visible ?? null,
+        selectedFfdControlCount:ffdIndices.length,
+        selectedFfdControlIndices:ffdIndices,
+        selectedFfdControlColors:ffdIndices.map(index => selectedProxy?.latticeControlObjects[index]?.material?.color?.getHex() ?? null),
+        selectedFfdControlScales:ffdIndices.map(index => selectedProxy?.latticeControlObjects[index]?.scale?.x ?? null),
+        selectedFfdControlOffsets:ffdIndices.map(index => modifier?.offsets[index]?.slice() ?? null),
+        ffdControlScreenPositions:selectedProxy?.latticeControlObjects.map(screenPoint) || [],
+        ffdLatticeVisible:selectedProxy?.latticeGroup?.visible ?? false,
+        editFfdButtonLabel:$('editFfdPointsBtn').textContent,
+        editFfdButtonActive:$('editFfdPointsBtn').classList.contains('active'),
+        selectedCurveName:selectedCurve?.name || null,
+        selectedCurveLocked:selectedCurve?.locked ?? null,
+        selectedCurveMeshEnabled:selectedCurve?.meshEnabled ?? null,
+        selectedCurveMidpointScreenPosition:curveMidpoint,
+        contextMenuVisible:!viewportContextMenu.hidden,
+        contextMenuKind:viewportContextTarget?.kind || null,
+        contextMenuCommands:[...viewportContextMenu.querySelectorAll('[data-context-command]')].map(button => ({
+          command:button.dataset.contextCommand,
+          label:button.textContent.trim(),
+          disabled:button.disabled,
+          checked:button.querySelector('.context-menu-item-mark')?.textContent === '✓'
+        }))
+      };
+    }
   });
 }
 </script>

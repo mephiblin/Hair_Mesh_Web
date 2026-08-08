@@ -73,6 +73,7 @@ open/recovery/undo/redo
 - 선택 ID/index가 없는 객체를 가리킬 때 안전한 fallback이 있는가?
 - `proxies`가 없는 version 1 문서는 빈 Proxy 목록으로 열리고, 새 문서는 primitive settings만 저장한 뒤 topology를 재생성하는가?
 - `modifiers`/`lastFfdControlIndices`가 없는 기존 Proxy는 빈 stack/단일 legacy control로 열리고, 새 Proxy는 FFD resolution/enabled/offsets/order와 활성 modifier/다중 control을 왕복한 뒤 최종 topology를 재평가하는가?
+- FFD 선택 Set을 복원한 뒤 `syncFfdLatticePositions()`가 실행되어 Undo/Redo/Project Open 직후에도 선택 전체의 노란 표시와 active scale이 즉시 일치하는가?
 - `selectedObjectKind`가 `proxy`면 Curve/Point 선택을 비우고 Proxy Modify 문맥과 gizmo를 복원하는가?
 - 이전 문서의 `selectedCurveId`만 있어도 단일 `selectedCurveIds`로 복원되고, 새 문서는 다중 Curve 선택과 활성 Curve를 함께 복원하는가?
 - Recovery 실패가 앱 부팅을 막지 않는가?

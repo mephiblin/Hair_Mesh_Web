@@ -61,6 +61,7 @@ Reference 파일 자체와 Mesh별 표시/재질/수동 텍스처는 Import 세�
 - Line은 Point가 2개 이상일 때만 완료할 수 있습니다.
 - 숨김 또는 잠긴 Curve는 편집할 수 없습니다.
 - 숨김 또는 잠긴 Proxy는 파라미터·이름·Transform·복제/삭제로 편집할 수 없습니다.
+- 잠긴 Curve/Proxy는 `canPickViewportObject()`에서 Viewport raycast 후보에서도 제외합니다. LMB/RMB/direct drag/Edit·FFD click-through 모두 같은 필터를 사용하고, Scene Explorer 행은 잠금 해제를 위해 선택 가능하게 둡니다.
 - 활성 root object는 Curve 또는 Proxy 중 하나이며 `syncModifyContext()`가 해당 Modify UI만 표시합니다.
 - Proxy FFD는 Base부터 Top까지 순서대로 평가하며 control offset을 원본 vertex에 bake하지 않습니다. 최종 bake는 Export 경계에서만 수행합니다.
 - Viewport는 3ds Max식 `MMB Pan`, `Alt+MMB Orbit`, `Ctrl+Alt+MMB Zoom`을 유지합니다. Control 영역 선택은 좌→우 Window(완전 포함), 우→좌 Crossing(교차 포함)이며 Ctrl/⌘은 추가, Alt는 제외입니다.
@@ -83,7 +84,10 @@ Reference 파일 자체와 Mesh별 표시/재질/수동 텍스처는 Import 세�
 - `axisGuideGroup`과 Three.js `TransformControls` helper는 별도 표시 계층입니다. `axisGuidesEnabled`를 `transformControls.enabled` 또는 helper visibility의 조건으로 재사용하지 않습니다.
 - FFD/Edit의 빈 공간 pointerdown은 우선 잠정 Region 입력을 시작하지만, 이동 임계값을 넘지 않은 click은 `findSceneObjectAtEvent()`로 전달합니다. 그렇지 않으면 Control 편집 중 다른 Proxy/Curve를 Viewport에서 선택할 수 없습니다.
 - `W`의 Proxy 표면 drag와 Control 직접 drag는 `beginDirectViewportMove()`의 같은 History 경계를 사용합니다. Object 취소는 `targetStart`, FFD/Point 취소는 각 시작 snapshot으로 복원합니다.
-- Pointer routing을 바꾸면 `tests/viewport-regression.mjs`의 Axis OFF, Proxy drag/Undo, FFD→Proxy click-through, 1024px 검사를 먼저 확장하고 `npm run test:viewport`를 실행합니다.
+- FFD 선택 표시는 `selectedFfdControlIndices` 하나를 source of truth로 사용합니다. 단일/Control Ctrl·Alt/Window·Crossing/restore 모든 경로는 `syncFfdLatticePositions()`를 지나 선택 전체를 노란색으로 만들고 active만 더 크게 표시해야 합니다.
+- `Edit Control Points`는 진입 명령이 아니라 `ffd ↔ orbit` 토글입니다. 종료 시 `setMode('orbit')`가 lattice, TransformControls, Axis guide를 같은 frame에 숨겨야 하며 modifier/선택 데이터는 삭제하지 않습니다.
+- RMB 메뉴는 `findSceneObjectAtEvent()`로 대상을 정하고 기존 함수 또는 DOM command에만 위임합니다. 별도 mutation을 넣으면 panel과 History/dirty/recovery/rebuild가 갈라집니다. Line 생성 중 RMB는 draft를 건드리지 않습니다.
+- Pointer routing을 바꾸면 `tests/viewport-regression.mjs`의 Axis OFF, Proxy drag/Undo, FFD 선택 색/다중 drag/Edit 토글/Proxy click-through, Proxy·Curve RMB, 1024px 검사를 먼저 확장하고 `npm run test:viewport`를 실행합니다.
 
 ## 5. 기능 구현 패턴
 
@@ -186,8 +190,8 @@ globalThis.__CURVE_TOOL_SELF_TEST__
    - Scene Explorer Curve 행을 Ctrl/⌘ 클릭해 다중 선택/활성 전환/전체 해제
 3. Ribbon과 Tube 생성, Segment/Sides 경계값 확인
 4. Brush fixture Import 후 Brush Mesh 생성
-5. Proxy 4종 생성, 크기/Segments/Sides/Rings 변경, Curve↔Proxy Modify 전환과 W/E/R/Frame/Clone/Delete 확인. Axis Lines OFF에서 긴 선은 숨고 기본 XYZ gizmo는 유지되는지, `W` Proxy 표면 drag/Undo와 FFD 상태의 다른 Proxy 클릭 선택을 먼저 확인합니다. FFD 관련 변경이면 2/4/8 추가, Window/Crossing·Ctrl/Alt 다중 선택, 직접/기즈모 다중 Move, 한 단계 Undo/Redo, stack reorder/ON/OFF/reset/remove, Proxy Surface Line도 확인
-6. 숨김/잠금 Curve/Proxy가 수정되지 않는지 확인
+5. Proxy 4종 생성, 크기/Segments/Sides/Rings 변경, Curve↔Proxy Modify 전환과 W/E/R/Frame/Clone/Delete 확인. Axis Lines OFF에서 긴 선은 숨고 기본 XYZ gizmo는 유지되는지, `W` Proxy 표면 drag/Undo와 FFD 상태의 다른 Proxy 클릭 선택을 먼저 확인합니다. FFD 관련 변경이면 2/4/8 추가, Window/Crossing·Ctrl/Alt 다중 선택과 선택 전체 노란 표시, 직접/기즈모 다중 Move, Edit/Finish lattice 토글, 한 단계 Undo/Redo, stack reorder/ON/OFF/reset/remove, Proxy Surface Line과 Proxy/Curve RMB command parity도 확인
+6. 숨김/잠금 Curve/Proxy가 수정되지 않는지 확인. 잠긴 root는 Viewport LMB/RMB로 선택되지 않고 Scene Explorer에서는 선택·잠금 해제되는지 함께 확인
 7. `.hairmesh.json` 저장 후 다시 열어 Curve/Brush/Proxy/활성 Modify 문맥/Live Mesh 확인
    - 참조 이미지 정렬값과 파일명 힌트는 복원되고 JSON에 image payload가 없는지 확인
 8. 변경 후 새로고침하여 복구 확인

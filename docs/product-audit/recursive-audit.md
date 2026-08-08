@@ -15,21 +15,21 @@ Overall status: COMPLETE · maintenance audit synchronized on 2026-08-09
 
 - Repository / surface: `mephiblin/Hair_Mesh_Web`, `curve_mesh_hair_tool_v4.html`
 - Historical baseline: `b1b121a84e845d1afd215a63a7f03e9e6533b33a`, 2026-08-07
-- Current implementation revision reviewed: `51508d86cb60cee5276d105a0d851680b93893de`, 2026-08-09; documentation/regression-test changes are the immediate follow-up commit.
+- Current implementation basis: default branch `master`, repository state maintained and revalidated on 2026-08-09. Historical review anchor: `51508d86cb60cee5276d105a0d851680b93893de`.
 - Runtime / test entry points: `python3 launch_server.py`, `?selftest=1`, `npm run check`, `npm run test:viewport`
 - Existing documentation: `PROJECT_AUDIT.md`, `BLENDER_FEATURE_RESEARCH.md`, `MODULARIZATION.md`
 
 ## Current conclusion
 
-Hair Card MVP의 Bézier 편집과 Curve-to-Mesh 생성에 더해 버전형 프로젝트 저장/열기, 자동복구, Brush topology 영속성, 숨김·잠금·LIVE 상태, 메시 입력 예산이 검증됐다. 이후 ZBrush식 MatCap, Reference 독립 Wire, Directional/Environment 조명, Viewport 배경/FOV/Grid와 정사영 표준 뷰, 다중 Reference Mesh 표시·재질·수동 텍스처, 3방향 Reference Plane, Point/Curve/FFD 다중 선택, Proxy primitive와 영구 FFD stack, 3ds Max식 Viewport 조작까지 통합됐다. Reference binary 재연결, Proxy Object 다중 박스 선택, 다중 Curve 일괄 변환/삭제, Blender식 Grooming 확장은 잔여 백로그이며 현재 Hair Card MVP 완료 계약을 막지 않는다.
+Hair Card MVP의 Bézier 편집과 Curve-to-Mesh 생성에 더해 버전형 프로젝트 저장/열기, 자동복구, Brush topology 영속성, 숨김·잠금·LIVE 상태, 메시 입력 예산이 검증됐다. 이후 ZBrush식 MatCap, Reference 독립 Wire, Directional/Environment 조명, Viewport 배경/FOV/Grid와 정사영 표준 뷰, 다중 Reference Mesh 표시·재질·수동 텍스처, 3방향 Reference Plane, Point/Curve/FFD 다중 선택, Proxy primitive와 영구 FFD stack, 3ds Max식 Viewport 조작, FFD 선택 피드백과 Proxy/Curve 대상별 RMB 메뉴까지 통합됐다. Reference binary 재연결, Proxy Object 다중 박스 선택, 다중 Curve 일괄 변환/삭제, Blender식 Grooming 확장은 잔여 백로그이며 현재 Hair Card MVP 완료 계약을 막지 않는다.
 
 ## Current verification snapshot
 
 | Check | Current result |
 | --- | --- |
-| Node policy/state regression | `npm run check` · 26/26 tests |
+| Node policy/state regression | `npm run check` · 29/29 tests |
 | Browser core self-check | 24/24 |
-| Viewport regression | `npm run test:viewport` · Axis Lines/XYZ gizmo 분리, Proxy drag/Undo, FFD→Proxy pick, 1024px PASS |
+| Viewport regression | `npm run test:viewport` · Axis/gizmo 분리, Proxy drag/Undo, FFD 선택 표시·다중 drag·편집 토글/click-through, Proxy/Curve RMB, locked root LMB/RMB 제외, 1024px PASS |
 | Reference display acceptance | 공식 Three.js FBX Import → MatCap Silver, 다중 OBJ Mesh별 visibility/material/texture, Wire Overlay 확인 |
 | Selection acceptance | Point 3→2→1→0 Ctrl/⌘ 토글, Curve 2→1→0 행 토글, 일반 클릭 복귀 확인 |
 | Persistence acceptance | Viewport 환경과 다중 Curve/Point 선택을 Recovery 후 복원 |
@@ -45,8 +45,13 @@ Hair Card MVP의 Bézier 편집과 Curve-to-Mesh 생성에 더해 버전형 프�
 | M-001 | P1 | `Axis Lines OFF`가 긴 guide뿐 아니라 기본 Translate XYZ helper까지 숨겼다. | `axisGuidesEnabled`를 custom `axisGuideGroup` visibility/raycast에만 사용하고 TransformControls helper를 분리했다. | Node/self-test 정책 + `npm run test:viewport` runtime helper assertion |
 | M-002 | P1 | FFD/Edit의 잠정 Region handler가 click도 소비해 다른 Proxy의 Viewport 선택을 막았다. | 이동 임계값 미만은 `finishSelectionRegion()`에서 Scene picking으로 전달한다. | FFD `Sphere002 → Box001` click-through browser regression |
 | M-003 | P1 | Control 직접 drag는 있었지만 Proxy Object `W` 표면 drag 경로가 없었다. | Object/Control이 `beginDirectViewportMove()` History 경계를 공유하도록 확장하고 Esc/Undo 복원을 추가했다. | Proxy position 변화 + one-step Undo browser regression |
-| M-004 | P2 | 제품 감사·기준선 문서의 revision, 테스트 수, Axis 설명과 모듈 목록이 현재 코드보다 오래됐다. | 현재 revision/26개 Node 계약/24개 self-check/Viewport CI gate 및 신규 모듈로 문서를 동기화했다. | 문서 유지 규칙, symbol/DOM anchor 대조, 동일 커밋 문서 갱신 |
+| M-004 | P2 | 제품 감사·기준선 문서의 revision, 테스트 수, Axis 설명과 모듈 목록이 현재 코드보다 오래됐다. | 현재 master 기준/28개 Node 계약/24개 self-check/Viewport CI gate 및 신규 모듈로 문서를 동기화했다. | 문서 유지 규칙, symbol/DOM anchor 대조, 동일 커밋 문서 갱신 |
 | M-005 | P2 | GitHub Actions `checkout/setup-node@v4`가 내부 Node.js 20 지원 종료 경고를 냈다. | 공식 Playwright CI 예시와 현재 Actions runtime에 맞춰 두 job을 `@v6`로 갱신했다. | push 후 Validate annotation과 Core/Viewport job 결과 확인 |
+| M-006 | P1 | Ctrl/Region 다중 선택 FFD Control은 단일 선택과 다른 청록색이라 활성 집합을 즉시 식별하기 어려웠다. | `selectedFfdControlIndices` 전체를 노란색으로 표시하고 active Control만 추가 scale로 구분했다. | 실제 Ctrl-click + 다중 direct drag 전후 color/scale browser assertion |
+| M-007 | P1 | `Edit Control Points`가 진입만 지원해 lattice와 FFD gizmo를 명시적으로 숨길 방법이 없었다. | 같은 명령을 `Edit Control Points ↔ Finish Editing` 토글로 바꾸고 종료 시 Object/Camera mode로 이탈한다. | mode/lattice/button 양방향 browser assertion |
+| M-008 | P2 | Viewport RMB가 브라우저 메뉴만 막고 대상별 작업 메뉴를 제공하지 않았다. | Proxy FFD/Display와 Curve Average/Object/Live Mesh 메뉴를 추가하고 기존 panel command에 위임했다. | 실제 Proxy/Curve surface RMB와 mutation 결과 browser assertion |
+| M-009 | P1 | 다중 FFD drag Undo는 offset/선택 Set을 복원했지만 lattice가 선택 복원 전 생성되어 노란 표시가 사라졌다. | `restoreAppState()`가 mode 복원 뒤 active lattice 위치·색·scale을 다시 동기화한다. | 다중 drag one-step Undo/Redo와 restore 후 yellow color browser assertion |
+| M-010 | P1 | 편집 잠금이 mutation만 막고 root mesh는 Viewport object raycast 후보에 남아 Curve/Proxy를 다시 선택하거나 RMB 대상으로 삼을 수 있었다. | 공통 `canPickViewportObject()`로 locked root를 LMB/RMB/direct drag/Edit·FFD click-through 후보에서 제외하고 Scene Explorer 선택은 유지했다. | Curve/Proxy 각각 실제 LMB·RMB 차단 + Scene Explorer recovery browser assertion |
 
 이번 감사에서 새 P0 또는 미해결 P1은 발견되지 않았다. 다만 Viewport 포인터 동작은 DOM 없는 Node 테스트만으로 충분히 보호할 수 없으므로 Chromium 회귀 job을 필수 게이트로 유지한다.
 

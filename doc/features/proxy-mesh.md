@@ -53,6 +53,7 @@ FFD 변형은 Sederberg/Parry 방식의 tensor-product Bernstein weight를 사�
 | Lattice 표시·선택 | `rebuildProxyLatticeVisual()`, `syncFfdLatticePositions()`, `findFfdControl()`, `setFfdControlSelection()` | HTML composition root + `control-selection.js` |
 | 영역 선택 | `beginSelectionRegion()`, `screenControlRecords()`, `finishSelectionRegion()` | HTML composition root + `region-selection.js` |
 | Modifier UI | `#proxyModifierList`, `refreshProxyModifierUI()`, `addFfdModifierToSelected()`, `moveActiveProxyModifier()` | HTML composition root |
+| Viewport 우클릭 메뉴 | `openViewportContextMenu()`, `renderProxyContextMenu()`, `toggleFfdControlEditing()` | HTML composition root + `src/ui/context-menu.js` |
 | FFD Move/History | `syncGizmo()`, `beginGizmoDrag()`, `handleGizmoChange()`, `endGizmoDrag()` | HTML composition root |
 | 표면 배치 | `updateDrawTargetUI()`, `pointOnSurface()` | HTML composition root |
 | 저장·복원 | `captureAppState()`, `restoreAppState()` | HTML composition root |
@@ -88,7 +89,8 @@ proxy
 - 활성 root object는 Curve 또는 Proxy 중 하나다. `selectCurve()`와 `selectProxy()`는 반대 종류의 선택을 해제한다.
 - FFD row의 순서는 Base에 가까운 항목부터 Top 방향이다. `Move Up`은 나중에, `Move Down`은 먼저 평가되도록 이동한다.
 - row checkbox를 끄면 데이터는 보존하고 평가만 건너뛴다. 편집 중인 FFD를 끄면 안전하게 Object/Camera 모드로 나온다.
-- `Edit Control Points`는 선택 modifier의 lattice만 표시한다. LMB 클릭은 단일 선택, Ctrl/⌘ 클릭은 추가/해제 토글, Alt 클릭은 제외다.
+- `Edit Control Points`는 선택 modifier의 lattice만 표시하며 같은 버튼을 다시 누르면 `Finish Editing`으로 동작해 Object/Camera mode로 돌아가고 lattice·FFD gizmo를 숨긴다. FFD 값과 Control 선택 기억은 그대로 유지한다.
+- LMB 클릭은 단일 선택, Ctrl/⌘ 클릭은 추가/해제 토글, Alt 클릭은 제외다. `selectedFfdControlIndices`에 포함된 모든 Control은 선택 경로와 관계없이 노란색이며, active Control은 추가 scale로 구분한다. Ctrl/Alt/Region/direct drag/restore 중 어느 경로도 이 표시를 우회하지 않는다.
 - 빈 곳에서 LMB를 드래그하면 사각 영역을 만든다. 좌→우는 완전히 포함된 control만 고르는 Window, 우→좌는 닿는 control도 고르는 Crossing이다. Ctrl은 기존 선택에 추가하고 Alt는 제외한다.
 - 선택된 Control 하나를 직접 LMB 드래그하면 View Plane에서 전체 선택을 함께 이동한다. Move gizmo와 긴 Axis Line은 좌표계 축 제약 이동을 담당한다.
 - Proxy Object `W` mode에서는 solid/edge 표면 drag가 root transform을 View Plane에서 이동한다. `Axis Lines` OFF는 긴 제약선만 숨기며 기본 XYZ gizmo와 Proxy 표면 drag는 유지한다.
@@ -98,8 +100,10 @@ proxy
 - `Reset FFD`는 선택 modifier의 모든 offset만 0으로 만들고 다른 stack 항목은 유지한다.
 - Clone은 stack 값은 복제하지만 modifier ID는 새로 할당해 원본과 독립 편집한다.
 - hidden/locked Proxy는 primitive, modifier, name, transform, clone/delete 변경을 막는다.
+- locked Proxy는 solid/edge가 보여도 Viewport LMB·RMB·직접 drag·FFD click-through raycast 후보에서 제외한다. Scene Explorer 행은 잠금 해제를 위해 계속 선택 가능하다.
 - `Show Edges`와 FFD lattice line은 Hair/Reference wire 설정과 독립된 자체 line layer다.
 - 보이는 Proxy solid는 `Reference / Proxy Surface`의 raycast 후보이며 Reference와 겹치면 카메라에서 가장 가까운 hit를 사용한다.
+- Proxy 표면 RMB는 FFD 2/4/8 추가, Control 편집 진입/종료, active FFD Reset/Remove, Smooth Shading, Show Edges를 제공한다. 메뉴 명령은 패널과 같은 `addFfdModifierToSelected()`/`toggleFfdControlEditing()` 또는 같은 DOM command를 호출하며 별도 mutation 경로를 만들지 않는다.
 
 ## History·Project·Export
 
@@ -134,12 +138,16 @@ UI의 `min/max`는 안내이며 실제 안전 경계는 순수 normalize 함수�
 - 다중 선택을 직접/기즈모로 이동할 때 모든 선택 offset만 같은 delta를 받고 한 Undo로 원복되는가?
 - Export가 Base가 아닌 최종 stack topology를 bake하는가?
 - `Axis Lines` OFF에서 기본 XYZ gizmo가 보이고 입력 가능하며, Proxy 표면 drag와 FFD 상태의 다른 Proxy click 선택이 함께 유지되는가?
+- Ctrl/Region으로 선택된 모든 FFD Control이 노란색이고 drag 뒤에도 유지되며, active만 더 크게 보이는가?
+- `Edit Control Points → Finish Editing → Edit Control Points` 왕복에서 lattice와 gizmo가 숨김/복원되고 stack/선택이 보존되는가?
+- Proxy RMB 각 명령이 패널과 동일한 History·rebuild·UI 동기화를 사용하며 잠긴 Proxy에는 메뉴 자체가 열리지 않는가?
+- 잠긴 Proxy 표면이 LMB/RMB/direct drag로 선택되지 않고 뒤의 편집 가능한 root는 선택되며, Scene Explorer 잠금 해제 경로는 남는가?
 
 ## 검증 기준
 
 - Node: 4종 primitive clamp/topology/winding, FFD resolution/identity/Bernstein 변형/stack order/disabled, project modifier round-trip.
 - Browser: Proxy Object 표면 직접 Move drag와 한 단계 Undo, Axis Lines OFF의 기본 XYZ gizmo 유지, FFD 상태에서 다른 Proxy viewport 선택, FFD 2/4/8 추가, Window/Crossing과 Ctrl/Alt 선택, 다중 직접/gizmo drag, 한 단계 Undo/Redo, ON/OFF 모드 이탈, reorder/reset/remove, Delete 안전장치, Clone 독립 ID, Save/Open/Recovery.
-- Automated browser gate: `tests/viewport-regression.mjs` / `npm run test:viewport`를 pointer·gizmo 변경마다 실행한다.
+- Automated browser gate: `tests/viewport-regression.mjs` / `npm run test:viewport`를 pointer·gizmo·context-menu 변경마다 실행한다. 실제 Ctrl-click 다중 선택, 두 Control direct drag, 노란 표시 유지, 편집 토글, Proxy RMB의 Add/Reset/Remove/Smooth/Edges 명령을 포함한다.
 - Surface: Reference 없이 Proxy만 있는 장면에서 Surface option 활성화, 2 Point Line 생성 완료.
 - Export: FFD로 이동한 vertex가 OBJ/FBX 최종 geometry에 포함되고 여러 Proxy object가 분리되는지 확인.
 - Visual: 1600×900과 1024×768에서 Primitive/Modifier rollout, 2×2×2와 8×8×8 lattice, Scene Explorer와 viewport clipping 확인.

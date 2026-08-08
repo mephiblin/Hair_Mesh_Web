@@ -14,6 +14,8 @@
 | Proxy 목업·누락 표면 지원 부족 | 4종 primitive, 비파괴 parameter, FFD 2/4/8 stack, Surface 배치와 최종 topology Export 구현 |
 | Viewport DCC 조작 부족 | 3ds Max식 MMB/Alt+MMB/Ctrl+Alt+MMB, Control Region·다중 Move, Proxy 표면 직접 Move 구현 |
 | Surface + Wire 깜빡임/Axis Lines OFF 간섭 | Surface depth bias 적용. Axis Lines는 긴 guide/raycast만 끄고 기본 XYZ gizmo는 유지하도록 분리했으며 자동 Viewport 회귀 검사 추가 |
+| FFD 다중 선택 피드백·편집 종료·RMB 부재 | 선택 전체 노란 표시와 active scale, Edit/Finish lattice 토글, Proxy/Curve 대상별 Viewport 메뉴 및 자동 회귀 검사 구현 |
+| 잠긴 객체의 Viewport 재선택 | Curve/Proxy 공통 `canPickViewportObject()` 필터로 LMB·RMB·직접 drag 대상에서 제외하고 Scene Explorer 잠금 해제 경로 유지 |
 
 아래 1절 이후의 판정과 수치는 2026-08-07 당시 기준선 기록으로 유지합니다.
 

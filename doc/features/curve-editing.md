@@ -18,6 +18,7 @@ Line 생성, Curve/Point/Handle 선택, Bézier 계산, Point topology 변경, �
 | Point 제거 | `#deletePointBtn`, `finishPointTopologyChange()` | line minimum policy | selection + points |
 | Knot/Handle | `setSelectedKnotType()`, `resetSelectedTangents()` | `geometry/bezier-handles.js` | tangent/type/mode fields |
 | Average | `averageSelectedGeometry()`, `#averageAmount` | Point selection module | selected point set |
+| Viewport RMB | `renderCurveContextMenu()`, `openViewportContextMenu()` | `ui/context-menu.js` 위치 clamp | active Curve/Point/Live state |
 | Root Transform | `setObjectTransformMode()`, `handleGizmoChange()` | — | `curve.group` transform |
 | Point/단면 Transform | `setPointTool()`, `applyPointUnitTransform()`, `handleGizmoChange()` | Handle constraint module | point position/offset/rotation/scale |
 | 숫자 단면 | `updatePointPanel()`, `#applyPointValuesBtn`, `#makeTipBtn`, `#resetSectionBtn` | `ui/numeric-scrubber.js` | point section fields |
@@ -67,6 +68,8 @@ point/handle transform
 - 일반 Scene Explorer Curve 행 클릭은 해당 Curve 하나만 선택한다.
 - Curve 행 `Ctrl/⌘` 클릭은 `selectedCurveIds` membership을 토글한다. 새로 추가한 Curve가 `selectedCurve` 활성 대상이며, 활성 Curve를 해제하면 남은 선택 중 마지막 Curve가 활성화된다.
 - 여러 Curve가 선택되어도 Modifier/Gizmo 명령은 활성 `selectedCurve` 하나만 대상으로 한다. 다중 Curve 삭제/변환은 이 계약의 범위가 아니다.
+- Curve line/Live Mesh RMB는 포인터 아래 Curve를 활성화하고 Average, Curve Object, Live Mesh 명령을 제공한다. 각 메뉴 항목은 기존 panel/shortcut command를 호출하며 별도 편집 구현을 갖지 않는다.
+- 잠긴 Curve는 Viewport의 line/Live Mesh/control pick과 RMB 대상에서 제외한다. Scene Explorer 행은 계속 선택할 수 있어 잠금 상태를 확인하고 해제할 수 있다.
 
 ## 변경 체크리스트
 
@@ -78,9 +81,10 @@ point/handle transform
 - Handle 이동 후 aligned/automatic 의존 Handle이 갱신되는가?
 - Live Mesh가 켜져 있으면 단 한 번의 의미 있는 rebuild가 일어나는가?
 - Drag 또는 연속 input이 한 번의 Undo로 복원되는가?
+- RMB Average/Object/Live Mesh 명령이 panel과 동일한 editability, History, Live 상태 전이를 사용하는가?
 
 ## 검증
 
 - Node: line minimum, Point/Curve selection normalize/toggle/active fallback.
 - Self-test: Bézier handle finite/constraint 관련 검사.
-- Browser: create/cancel/finish, Ctrl/⌘ Point 토글과 0개 해제/재선택, Scene Curve 행 다중 선택/활성 전환, split/delete, multi-select average, handle mode, root/point/section transform, Undo/Redo.
+- Browser: create/cancel/finish, Ctrl/⌘ Point 토글과 0개 해제/재선택, Scene Curve 행 다중 선택/활성 전환, split/delete, multi-select average, handle mode, root/point/section transform, Curve RMB Average/Object/Live toggle, Undo/Redo.

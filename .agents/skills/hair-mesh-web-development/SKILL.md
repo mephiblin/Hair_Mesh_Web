@@ -64,7 +64,11 @@ For runtime/UI changes, also:
 3. Open the URL with `?selftest=1` and inspect `globalThis.__CURVE_TOOL_SELF_TEST__` when relevant.
 4. Exercise the routed manual acceptance scenarios in `doc/CODEX_INDEX.md` and the feature document.
 
-For viewport pointer, gizmo, mode, or Proxy interaction changes, run `npm run test:viewport`. Preserve these independent contracts: `Axis Lines` controls only the long custom guide/raycast layer while the standard XYZ TransformControls helper stays visible and interactive; Proxy `W` surface drag remains available; and click-only Region input in FFD/Edit falls through to Scene object picking.
+For viewport pointer, gizmo, mode, context-menu, or Proxy interaction changes, run `npm run test:viewport`. Preserve these independent contracts: `Axis Lines` controls only the long custom guide/raycast layer while the standard XYZ TransformControls helper stays visible and interactive; Proxy `W` surface drag remains available; click-only Region input in FFD/Edit falls through to Scene object picking; all selected FFD controls stay yellow through Ctrl/Alt/Region and drag; and `Edit Control Points` toggles both mode and lattice visibility in both directions.
+
+Viewport RMB commands must resolve the object under the pointer, respect hidden/locked editability, and delegate to the same owning function or DOM command as the panel. Never create a context-menu-only mutation path; this prevents mismatched History, dirty/recovery, geometry rebuild, and UI synchronization.
+
+Edit-locked Curve and Proxy roots must be filtered by `canPickViewportObject()` before every Viewport raycast list is built. This applies to LMB selection, RMB menus, Proxy direct drag, and Edit/FFD click-through. Do not disable Scene Explorer selection because it is the recovery path for inspecting and unlocking the object.
 
 For Proxy/FFD changes, acceptance must include Window/Crossing plus Ctrl/Alt control selection, a real multi-control direct or gizmo drag, one-step Undo/Redo, stack ON/OFF or reorder, project round-trip, Proxy-only Surface Line placement, and final baked Export topology. For viewport-input changes, also verify MMB Pan, Alt+MMB Orbit, Ctrl+Alt+MMB Zoom, wheel zoom, and that object/control picking still works.
 

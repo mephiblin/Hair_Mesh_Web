@@ -59,12 +59,13 @@ import {
   normalizeReferenceWireMode,
   referenceWireUsesSurfaceDepthBias
 } from '../src/viewport/reference-wireframe.js';
-import { canInteractWithAxisGuides, shouldShowTransformHelper } from '../src/viewport/interaction-policy.js';
+import { canInteractWithAxisGuides, canPickViewportObject, shouldShowTransformHelper } from '../src/viewport/interaction-policy.js';
 import {
   DEFAULT_REFERENCE_IMAGE_SETTINGS,
   normalizeReferenceImageSettings,
   referenceImagePlaneLayout
 } from '../src/viewport/reference-images.js';
+import { contextMenuPosition } from '../src/ui/context-menu.js';
 
 const tests = [];
 function test(name, run) { tests.push({ name, run }); }
@@ -74,6 +75,28 @@ test('line creation requires two points', () => {
   assert.equal(canFinishLine(2), true);
   assert.equal(lineCreationExitAction(1, 'edit'), 'cancel');
   assert.equal(lineCreationExitAction(2, 'edit'), 'finish-edit');
+});
+
+test('viewport context menu keeps its bounds inside the window', () => {
+  assert.deepEqual(contextMenuPosition({
+    clientX:980,
+    clientY:740,
+    menuWidth:240,
+    menuHeight:320,
+    viewportWidth:1024,
+    viewportHeight:768
+  }), { left:776, top:440 });
+});
+
+test('viewport context menu honors a safe margin at the top-left', () => {
+  assert.deepEqual(contextMenuPosition({
+    clientX:-20,
+    clientY:2,
+    menuWidth:240,
+    menuHeight:320,
+    viewportWidth:1024,
+    viewportHeight:768
+  }), { left:8, top:8 });
 });
 
 test('point selection normalizes invalid and duplicate indices', () => {
@@ -212,6 +235,13 @@ test('curve policy rejects hidden/locked edits and dishonest live state', () => 
   assert.equal(canEditCurve({ visible: true, locked: true }), false);
   assert.equal(hasReadyMesh({ enabled: true, status: 'ready', hasTopology: true }), true);
   assert.equal(hasReadyMesh({ enabled: true, status: 'error', hasTopology: false }), false);
+});
+
+test('viewport object picking excludes hidden and edit-locked roots', () => {
+  assert.equal(canPickViewportObject({ visible:true, locked:false }), true);
+  assert.equal(canPickViewportObject({ visible:false, locked:false }), false);
+  assert.equal(canPickViewportObject({ visible:true, locked:true }), false);
+  assert.equal(canPickViewportObject(null), false);
 });
 
 test('history groups a mutation and restores both directions', () => {

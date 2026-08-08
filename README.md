@@ -68,7 +68,7 @@ HTML 파일을 직접 더블클릭하는 방식은 ES Module/CORS 제한 때문�
 10. `Display → Viewport`에서 배경색, Perspective Camera FOV, Grid와 조명을 조정합니다.
 11. `Save Project`로 편집본을 보존하거나 `Export` 탭에서 OBJ/FBX를 출력합니다.
 
-프록시가 필요하면 `Create → Proxy Mesh`에서 Box, Sphere, Quad Sphere 또는 Cylinder를 만듭니다. 생성 위치는 현재 카메라가 바라보는 Orbit 중심입니다. Scene Explorer의 `Proxy Objects`에서 선택하면 Modify가 Proxy 문맥으로 바뀝니다. `Primitive Parameters`에서는 크기·Segments/Sides/Rings·Smooth·Edges를 조정하고, `Modifier Stack`에서는 FFD 2×2×2 / 4×4×4 / 8×8×8을 여러 개 쌓습니다. `Edit Control Points`를 누른 뒤 좌클릭 또는 사각 영역 드래그로 lattice Point를 선택합니다. Ctrl은 추가/클릭 토글, Alt는 제외이며 선택 Point를 직접 드래그하거나 선택 중심의 Move gizmo로 함께 변형합니다. 각 FFD의 ON/OFF, 순서, Reset, Remove와 Control 선택은 Proxy와 함께 저장되고 한 번의 drag는 한 Undo 단계가 됩니다.
+프록시가 필요하면 `Create → Proxy Mesh`에서 Box, Sphere, Quad Sphere 또는 Cylinder를 만듭니다. 생성 위치는 현재 카메라가 바라보는 Orbit 중심입니다. Scene Explorer의 `Proxy Objects`에서 선택하면 Modify가 Proxy 문맥으로 바뀝니다. `Primitive Parameters`에서는 크기·Segments/Sides/Rings·Smooth·Edges를 조정하고, `Modifier Stack`에서는 FFD 2×2×2 / 4×4×4 / 8×8×8을 여러 개 쌓습니다. `Edit Control Points`를 누른 뒤 좌클릭 또는 사각 영역 드래그로 lattice Point를 선택합니다. Ctrl은 추가/클릭 토글, Alt는 제외이며 선택된 모든 Point가 노란색으로 강조됩니다. 선택 Point를 직접 드래그하거나 선택 중심의 Move gizmo로 함께 변형합니다. `Finish Editing`을 누르면 FFD 데이터는 유지한 채 lattice와 기즈모를 숨깁니다. 각 FFD의 ON/OFF, 순서, Reset, Remove와 Control 선택은 Proxy와 함께 저장되고 한 번의 drag는 한 Undo 단계가 됩니다.
 
 Proxy를 Reference 대용 또는 누락 부위 보충 표면으로 쓰려면 `Create → Line Creation → 포인트 배치`를 `Reference / Proxy Surface`로 바꿉니다. 보이는 Reference와 Proxy 중 카메라에서 가장 가까운 표면에 Point가 찍힙니다. FFD 결과는 Viewport·Surface 배치·OBJ/FBX Export에 반영되며 Export에서는 최종 geometry로 bake됩니다.
 
@@ -101,6 +101,7 @@ Create·Modify·Display 탭의 내부 항목은 처음에 모두 닫힌 상태�
 | --- | --- |
 | `LMB 클릭` | Object 또는 Control 선택 |
 | `LMB 드래그` | FFD/Curve Control 사각 영역 선택. 좌→우 Window, 우→좌 Crossing |
+| `RMB` | 포인터 아래 Proxy/Curve를 선택하고 대상별 Viewport 메뉴 열기 |
 | `Ctrl/⌘ + LMB` | 선택 추가, Control 클릭은 추가/해제 토글 |
 | `Alt + LMB` | 선택 제외 |
 | 선택 Control `LMB 드래그` | View Plane에서 선택 Control 함께 이동 |
@@ -112,6 +113,10 @@ Create·Modify·Display 탭의 내부 항목은 처음에 모두 닫힌 상태�
 
 사각 영역 선택은 현재 Curve Point와 FFD Control을 대상으로 합니다. Proxy Object는 Viewport 클릭 또는 Scene Explorer에서 선택하며, `W` 상태에서는 선택 Proxy 표면을 직접 드래그해 이동합니다.
 
+Scene Explorer에서 편집 잠금한 Curve/Proxy는 Viewport LMB·RMB 선택과 직접 드래그 대상에서 제외됩니다. 잠긴 객체의 상태 확인과 잠금 해제는 Scene Explorer에서 할 수 있습니다.
+
+Viewport에서 Proxy를 우클릭하면 FFD 2/4/8 추가, Control 편집 진입/종료, Reset/Remove, Smooth Shading과 Show Edges를 바로 실행할 수 있습니다. Curve를 우클릭하면 연결 Point 평균화, Point/Object 편집, Frame/Clone/Delete와 `Live Curve → Mesh · Enable in Viewport`를 사용할 수 있습니다. 숨김·잠금 객체의 편집 명령은 비활성화됩니다.
+
 ## 검증
 
 Node.js 20 이상에서 핵심 상태·정책 테스트와 모듈 문법 검사를 실행합니다.
@@ -122,7 +127,7 @@ npm run check
 npm run test:viewport
 ```
 
-`npm run test:viewport`는 임시 로컬 서버와 Chromium을 자동으로 실행해 Axis Lines/기본 XYZ gizmo 분리, Proxy 직접 drag/Undo, FFD 모드의 Proxy 선택 전달과 1024px 레이아웃을 검사합니다. 브라우저 핵심 진단은 실행 주소 뒤에 `?selftest=1`을 붙여 확인할 수 있으며 결과는 개발자 도구의 `globalThis.__CURVE_TOOL_SELF_TEST__`, 회귀 진단 상태는 `globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__`에서 조회할 수 있습니다.
+`npm run test:viewport`는 임시 로컬 서버와 Chromium을 자동으로 실행해 Axis Lines/기본 XYZ gizmo 분리, Proxy 직접 drag/Undo, FFD 다중 선택의 노란 표시·동시 drag·편집 토글, FFD 모드의 Proxy 선택 전달, Proxy/Curve 우클릭 메뉴 명령, 잠긴 Curve/Proxy의 Viewport LMB·RMB 선택 차단과 1024px 레이아웃을 검사합니다. 브라우저 핵심 진단은 실행 주소 뒤에 `?selftest=1`을 붙여 확인할 수 있으며 결과는 개발자 도구의 `globalThis.__CURVE_TOOL_SELF_TEST__`, 회귀 진단 상태는 `globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__`에서 조회할 수 있습니다.
 
 ## 저장소 구조
 
@@ -135,7 +140,7 @@ Hair_Mesh_Web/
 │   ├── geometry/                  # Bézier·Sweep·프록시 primitive·FFD·메시 제한 계산
 │   ├── state/                     # History·프로젝트·선택·편집 정책
 │   ├── viewport/                  # Picking/축 드래그 + 재질/조명/Wire 표시 정책
-│   ├── ui/                        # 숫자 입력 Scrubber
+│   ├── ui/                        # 숫자 입력 Scrubber·Context menu 위치 정책
 │   └── diagnostics/               # 브라우저 Self-test
 ├── tests/                         # Node 계약, Playwright Viewport 회귀 테스트와 Fixture
 ├── doc/                           # 개발자용 코드 지도와 작업 지침

@@ -19,5 +19,7 @@
 - Run `npm run check` for every JavaScript or state-contract change.
 - Run `git diff --check` for all changes.
 - For runtime/UI changes, start the server and test the affected browser flow; use `?selftest=1` when relevant.
-- For Viewport pointer/gizmo/Proxy changes, run `npm run test:viewport`. Do not couple `Axis Lines` to standard TransformControls visibility, remove FFD/Edit click-through Scene picking, or drop Proxy `W` surface drag without an explicit contract change.
+- For Viewport pointer/gizmo/Proxy changes, run `npm run test:viewport`. Do not couple `Axis Lines` to standard TransformControls visibility, remove FFD/Edit click-through Scene picking, or drop Proxy `W` surface drag without an explicit contract change. Every selected FFD control must receive the yellow selected appearance after click, Ctrl/Alt, Region, direct drag, and restore; `Edit Control Points` must remain a true enter/exit toggle that hides the lattice on exit.
+- Viewport context-menu items must call the same owning command used by the panel/shortcut. Do not mutate Proxy/Curve data in a menu-only path or allow RMB to cancel a Line draft.
+- Edit-locked Curve/Proxy roots must stay out of every Viewport object-picking list, including LMB, RMB, direct drag, and Edit/FFD click-through. Keep Scene Explorer selection available so users can inspect and unlock them.
 - Update `doc/CODEX_INDEX.md` or its routed feature document when ownership, symbols, invariants, or validation paths change.

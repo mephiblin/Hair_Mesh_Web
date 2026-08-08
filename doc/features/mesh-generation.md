@@ -37,6 +37,7 @@ settings/curve change
 | 렌더 Geometry | `topologyToGeometry()`, `topologyToWireGeometry()` | HTML composition root |
 | Hair 표시 Material | `createViewportMaterial()`, `applyHairMaterialDisplay()` | HTML + `src/viewport/material-presets.js` |
 | Live lifecycle | `rebuildCurveMesh()`, `removeCurveMesh()`, `failCurveMesh()` | HTML composition root |
+| Live RMB toggle | `renderCurveContextMenu()` → `#enableLiveMesh` command | HTML composition root |
 | 상태 판정 | `hasReadyMesh()` | `src/state/curve-policy.js` |
 
 ## 논리 topology 계약
@@ -70,6 +71,7 @@ UI의 체크/배지는 `meshEnabled`만 보지 말고 `curveHasReadyMesh()`를 �
 - 실패 시 이전 topology가 Ready처럼 남지 않는가?
 - rebuild/remove 시 이전 Geometry와 Material을 dispose하는가?
 - Hair material preset 변경 시 topology/UV/face가 유지되고 교체된 Material만 dispose되는가?
+- Curve RMB의 `Enable in Viewport`가 checkbox와 같은 handler를 사용해 `disabled | ready | error` 상태를 정직하게 갱신하는가?
 - Brush가 프로젝트 복원 후에도 같은 topology를 생성하는가?
 
 ## 검증

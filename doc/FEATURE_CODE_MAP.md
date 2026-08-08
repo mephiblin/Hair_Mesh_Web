@@ -26,14 +26,14 @@ launch_server.py
 | 표면/평면 Point 배치 | `#drawTarget`, `updateDrawTargetUI()`, `pointOnSurface()`, `pointInFreePlane()` | Raycaster로 보이는 Reference/Proxy 중 최근접 표면 또는 카메라 평면 좌표 계산 | `src/state/line-creation-policy.js` |
 | Line 생성/완료/취소 | `#newCurveBtn`, `beginLineCreation()`, `finishLineCreation()`, `cancelLineCreation()` | Draft curve 생성, 최소 Point 검사, 이전 선택 복원 | Node의 `line creation requires two points` |
 | Curve/Point 선택 | `selectCurve()`, `toggleCurveSelection()`, `selectControl()`, `#curveList` | Ctrl/⌘ 토글, 활성 Curve/Point, UI/Gizmo 동기화 | `src/state/curve-selection.js`, `src/state/point-selection.js` |
-| Curve 표시/잠금 | `setCurveVisible()`, `setCurveLocked()` | Scene row와 편집 가능 상태 동기화 | `src/state/curve-policy.js` 및 정책 테스트 |
+| Curve 표시/잠금 | `setCurveVisible()`, `setCurveLocked()` | Scene row와 편집 가능 상태 동기화, 잠금 시 Viewport pick 제외 | `src/state/curve-policy.js`, `canPickViewportObject()` 및 정책 테스트 |
 | Curve 복제/삭제 | `#duplicateCurveBtn`, `deleteSelectedCurve()` | Curve state 복제/폐기와 History transaction | 브라우저 QA + Undo/Redo |
 | Proxy 4종 생성 | `#create*ProxyBtn`, `createProxyPrimitive()` | Orbit target에 Box/Sphere/Quad Sphere/Cylinder 생성 | `src/geometry/proxy-primitives.js`, Node topology 테스트 |
 | Proxy 파라미터 | `#proxy*`, `readProxySettingsFromUI()`, `rebuildProxyMesh()` | 크기·축별 segment·Smooth·Edges를 비파괴 재생성 | `normalizeProxySettings()`, 브라우저 QA |
 | Proxy FFD Stack | `#proxyModifierList`, `addFfdModifierToSelected()`, `moveActiveProxyModifier()` | FFD 2/4/8 추가, ON/OFF, 순서, Reset/Remove | `src/geometry/ffd-lattice.js`, Node stack 테스트 |
-| FFD Control 편집 | `findFfdControl()`, `setFfdControlSelection()`, `rebuildProxyLatticeVisual()`, `syncGizmo()` | 단일/영역 다중 선택, 선택 중심 직접/기즈모 Move와 최종 Proxy 재평가 | `control-selection.js`, `region-selection.js`, FFD 좌표 함수 |
+| FFD Control 편집 | `findFfdControl()`, `setFfdControlSelection()`, `rebuildProxyLatticeVisual()`, `toggleFfdControlEditing()`, `syncGizmo()` | 단일/영역 다중 선택, 선택 전체 노란 표시, Edit/Finish lattice 토글, 선택 중심 직접/기즈모 Move와 최종 Proxy 재평가 | `control-selection.js`, `region-selection.js`, FFD 좌표 함수 |
 | 객체별 Modify 문맥 | `syncModifyContext()`, `#curveModifyContext`, `#proxyModifyContext` | 활성 Curve/Proxy에 해당하는 rollout만 표시 | `features/proxy-mesh.md` |
-| Proxy 선택/표시/잠금 | `selectProxy()`, `refreshProxyList()`, `setProxyVisible()`, `setProxyLocked()` | Scene Explorer와 viewport pick, edit policy 동기화 | 브라우저 QA + Project restore |
+| Proxy 선택/표시/잠금 | `selectProxy()`, `refreshProxyList()`, `setProxyVisible()`, `setProxyLocked()` | Scene Explorer 선택은 유지하고 잠긴 root는 Viewport LMB/RMB/direct drag에서 제외 | `canPickViewportObject()`, 브라우저 QA + Project restore |
 | Proxy 복제/삭제 | `#duplicateCurveBtn`, `deleteSelectedProxy()` | 파라미터/transform 복제와 GPU 자원 폐기 | History + 브라우저 QA |
 | Bézier 곡선 평가 | `BezierChainCurve` | `getPoint()`, `getTangent()`이 Cubic Bézier 계산 | `src/geometry/bezier-handles.js` |
 | Handle/Knot 편집 | `setSelectedKnotType()`, `resetSelectedTangents()` | Handle 모드 적용, 인접 Handle 재계산 | `bezier-handles.js`, Self-test |
@@ -43,6 +43,7 @@ launch_server.py
 | Point Transform | `setPointTool()`, `applyPointUnitTransform()`, `handleGizmoChange()` | Point, Handle, 단면 Transform을 선택 문맥에 맞게 적용 | `coordinateFrameQuaternion()` |
 | 축 가이드 이동 | `toggleAxisGuides()`, `startAxisGuideDrag()`, `updateAxisGuideDrag()` | 화면 Pick → 제약 평면 → 축 Scalar 적용, OFF 시 긴 guide만 숨기고 기본 Translate gizmo 유지 | `src/viewport/axis-guide-drag.js`, `interaction-policy.js`, Self-test |
 | 3ds Max Viewport 입력 | `beginMaxViewportNavigation()`, `beginSelectionRegion()`, `beginDirectViewportMove()` | MMB Pan, Alt+MMB Orbit, Ctrl+Alt+MMB Zoom, Window/Crossing Control 선택, Proxy 표면 Move drag | `src/state/control-selection.js`, `src/viewport/region-selection.js` |
+| 대상별 RMB 메뉴 | `openViewportContextMenu()`, `renderProxyContextMenu()`, `renderCurveContextMenu()` | 포인터 아래 Proxy/Curve 선택, 기존 panel/shortcut command 재사용, 가장자리 clamp/닫힘 | `src/ui/context-menu.js`, `features/viewport-ui.md` |
 | 단면 수치 편집 | `#applyPointValuesBtn`, `updatePointPanel()` | Position/Offset/Scale/Rotation 입력과 Live rebuild | `src/ui/numeric-scrubber.js` |
 | Tip/단면 초기화 | `#makeTipBtn`, `#resetSectionBtn` | Point의 `scaleX/scaleZ` 또는 단면 Transform 초기화 | History + 브라우저 QA |
 | Sweep 좌표계 | `buildSweepContext()`, `evaluateSweep()` | Curve상의 Point/Tangent/Normal/Binormal 생성 | `src/geometry/sweep-frames.js`, Self-test |
@@ -69,7 +70,7 @@ launch_server.py
 | 단축키 | `document.addEventListener('keydown', ...)` | 저장, History, 선택, 모드, Transform dispatch | README 단축키 표와 함께 갱신 |
 | Command rollout | `.rollout-header`, `setRolloutCollapsed()`, `initializeRollouts()` | Create/Modify/Display 기본 닫힘, 탭 전환 중 DOM 상태 유지, ARIA 동기화 | `features/viewport-ui.md`, 브라우저 QA |
 | 내장 진단 | URL `?selftest=1`, `runCoreSelfChecks()`, `__CURVE_TOOL_RUNTIME_DIAGNOSTICS__` | 순수 Geometry/Policy smoke test와 selftest 전용 runtime 상태 노출 | `src/diagnostics/core-self-check.js` |
-| Viewport 자동 회귀 | `npm run test:viewport` | 임시 서버+Chromium으로 Axis/gizmo 분리, Proxy drag/Undo, FFD click-through, 1024px 검사 | `tests/viewport-regression.mjs`, GitHub Validate `viewport` job |
+| Viewport 자동 회귀 | `npm run test:viewport` | 임시 서버+Chromium으로 Axis/gizmo 분리, Proxy drag/Undo, FFD 선택 표시·다중 drag·편집 토글/click-through, Proxy/Curve RMB, 1024px 검사 | `tests/viewport-regression.mjs`, GitHub Validate `viewport` job |
 
 ## 핵심 상태의 코드 위치
 
