@@ -15,7 +15,7 @@ Overall status: COMPLETE · maintenance audit synchronized on 2026-08-09
 
 - Repository / surface: `mephiblin/Hair_Mesh_Web`, `curve_mesh_hair_tool_v4.html`
 - Historical baseline: `b1b121a84e845d1afd215a63a7f03e9e6533b33a`, 2026-08-07
-- Current implementation basis: default branch `master`, repository state maintained and revalidated on 2026-08-09. Historical review anchor: `51508d86cb60cee5276d105a0d851680b93893de`.
+- Current implementation basis: default branch `master`, feature commit `969a05eb5cd714047207da19b0d3a20bca3b6e7e`, revalidated on 2026-08-09. GitHub Actions Validate run `31267391750` succeeded. Historical review anchor: `51508d86cb60cee5276d105a0d851680b93893de`.
 - Runtime / test entry points: `python3 launch_server.py`, `?selftest=1`, `npm run check`, `npm run test:viewport`
 - Existing documentation: `PROJECT_AUDIT.md`, `BLENDER_FEATURE_RESEARCH.md`, `MODULARIZATION.md`
 

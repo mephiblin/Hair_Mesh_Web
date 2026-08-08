@@ -45,5 +45,5 @@
 - geometry 모듈은 DOM을 직접 참조하지 않습니다.
 - UI 모듈은 Three.js 객체를 직접 수정하지 않고 명령 또는 표준 이벤트를 전달합니다.
 - 각 단계는 기존 동작을 브라우저에서 확인한 뒤 별도 커밋으로 진행합니다.
-- Viewport pointer/gizmo/context-menu 단계는 `npm run test:viewport`로 Axis Lines/기본 XYZ helper 분리, Proxy drag/Undo, FFD 선택 표시·다중 drag·편집 토글/Scene click-through와 Proxy/Curve RMB command를 확인합니다.
+- Viewport pointer/gizmo/context-menu 단계는 `npm run test:viewport`로 Axis Lines/기본 XYZ helper 분리, Proxy drag/Undo, FFD 선택 표시·다중 drag·편집 토글/Scene click-through, Proxy/Curve RMB command와 잠긴 root의 LMB/RMB 제외를 확인합니다.
 - 단일 HTML의 대규모 일괄 분해 대신 기능 단위로 이동해 회귀 원인을 좁힙니다.

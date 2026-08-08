@@ -87,7 +87,7 @@ Reference 파일 자체와 Mesh별 표시/재질/수동 텍스처는 Import 세�
 - FFD 선택 표시는 `selectedFfdControlIndices` 하나를 source of truth로 사용합니다. 단일/Control Ctrl·Alt/Window·Crossing/restore 모든 경로는 `syncFfdLatticePositions()`를 지나 선택 전체를 노란색으로 만들고 active만 더 크게 표시해야 합니다.
 - `Edit Control Points`는 진입 명령이 아니라 `ffd ↔ orbit` 토글입니다. 종료 시 `setMode('orbit')`가 lattice, TransformControls, Axis guide를 같은 frame에 숨겨야 하며 modifier/선택 데이터는 삭제하지 않습니다.
 - RMB 메뉴는 `findSceneObjectAtEvent()`로 대상을 정하고 기존 함수 또는 DOM command에만 위임합니다. 별도 mutation을 넣으면 panel과 History/dirty/recovery/rebuild가 갈라집니다. Line 생성 중 RMB는 draft를 건드리지 않습니다.
-- Pointer routing을 바꾸면 `tests/viewport-regression.mjs`의 Axis OFF, Proxy drag/Undo, FFD 선택 색/다중 drag/Edit 토글/Proxy click-through, Proxy·Curve RMB, 1024px 검사를 먼저 확장하고 `npm run test:viewport`를 실행합니다.
+- Pointer routing을 바꾸면 `tests/viewport-regression.mjs`의 Axis OFF, Proxy drag/Undo, FFD 선택 색/다중 drag/Edit 토글/Proxy click-through, Proxy·Curve RMB, 잠긴 Curve/Proxy의 LMB·RMB 제외와 Scene Explorer 복구, 1024px 검사를 먼저 확장하고 `npm run test:viewport`를 실행합니다.
 
 ## 5. 기능 구현 패턴
 

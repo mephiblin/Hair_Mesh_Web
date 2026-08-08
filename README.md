@@ -115,7 +115,7 @@ Create·Modify·Display 탭의 내부 항목은 처음에 모두 닫힌 상태�
 
 Scene Explorer에서 편집 잠금한 Curve/Proxy는 Viewport LMB·RMB 선택과 직접 드래그 대상에서 제외됩니다. 잠긴 객체의 상태 확인과 잠금 해제는 Scene Explorer에서 할 수 있습니다.
 
-Viewport에서 Proxy를 우클릭하면 FFD 2/4/8 추가, Control 편집 진입/종료, Reset/Remove, Smooth Shading과 Show Edges를 바로 실행할 수 있습니다. Curve를 우클릭하면 연결 Point 평균화, Point/Object 편집, Frame/Clone/Delete와 `Live Curve → Mesh · Enable in Viewport`를 사용할 수 있습니다. 숨김·잠금 객체의 편집 명령은 비활성화됩니다.
+Viewport에서 Proxy를 우클릭하면 FFD 2/4/8 추가, Control 편집 진입/종료, Reset/Remove, Smooth Shading과 Show Edges를 바로 실행할 수 있습니다. Curve를 우클릭하면 연결 Point 평균화, Point/Object 편집, Frame/Clone/Delete와 `Live Curve → Mesh · Enable in Viewport`를 사용할 수 있습니다. 숨김·잠금 객체는 Viewport 우클릭 대상이 아니며, Scene Explorer에서 선택한 잠금 객체의 패널 편집 명령도 비활성화됩니다.
 
 ## 검증
 
@@ -128,6 +128,8 @@ npm run test:viewport
 ```
 
 `npm run test:viewport`는 임시 로컬 서버와 Chromium을 자동으로 실행해 Axis Lines/기본 XYZ gizmo 분리, Proxy 직접 drag/Undo, FFD 다중 선택의 노란 표시·동시 drag·편집 토글, FFD 모드의 Proxy 선택 전달, Proxy/Curve 우클릭 메뉴 명령, 잠긴 Curve/Proxy의 Viewport LMB·RMB 선택 차단과 1024px 레이아웃을 검사합니다. 브라우저 핵심 진단은 실행 주소 뒤에 `?selftest=1`을 붙여 확인할 수 있으며 결과는 개발자 도구의 `globalThis.__CURVE_TOOL_SELF_TEST__`, 회귀 진단 상태는 `globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__`에서 조회할 수 있습니다.
+
+현재 기능 기준 커밋 `969a05e`에서 `npm run check` 29/29, 브라우저 self-test 24/24, `npm run test:viewport`와 GitHub Actions Validate(run `31267391750`) 통과를 확인했습니다.
 
 ## 저장소 구조
 
