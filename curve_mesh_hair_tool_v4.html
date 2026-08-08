@@ -674,7 +674,7 @@ let brushes = [];
 let nextBrushId = 1;
 let pointerDownState = null;
 let selectionDrag = null;
-let directControlDrag = null;
+let directViewportDrag = null;
 let maxNavigationPointerId = null;
 let activeCommandTab = 'modify';
 let projectLifecycleReady = false;
@@ -4195,16 +4195,21 @@ function finishSelectionRegion(event, cancel = false) {
       if (drag.kind === 'ffd') setFfdControlSelection(hits, drag.operation, hits.at(-1));
       else setCurvePointSelection(hits, drag.operation, hits.at(-1));
       setStatus(`${rectangle.crossing ? 'Crossing' : 'Window'} Region · ${hits.length}개 hit · Ctrl 추가 / Alt 제외`);
-    } else if (drag.operation === 'replace') {
-      if (drag.kind === 'ffd') setFfdControlSelection([], 'replace');
-      else setCurvePointSelection([], 'replace');
+    } else {
+      const hit = event ? findSceneObjectAtEvent(event) : null;
+      if (hit?.kind === 'proxy' && hit.object) selectProxy(hit.object);
+      else if (hit?.kind === 'curve' && hit.object) selectCurve(hit.object, { enterEdit:drag.kind === 'curve' });
+      else if (drag.operation === 'replace') {
+        if (drag.kind === 'ffd') setFfdControlSelection([], 'replace');
+        else setCurvePointSelection([], 'replace');
+      }
     }
   }
   if (event) { event.preventDefault(); event.stopImmediatePropagation(); }
   return true;
 }
 
-function beginDirectControlMove(event) {
+function beginDirectViewportMove(event) {
   if (!gizmoContext || gizmoContext.operation !== 'translate') return false;
   const normal = new THREE.Vector3(); camera.getWorldDirection(normal);
   const pivot = gizmoProxy.getWorldPosition(new THREE.Vector3());
@@ -4214,19 +4219,19 @@ function beginDirectControlMove(event) {
   if (!start) return false;
   beginGizmoDrag();
   if (!gizmoDrag) return false;
-  directControlDrag = { pointerId:event.pointerId, plane, start:start.clone(), pivot:pivot.clone(), moved:false };
+  directViewportDrag = { pointerId:event.pointerId, plane, start:start.clone(), pivot:pivot.clone(), moved:false };
   renderer.domElement.setPointerCapture?.(event.pointerId);
   orbit.enabled = false;
   event.preventDefault(); event.stopImmediatePropagation();
   return true;
 }
-function updateDirectControlMove(event) {
-  if (!directControlDrag || event.pointerId !== directControlDrag.pointerId) return false;
+function updateDirectViewportMove(event) {
+  if (!directViewportDrag || event.pointerId !== directViewportDrag.pointerId) return false;
   pointerNDC(event);
-  const point = raycaster.ray.intersectPlane(directControlDrag.plane, new THREE.Vector3());
+  const point = raycaster.ray.intersectPlane(directViewportDrag.plane, new THREE.Vector3());
   if (point) {
-    directControlDrag.moved = directControlDrag.moved || point.distanceTo(directControlDrag.start) > 1e-5;
-    gizmoProxy.position.copy(directControlDrag.pivot).add(point.sub(directControlDrag.start));
+    directViewportDrag.moved = directViewportDrag.moved || point.distanceTo(directViewportDrag.start) > 1e-5;
+    gizmoProxy.position.copy(directViewportDrag.pivot).add(point.sub(directViewportDrag.start));
     gizmoProxy.updateMatrixWorld(true);
     handleGizmoChange();
     updateAxisGuideTransform();
@@ -4234,14 +4239,17 @@ function updateDirectControlMove(event) {
   event.preventDefault(); event.stopImmediatePropagation();
   return true;
 }
-function finishDirectControlMove(event, cancel = false) {
-  if (!directControlDrag || (event && event.pointerId !== directControlDrag.pointerId)) return false;
-  const pointerId = directControlDrag.pointerId; directControlDrag = null;
+function finishDirectViewportMove(event, cancel = false) {
+  if (!directViewportDrag || (event && event.pointerId !== directViewportDrag.pointerId)) return false;
+  const pointerId = directViewportDrag.pointerId; directViewportDrag = null;
   if (renderer.domElement.hasPointerCapture?.(pointerId)) renderer.domElement.releasePointerCapture(pointerId);
   orbit.enabled = mode !== 'draw' || drawCameraOverride;
   if (cancel && gizmoDrag) {
     const ctx = gizmoDrag.context;
-    if (ctx.type === 'ffd') {
+    if (ctx.type === 'object') {
+      worldMatrixToLocalObject(ctx.target.group, gizmoDrag.targetStart);
+      updateMeshStats();
+    } else if (ctx.type === 'ffd') {
       const modifierIndex = ctx.proxy.modifiers.findIndex(modifier => modifier.id === ctx.modifierId);
       if (modifierIndex >= 0) ctx.proxy.modifiers[modifierIndex] = cloneFfdModifier(gizmoDrag.ffdModifierStart);
       rebuildProxyMesh(ctx.proxy, { rebuildLattice:false, syncUi:false });
@@ -4318,6 +4326,14 @@ renderer.domElement.addEventListener('pointerdown', event => {
   const visibleTransformAxis = transformControls.axis && transformControls.enabled && transformControls.getHelper().visible;
   const visibleReferenceAxis = referenceImageTransformControls.axis && referenceImageTransformControls.enabled && referenceImageTransformControls.getHelper().visible;
   if (visibleTransformAxis || visibleReferenceAxis) return;
+  if (mode === 'transform' && objectTransformMode === 'translate') {
+    const hit = findSceneObjectAtEvent(event);
+    if (hit?.kind === 'proxy' && hit.object) {
+      if (hit.object !== selectedProxy) selectProxy(hit.object, { enterTransform:true });
+      if (proxyIsEditable(hit.object)) beginDirectViewportMove(event);
+      return;
+    }
+  }
   if (mode === 'ffd') {
     const control = findFfdControl(event);
     if (control) {
@@ -4326,7 +4342,7 @@ renderer.domElement.addEventListener('pointerdown', event => {
       const index = control.userData.ffdPointIndex;
       if (selectedFfdControlIndices.has(index) && selectedFfdControlIndices.size > 1) setFfdControlSelection([], 'add', index);
       else selectFfdControl(index);
-      beginDirectControlMove(event);
+      beginDirectViewportMove(event);
       return;
     }
     beginSelectionRegion(event, 'ffd');
@@ -4342,7 +4358,7 @@ renderer.domElement.addEventListener('pointerdown', event => {
         const index = control.userData.pointIndex;
         if (control.userData.kind === 'anchor' && selectedPointIndices.has(index) && selectedPointIndices.size > 1) setCurvePointSelection([], 'add', index);
         else selectControl(curve, index, control.userData.kind);
-        if (control.userData.kind === 'anchor' && pointTool === 'pointMove') beginDirectControlMove(event);
+        if (control.userData.kind === 'anchor' && pointTool === 'pointMove') beginDirectViewportMove(event);
       }
       return;
     }
@@ -4363,19 +4379,19 @@ renderer.domElement.addEventListener('pointerdown', event => {
   }
 }, true);
 renderer.domElement.addEventListener('pointermove', event => {
-  if (updateDirectControlMove(event)) return;
+  if (updateDirectViewportMove(event)) return;
   if (updateSelectionMarquee(event)) return;
   updateAxisGuideDrag(event);
 }, true);
 renderer.domElement.addEventListener('pointerup', event => {
-  if (finishDirectControlMove(event)) { pointerDownState = null; return; }
+  if (finishDirectViewportMove(event)) { pointerDownState = null; return; }
   if (finishSelectionRegion(event)) { pointerDownState = null; return; }
   if (finishAxisGuideDrag(event)) { pointerDownState = null; return; }
   if (finishMaxViewportNavigation(event)) return;
   handleViewportClick(event);
 }, true);
 renderer.domElement.addEventListener('pointercancel', event => {
-  finishDirectControlMove(event, true);
+  finishDirectViewportMove(event, true);
   finishSelectionRegion(event, true);
   finishAxisGuideDrag(event);
   finishMaxViewportNavigation(event);
@@ -4906,7 +4922,7 @@ document.addEventListener('keydown', e => {
     setStatus(message || 'Redo할 작업이 없습니다.');
     return;
   }
-  if (e.key === 'Escape' && directControlDrag) { e.preventDefault(); finishDirectControlMove(null, true); return; }
+  if (e.key === 'Escape' && directViewportDrag) { e.preventDefault(); finishDirectViewportMove(null, true); return; }
   if (e.key === 'Escape' && selectionDrag) { e.preventDefault(); finishSelectionRegion(null, true); return; }
   if (e.key === 'Escape' && mode === 'draw') { e.preventDefault(); cancelLineCreation(); return; }
   if (e.code === 'CapsLock' && mode === 'draw') { e.preventDefault(); toggleDrawCameraOverride(); return; }

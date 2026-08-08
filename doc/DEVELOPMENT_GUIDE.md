@@ -63,6 +63,7 @@ Reference 파일 자체와 Mesh별 표시/재질/수동 텍스처는 Import 세�
 - 활성 root object는 Curve 또는 Proxy 중 하나이며 `syncModifyContext()`가 해당 Modify UI만 표시합니다.
 - Proxy FFD는 Base부터 Top까지 순서대로 평가하며 control offset을 원본 vertex에 bake하지 않습니다. 최종 bake는 Export 경계에서만 수행합니다.
 - Viewport는 3ds Max식 `MMB Pan`, `Alt+MMB Orbit`, `Ctrl+Alt+MMB Zoom`을 유지합니다. Control 영역 선택은 좌→우 Window(완전 포함), 우→좌 Crossing(교차 포함)이며 Ctrl/⌘은 추가, Alt는 제외입니다.
+- `Axis Lines`는 긴 축 제약선만 소유합니다. OFF에서도 기본 XYZ Transform gizmo는 표시·입력이 유지되어야 합니다.
 - Live Mesh는 `meshEnabled`, `meshStatus === 'ready'`, 유효한 `topology`가 모두 충족되어야 Ready입니다.
 - Path Segments는 2–512, Tube Sides는 3–64 범위입니다.
 - Point/Brush의 Vector와 Quaternion은 배열로 변환한 뒤 저장합니다.

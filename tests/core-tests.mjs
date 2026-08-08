@@ -312,13 +312,13 @@ test('reference wireframe accepts only owned modes and six-digit colors', () => 
   assert.equal(referenceWireUsesSurfaceDepthBias('off'), false);
 });
 
-test('disabled axis guides cannot render an interactive pick target', () => {
+test('disabled axis guides hide only guide lines and preserve the transform gizmo', () => {
   assert.equal(canInteractWithAxisGuides({ enabled:true, visible:true, dragging:false, operation:'translate' }), true);
   assert.equal(canInteractWithAxisGuides({ enabled:false, visible:true, dragging:false, operation:'translate' }), false);
   assert.equal(canInteractWithAxisGuides({ enabled:true, visible:false, dragging:false, operation:'translate' }), false);
   assert.equal(canInteractWithAxisGuides({ enabled:true, visible:true, dragging:true, operation:'translate' }), false);
   assert.equal(canInteractWithAxisGuides({ enabled:true, visible:true, dragging:false, operation:'rotate' }), false);
-  assert.equal(shouldShowTransformHelper({ axisGuidesEnabled:false, operation:'translate' }), false);
+  assert.equal(shouldShowTransformHelper({ axisGuidesEnabled:false, operation:'translate' }), true);
   assert.equal(shouldShowTransformHelper({ axisGuidesEnabled:true, operation:'translate' }), true);
   assert.equal(shouldShowTransformHelper({ axisGuidesEnabled:false, operation:'rotate' }), true);
   assert.equal(shouldShowTransformHelper({ axisGuidesEnabled:false, operation:'scale' }), true);

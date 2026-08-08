@@ -41,8 +41,8 @@ launch_server.py
 | Point 평균화 | `averageSelectedGeometry()` | 선택 Point 위치/Handle을 Amount만큼 평균화 | `#averageAmount`, 실제 브라우저 QA |
 | Curve/Proxy Object Transform | `setObjectTransformMode()`, `activeSceneObject()`, `handleGizmoChange()` | 활성 `group`의 Position/Quaternion/Scale 변경 | TransformControls, History |
 | Point Transform | `setPointTool()`, `applyPointUnitTransform()`, `handleGizmoChange()` | Point, Handle, 단면 Transform을 선택 문맥에 맞게 적용 | `coordinateFrameQuaternion()` |
-| 축 가이드 이동 | `toggleAxisGuides()`, `startAxisGuideDrag()`, `updateAxisGuideDrag()` | 화면 Pick → 제약 평면 → 축 Scalar 적용, OFF 시 Translate gizmo/pick 차단 | `src/viewport/axis-guide-drag.js`, `interaction-policy.js`, Self-test |
-| 3ds Max Viewport 입력 | `beginMaxViewportNavigation()`, `beginSelectionRegion()`, `beginDirectControlMove()` | MMB Pan, Alt+MMB Orbit, Ctrl+Alt+MMB Zoom, Window/Crossing Control 선택 | `src/state/control-selection.js`, `src/viewport/region-selection.js` |
+| 축 가이드 이동 | `toggleAxisGuides()`, `startAxisGuideDrag()`, `updateAxisGuideDrag()` | 화면 Pick → 제약 평면 → 축 Scalar 적용, OFF 시 긴 guide만 숨기고 기본 Translate gizmo 유지 | `src/viewport/axis-guide-drag.js`, `interaction-policy.js`, Self-test |
+| 3ds Max Viewport 입력 | `beginMaxViewportNavigation()`, `beginSelectionRegion()`, `beginDirectViewportMove()` | MMB Pan, Alt+MMB Orbit, Ctrl+Alt+MMB Zoom, Window/Crossing Control 선택, Proxy 표면 Move drag | `src/state/control-selection.js`, `src/viewport/region-selection.js` |
 | 단면 수치 편집 | `#applyPointValuesBtn`, `updatePointPanel()` | Position/Offset/Scale/Rotation 입력과 Live rebuild | `src/ui/numeric-scrubber.js` |
 | Tip/단면 초기화 | `#makeTipBtn`, `#resetSectionBtn` | Point의 `scaleX/scaleZ` 또는 단면 Transform 초기화 | History + 브라우저 QA |
 | Sweep 좌표계 | `buildSweepContext()`, `evaluateSweep()` | Curve상의 Point/Tangent/Normal/Binormal 생성 | `src/geometry/sweep-frames.js`, Self-test |

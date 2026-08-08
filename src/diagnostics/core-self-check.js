@@ -97,8 +97,8 @@ export function runCoreSelfChecks(THREE) {
       && !canInteractWithAxisGuides({ enabled:true, visible:false, dragging:false, operation:'translate' })
   );
   check(
-    'Axis Lines OFF hides Translate helper but keeps Rotate and Scale helpers',
-    !shouldShowTransformHelper({ axisGuidesEnabled:false, operation:'translate' })
+    'Axis Lines OFF hides only long guides and keeps Translate, Rotate, and Scale helpers',
+    shouldShowTransformHelper({ axisGuidesEnabled:false, operation:'translate' })
       && shouldShowTransformHelper({ axisGuidesEnabled:false, operation:'rotate' })
       && shouldShowTransformHelper({ axisGuidesEnabled:false, operation:'scale' })
   );

@@ -15,7 +15,7 @@ Scene 초기화, picking, mode, TransformControls, axis guide, keyboard과 패�
 | Visibility | `updateControlVisibility()`, `updateCurveSelectionStyles()` | viewport interaction policy |
 | Picking | `findControl()`, `selectControl()`, `findFfdControl()`, `selectFfdControl()`, `findSceneObjectAtEvent()`, `handleViewportClick()` | `interaction-policy.js`, `point-selection.js` |
 | Region selection | `beginSelectionRegion()`, `updateSelectionMarquee()`, `finishSelectionRegion()` | `control-selection.js`, `region-selection.js` |
-| Direct Control Move | `beginDirectControlMove()`, `updateDirectControlMove()`, `finishDirectControlMove()` | 선택 중심 `gizmoContext` 공유 |
+| Direct Viewport Move | `beginDirectViewportMove()`, `updateDirectViewportMove()`, `finishDirectViewportMove()` | Control 선택 중심 및 Proxy Object `gizmoContext` 공유 |
 | 3ds Max navigation | `beginMaxViewportNavigation()`, `finishMaxViewportNavigation()` | OrbitControls mouse mapping |
 | Surface/free placement | `pointOnSurface()`, `pointInFreePlane()` | raycaster |
 | Mode | `setMode()`, `leaveLineCreationForMode()`, `updateHint()` | line creation policy |
@@ -51,6 +51,7 @@ Reference Plane은 Curve mode와 별개의 `translate | rotate | scale | none` �
 - FFD와 Curve Anchor의 빈 영역 LMB drag는 Rectangle Region이다. 좌→우 Window, 우→좌 Crossing 자동 방향을 사용한다.
 - Region의 Ctrl/⌘는 Add, Alt는 Remove다. Control Ctrl/⌘ 클릭은 기존 사용자 계약대로 Add/Toggle이고 Alt 클릭은 Remove다.
 - Move 도구에서 선택 Control을 직접 drag하면 camera-facing plane을 따라 이동하며, 선택이 여러 개면 selection center gizmo와 같은 집합을 움직인다.
+- Proxy Object Move 모드에서 Proxy 표면을 직접 drag하면 camera-facing plane을 따라 root object가 이동한다. FFD/Edit에서 drag되지 않은 click은 Scene object 선택으로 전달해 다른 Proxy 선택을 막지 않는다.
 - Direct drag 도중 Esc/pointer cancel은 시작 snapshot으로 되돌리고 History entry를 취소한다.
 
 ## Camera projection 계약
@@ -89,7 +90,7 @@ Reference Plane은 Curve mode와 별개의 `translate | rotate | scale | none` �
 - Perspective↔Orthographic 전환 후 Orbit, Curve/Point·Reference Plane picking, 두 gizmo가 active camera를 계속 사용하는가?
 - Plane을 Viewport에서 클릭해 선택할 수 있고 W/E/R/Q가 입력 필드 포커스와 충돌하지 않는가?
 - Pointer cancel/up이 History transaction과 OrbitControls를 복구하는가?
-- Axis Lines OFF가 parent/child guide visibility, guide raycast, Translate gizmo 표시/입력을 모두 차단하고 다른 Point 선택을 막지 않는가? Rotate/Scale gizmo는 유지되어야 한다.
+- Axis Lines OFF가 긴 parent/child guide visibility와 guide raycast만 차단하고 기본 Translate XYZ gizmo 표시/입력과 다른 Point 선택은 유지하는가? Rotate/Scale gizmo도 유지되어야 한다.
 - Ctrl/⌘ Anchor 토글이 Point 중앙의 Transform Gizmo에 가로막히지 않는가?
 - FFD Point pick이 Move gizmo와 충돌하지 않고, E/R/Delete가 Proxy root 또는 lattice 구조를 우발 변경하지 않는가?
 - MMB/Alt+MMB/Ctrl+Alt+MMB가 각각 Pan/Orbit/Zoom이고 LMB 빈 drag가 카메라를 회전하지 않는가?

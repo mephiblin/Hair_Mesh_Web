@@ -91,7 +91,7 @@ Create·Modify·Display 탭의 내부 항목은 처음에 모두 닫힌 상태�
 | `Q` | 3ds Max식 Select/Object 모드 또는 Reference Plane gizmo 숨김 |
 | `Z` | 선택 객체 Frame |
 | `I` | Point Insert 모드 |
-| `Shift + G` | 축 가이드 표시 전환 |
+| `Shift + G` | 긴 축 가이드만 표시 전환. 기본 XYZ Transform gizmo는 유지 |
 | `Esc` | 진행 중인 Line 생성 취소 |
 | `Delete` | 선택 Point, Curve 또는 Proxy 삭제. FFD 편집 중에는 삭제하지 않고 안내 표시 |
 
@@ -104,6 +104,7 @@ Create·Modify·Display 탭의 내부 항목은 처음에 모두 닫힌 상태�
 | `Ctrl/⌘ + LMB` | 선택 추가, Control 클릭은 추가/해제 토글 |
 | `Alt + LMB` | 선택 제외 |
 | 선택 Control `LMB 드래그` | View Plane에서 선택 Control 함께 이동 |
+| `W` 상태의 Proxy 표면 `LMB 드래그` | Proxy Object를 View Plane에서 직접 이동 |
 | `MMB 드래그` | Pan |
 | `Alt + MMB 드래그` | Orbit |
 | `Ctrl + Alt + MMB 드래그` | Zoom |

@@ -135,7 +135,7 @@ UI의 `min/max`는 안내이며 실제 안전 경계는 순수 normalize 함수�
 ## 검증 기준
 
 - Node: 4종 primitive clamp/topology/winding, FFD resolution/identity/Bernstein 변형/stack order/disabled, project modifier round-trip.
-- Browser: FFD 2/4/8 추가, Window/Crossing과 Ctrl/Alt 선택, 다중 직접/gizmo drag, Axis Lines OFF 직접 drag, 한 단계 Undo/Redo, ON/OFF 모드 이탈, reorder/reset/remove, Delete 안전장치, Clone 독립 ID, Save/Open/Recovery.
+- Browser: Proxy Object 표면 직접 Move drag와 한 단계 Undo, Axis Lines OFF의 기본 XYZ gizmo 유지, FFD 상태에서 다른 Proxy viewport 선택, FFD 2/4/8 추가, Window/Crossing과 Ctrl/Alt 선택, 다중 직접/gizmo drag, 한 단계 Undo/Redo, ON/OFF 모드 이탈, reorder/reset/remove, Delete 안전장치, Clone 독립 ID, Save/Open/Recovery.
 - Surface: Reference 없이 Proxy만 있는 장면에서 Surface option 활성화, 2 Point Line 생성 완료.
 - Export: FFD로 이동한 vertex가 OBJ/FBX 최종 geometry에 포함되고 여러 Proxy object가 분리되는지 확인.
 - Visual: 1600×900과 1024×768에서 Primitive/Modifier rollout, 2×2×2와 8×8×8 lattice, Scene Explorer와 viewport clipping 확인.

@@ -12,6 +12,6 @@ export function canInteractWithAxisGuides({ enabled, visible, dragging, operatio
   return Boolean(enabled && visible && !dragging && operation === 'translate');
 }
 
-export function shouldShowTransformHelper({ axisGuidesEnabled, operation }) {
-  return operation !== 'translate' || Boolean(axisGuidesEnabled);
+export function shouldShowTransformHelper({ operation }) {
+  return ['translate', 'rotate', 'scale'].includes(operation);
 }
