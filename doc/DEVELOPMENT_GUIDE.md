@@ -53,7 +53,7 @@ curl -I http://127.0.0.1:8080/curve_mesh_hair_tool_v4.html
 
 Scene 객체를 JSON에 직접 넣지 않습니다. 새 기능을 저장하려면 최소 데이터만 직렬화 상태에 넣고 Scene 객체는 복원 시 다시 만드십시오.
 
-Reference 파일 자체와 Mesh별 표시/재질/수동 텍스처는 Import 세션 상태이며 프로젝트에 넣지 않습니다. 전역 Reference preset과 Viewport 배경/FOV/Grid/조명은 `display` snapshot으로 저장합니다. Front/Left/Back 참조 이미지도 binary/Texture/plane/outline은 세션 상태이고 `src/viewport/reference-images.js`로 정규화한 frame·3D transform·표시·Flip·Back-face Cull과 파일명 힌트만 snapshot에 저장합니다. Reference 모델 기능은 `normalizeMaterials()` → `refreshReferenceObjectUI()` → `applyModelDisplay()` 경로를, 이미지 기능은 `loadReferenceImage()` → `applyReferenceImageDisplay()` → `syncReferenceImageTransformControls()` → `disposeReferenceImage()` 경로를 함께 확인합니다.
+Reference 파일 자체와 Mesh별 표시/재질/수동 텍스처는 Import 세션 상태이며 프로젝트에 넣지 않습니다. 전역 Reference preset과 Viewport 배경/FOV/Ortho Views/Grid/조명은 `display` snapshot으로 저장합니다. Front/Left/Back 참조 이미지도 binary/Texture/plane/outline은 세션 상태이고 `src/viewport/reference-images.js`로 정규화한 frame·3D transform·표시·Flip·Back-face Cull과 파일명 힌트만 snapshot에 저장합니다. Reference 모델 기능은 `normalizeMaterials()` → `refreshReferenceObjectUI()` → `applyModelDisplay()` 경로를, 이미지 기능은 `loadReferenceImage()` → `applyReferenceImageDisplay()` → `syncReferenceImageTransformControls()` → `disposeReferenceImage()` 경로를 함께 확인합니다.
 
 ## 4. 주요 불변 조건
 
@@ -68,6 +68,7 @@ Reference 파일 자체와 Mesh별 표시/재질/수동 텍스처는 Import 세�
 - Point `Ctrl/⌘` 토글은 활성 Curve 안에서만 동작하며 0개 선택을 허용합니다.
 - Scene Curve 다중 선택은 `selectedCurveIds`와 활성 `selectedCurve`를 함께 유지하고, Modifier/Gizmo는 활성 Curve 하나만 편집합니다.
 - Front/Left/Back 참조 Plane은 Perspective를 포함한 모든 View에서 보이지만 모델 surface raycast와 Mesh Export에는 참여하지 않습니다.
+- `Persp`는 항상 Perspective Camera이며, Ortho Views ON의 Front/Left/Back/Top은 Orthographic Camera입니다. active camera를 바꾸면 OrbitControls, 두 TransformControls, picking/raycast, resize/frame 경로를 함께 검사하십시오.
 
 관련 정책은 `src/state/curve-policy.js`, `curve-selection.js`, `point-selection.js`, `line-creation-policy.js`, `src/geometry/mesh-limits.js`에 있으며 Node 테스트가 계약을 고정합니다.
 
@@ -148,7 +149,7 @@ History 밖에서 표시 옵션처럼 상태를 직접 바꾸는 경우 `markPro
 - 숨김/잠금/Live 상태 정책
 - History transaction과 양방향 복원
 - 프로젝트 문서 round-trip/버전 거부
-- Viewport material/light/wire/object/환경과 Front/Left/Back 참조 Plane 설정·초기 배치·custom 3D transform 정규화
+- Viewport material/light/wire/object/환경, 표준 뷰 projection/matched height, Front/Left/Back 참조 Plane 설정·초기 배치·custom 3D transform 정규화
 
 새 순수 모듈은 이 테스트에 직접 import하여 회귀를 추가합니다.
 
@@ -176,7 +177,9 @@ globalThis.__CURVE_TOOL_SELF_TEST__
 7. 변경 후 새로고침하여 복구 확인
 8. OBJ/FBX Export 후 대상 DCC Import 확인
 9. Front/Left/Back Plane이 Perspective에서도 보이고 Move/Rotate/Scale, Back-face Cull, Flip Horizontal이 동작하는지 확인
-10. 좁은 뷰포트에서 Toolbar와 패널 접근 확인
+10. Ortho Views ON의 Front/Left/Back/Top에서 FOV 왜곡이 없고 FOV 입력이 비활성화되는지, OFF/Persp에서 원근 카메라가 복원되는지 확인
+11. 카메라 전환 후 Orbit 줌, Plane/Curve picking, gizmo drag, 프로젝트 설정 왕복 확인
+12. 좁은 뷰포트에서 Toolbar와 패널 접근 확인
 
 ## 11. 알려진 기술 부채와 확장 방향
 

@@ -15,6 +15,7 @@ Display 탭의 Hair/Reference 재질, Reference Mesh별 표시·재질·텍스�
 | Reference 적용 | `#referenceMaterialPreset`, `applyModelDisplay()` | Reference fallback `auto` |
 | Mesh별 관리 | `#referenceObjectList`, `refreshReferenceObjectUI()`, `loadReferenceTexture()` | `src/viewport/reference-object-policy.js` |
 | Viewport 환경 | `#viewportBackground`, `#cameraFov`, `#gridVisible`, `applyViewportDisplay()` | `src/viewport/viewport-settings.js` |
+| 표준 뷰 투영 | `#orthographicViewsToggleBtn`, `useViewportCamera()`, `setStandardView()` | `standardViewProjection()`, `matchedOrthographicHeight()` |
 | 조명 | `#lightAzimuth`, `#lightElevation`, `#lightIntensity`, `#fillLightIntensity`, `applyLightingDisplay()` | `src/viewport/lighting.js` |
 | Wire 생성/표시 | `ensureReferenceWireObject()`, `applyReferenceWireframeDisplay()` | `src/viewport/reference-wireframe.js` |
 | 3방향 이미지 | `#referenceImageStrip`, `loadReferenceImage()`, `applyReferenceImageDisplay()` | `src/viewport/reference-images.js` |
@@ -49,11 +50,12 @@ target: scene origin
 
 ```yaml
 background: six-digit hex, default '#101317'
-cameraFov: 15..120 degrees, default 45
+cameraFov: Perspective only, 15..120 degrees, default 45
+orthographicStandardViews: boolean, default true
 gridVisible: boolean
 ```
 
-기존 `Grid` rollout은 `Viewport`로 이름을 바꾸고 Background, Camera FOV, Ground Grid, Directional/Environment lighting을 한곳에 소유한다. Background/FOV/Grid와 조명 값은 optional display field로 Recovery/Project에 저장한다.
+기존 `Grid` rollout은 `Viewport`로 이름을 바꾸고 Background, Camera FOV, Ground Grid, Directional/Environment lighting을 한곳에 소유한다. `Ortho Views` ON에서 Front/Left/Back/Top은 실제 Orthographic Camera로 전환하고 FOV 입력을 비활성화한다. `Persp`는 항상 Perspective Camera이며 토글 OFF에서는 표준 뷰도 Perspective FOV를 사용한다. Background/FOV/Grid/Ortho Views와 조명 값은 optional display field로 Recovery/Project에 저장한다.
 
 ## Viewport Reference Images 계약
 
@@ -103,6 +105,7 @@ referenceMaterialPreset
 directionalLight: { azimuth, elevation, intensity, fillIntensity, distance }
 viewportBackground
 cameraFov
+orthographicStandardViews
 referenceWireMode
 referenceWireColor
 referenceImages: { opacity, layer, frame, views }
@@ -122,6 +125,7 @@ gridVisible
 - 수동 Texture가 UV Mesh에 표시되고 Clear/New Import에서 GPU 자원과 UI 선택이 정리되는가?
 - 조명 Reset이 Directional/Environment 기본값으로 복귀하고 Dirty/Recovery에 반영되는가?
 - Background/FOV/Grid가 즉시 반영되고 이전 프로젝트 누락 필드는 기본값으로 복원되는가?
+- Ortho Views ON의 Front/Left/Back/Top에서 깊이에 따른 FOV 크기 왜곡이 사라지고 FOV 입력이 비활성화되는가? OFF와 Persp에서는 Perspective/FOV가 복구되는가?
 - Reference/Wire/Grid의 visibility가 서로 독립적인가?
 - Front/Left/Back plane이 Perspective/Top/궤도 회전에서도 공간상의 실제 Plane Mesh로 보이는가?
 - 이미지 카드 전환이 선택 Curve 위치와 무관하게 저장된 frame center를 바라보는가?
@@ -136,6 +140,6 @@ gridVisible
 ## 검증
 
 - Node: material preset fallback/kind, dark-original Auto 정책, object material mode, viewport setting, lighting clamp/position, wire mode/color, reference image 설정/초기 plane/custom 3D transform 정규화.
-- Browser: 다중 Mesh Import/숨김/선택, Mesh별 preset/texture/Clear, 모든 Hair/Reference preset, Original 복귀, Directional/Environment 조명/Reset, Wire Off/Wire Only/Surface + Wire, Front/Left/Back Plane의 Perspective 표시·Viewport 선택·gizmo drag·Back-face/Flip·Clear, Background/FOV/Grid, 프로젝트 왕복과 Recovery.
+- Browser: 다중 Mesh Import/숨김/선택, Mesh별 preset/texture/Clear, 모든 Hair/Reference preset, Original 복귀, Directional/Environment 조명/Reset, Wire Off/Wire Only/Surface + Wire, Front/Left/Back Plane의 Perspective 표시·Viewport 선택·gizmo drag·Back-face/Flip·Clear, Ortho/Perspective 표준 뷰 전환·줌·FOV disabled·picking, Background/FOV/Grid, 프로젝트 왕복과 Recovery.
 - Import: 유효한 FBX fixture에 Reference MatCap과 Wire layer를 적용한다.
 - Layout: 1600×900과 1024×768에서 console/page error, 가로 overflow, control 접근성을 확인한다.

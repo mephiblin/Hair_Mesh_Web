@@ -1,6 +1,7 @@
 export const DEFAULT_VIEWPORT_SETTINGS = Object.freeze({
   background: '#101317',
-  cameraFov: 45
+  cameraFov: 45,
+  orthographicStandardViews: true
 });
 
 export function normalizeViewportBackground(value) {
@@ -18,6 +19,16 @@ export function normalizeCameraFov(value) {
 export function normalizeViewportSettings(settings = {}) {
   return {
     background: normalizeViewportBackground(settings.background),
-    cameraFov: normalizeCameraFov(settings.cameraFov)
+    cameraFov: normalizeCameraFov(settings.cameraFov),
+    orthographicStandardViews: settings.orthographicStandardViews !== false
   };
+}
+
+export function standardViewProjection(viewName, orthographicStandardViews = true) {
+  return viewName === 'perspective' || !orthographicStandardViews ? 'perspective' : 'orthographic';
+}
+
+export function matchedOrthographicHeight(distance, cameraFov) {
+  const safeDistance = Math.max(0.0001, Number.isFinite(Number(distance)) ? Number(distance) : 1);
+  return 2 * safeDistance * Math.tan(normalizeCameraFov(cameraFov) * Math.PI / 360);
 }

@@ -90,6 +90,7 @@ input[type=checkbox]{accent-color:var(--accent)}
       <button id="axisGuidesToggleBtn" class="icon-btn active" type="button" title="Move 축 가이드 표시 (Shift+G)" aria-pressed="true">Axis Lines</button>
     </div>
     <div class="toolgroup">
+      <button id="orthographicViewsToggleBtn" class="view-btn active" type="button" title="Front / Left / Back / Top을 FOV 왜곡 없는 Orthographic Camera로 표시" aria-pressed="true">Ortho Views</button>
       <button id="viewPerspectiveBtn" class="view-btn" type="button">Persp</button>
       <button id="viewFrontBtn" class="view-btn" type="button">Front</button>
       <button id="viewLeftBtn" class="view-btn" type="button">Left</button>
@@ -363,6 +364,7 @@ input[type=checkbox]{accent-color:var(--accent)}
                 <label>Camera FOV<input id="cameraFov" type="number" min="15" max="120" step="1" value="45" /></label>
               </div>
               <label class="checkrow"><input id="gridVisible" type="checkbox" checked /> Show Ground Grid</label>
+              <p class="muted">상단 Ortho Views가 켜지면 Front / Left / Back / Top에서 FOV 원근 왜곡을 제거합니다. Persp는 항상 Perspective Camera입니다.</p>
               <div class="mini-separator"></div>
               <div class="section-label">Lighting</div>
               <div class="coords2">
@@ -442,6 +444,8 @@ import {
   normalizeDirectionalLightSettings
 } from './src/viewport/lighting.js';
 import {
+  matchedOrthographicHeight,
+  standardViewProjection,
   normalizeViewportSettings
 } from './src/viewport/viewport-settings.js';
 import {
@@ -472,8 +476,13 @@ if (new URLSearchParams(location.search).has('selftest')) {
 }
 const viewport = $('viewport'), statusEl = $('status'), hintEl = $('viewportHint'), viewportBadge = $('viewportBadge');
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(45, 1, .001, 100000);
-camera.position.set(2, 1.4, 2.5);
+const perspectiveCamera = new THREE.PerspectiveCamera(45, 1, .001, 100000);
+const orthographicCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, .001, 100000);
+perspectiveCamera.position.set(2, 1.4, 2.5);
+orthographicCamera.position.copy(perspectiveCamera.position);
+let camera = perspectiveCamera;
+let orthographicStandardViews = true;
+let activeStandardView = 'perspective';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -633,11 +642,70 @@ class BezierChainCurve extends THREE.Curve {
   }
 }
 
+function viewportAspect() {
+  const rect = viewport.getBoundingClientRect();
+  return rect.width / Math.max(rect.height, 1);
+}
+function setOrthographicFrustumHeight(height, { resetZoom = false } = {}) {
+  const safeHeight = Math.max(Number(height) || 1, 0.0001);
+  const halfHeight = safeHeight * .5;
+  const halfWidth = halfHeight * viewportAspect();
+  orthographicCamera.left = -halfWidth;
+  orthographicCamera.right = halfWidth;
+  orthographicCamera.top = halfHeight;
+  orthographicCamera.bottom = -halfHeight;
+  if (resetZoom) orthographicCamera.zoom = 1;
+  orthographicCamera.updateProjectionMatrix();
+}
+function currentProjectionHeight(target = orbit.target) {
+  if (camera.isOrthographicCamera) return (camera.top - camera.bottom) / Math.max(camera.zoom, 0.0001);
+  return matchedOrthographicHeight(camera.position.distanceTo(target), perspectiveCamera.fov);
+}
+function updateProjectionToggleUI() {
+  const button = $('orthographicViewsToggleBtn');
+  button.classList.toggle('active', orthographicStandardViews);
+  button.setAttribute('aria-pressed', String(orthographicStandardViews));
+  document.documentElement.dataset.cameraProjection = camera.isOrthographicCamera ? 'orthographic' : 'perspective';
+  $('cameraFov').disabled = camera.isOrthographicCamera;
+  $('cameraFov').title = camera.isOrthographicCamera ? 'Orthographic View에서는 FOV가 적용되지 않습니다.' : 'Perspective Camera FOV';
+}
+function useViewportCamera(projection, { target = orbit.target, viewHeight = currentProjectionHeight(target) } = {}) {
+  const nextCamera = projection === 'orthographic' ? orthographicCamera : perspectiveCamera;
+  if (nextCamera !== camera) {
+    const previous = camera;
+    const direction = previous.position.clone().sub(target);
+    if (direction.lengthSq() < 1e-12) direction.set(0, 0, 1);
+    direction.normalize();
+    nextCamera.position.copy(previous.position);
+    nextCamera.quaternion.copy(previous.quaternion);
+    nextCamera.up.copy(previous.up);
+    nextCamera.near = previous.near;
+    nextCamera.far = previous.far;
+    if (nextCamera.isOrthographicCamera) {
+      setOrthographicFrustumHeight(viewHeight, { resetZoom:true });
+    } else {
+      const distance = viewHeight / (2 * Math.tan(THREE.MathUtils.degToRad(perspectiveCamera.fov / 2)));
+      nextCamera.position.copy(target).addScaledVector(direction, Math.max(distance, 0.0001));
+      nextCamera.aspect = viewportAspect();
+      nextCamera.updateProjectionMatrix();
+    }
+    camera = nextCamera;
+    orbit.object = camera;
+    transformControls.camera = camera;
+    referenceImageTransformControls.camera = camera;
+  } else if (camera.isOrthographicCamera) {
+    setOrthographicFrustumHeight((camera.top - camera.bottom), { resetZoom:false });
+  }
+  orbit.update();
+  updateProjectionToggleUI();
+}
+
 function resize() {
   const r = viewport.getBoundingClientRect();
   renderer.setSize(r.width, r.height, false);
-  camera.aspect = r.width / Math.max(r.height, 1);
-  camera.updateProjectionMatrix();
+  perspectiveCamera.aspect = r.width / Math.max(r.height, 1);
+  perspectiveCamera.updateProjectionMatrix();
+  setOrthographicFrustumHeight(orthographicCamera.top - orthographicCamera.bottom, { resetZoom:false });
 }
 new ResizeObserver(resize).observe(viewport);
 resize();
@@ -862,18 +930,21 @@ function resetLightingDisplay() {
 function currentViewportSettings() {
   const settings = normalizeViewportSettings({
     background: $('viewportBackground')?.value,
-    cameraFov: $('cameraFov')?.value
+    cameraFov: $('cameraFov')?.value,
+    orthographicStandardViews
   });
   $('viewportBackground').value = settings.background;
   $('cameraFov').value = String(settings.cameraFov);
+  orthographicStandardViews = settings.orthographicStandardViews;
   return settings;
 }
 function applyViewportDisplay() {
   const settings = currentViewportSettings();
   scene.background = new THREE.Color(settings.background);
-  camera.fov = settings.cameraFov;
-  camera.updateProjectionMatrix();
+  perspectiveCamera.fov = settings.cameraFov;
+  perspectiveCamera.updateProjectionMatrix();
   grid.visible = $('gridVisible').checked;
+  updateProjectionToggleUI();
 }
 function referenceImageViewLabel(viewName) {
   return viewName === 'front' ? 'Front' : viewName === 'left' ? 'Left' : 'Back';
@@ -1223,8 +1294,17 @@ function fitObject(object) {
   const maxDim = Math.max(size.x, size.y, size.z, .001);
   modelDiagonal = size.length() || maxDim;
   handleRadius = Math.max(modelDiagonal * .005, .001);
-  const distance = maxDim / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) * 1.6;
-  camera.position.copy(center).add(new THREE.Vector3(distance * .75, distance * .45, distance));
+  if (camera.isOrthographicCamera) {
+    const direction = camera.position.clone().sub(orbit.target);
+    if (direction.lengthSq() < 1e-12) direction.set(.75, .45, 1);
+    direction.normalize();
+    const distance = Math.max(maxDim * 3, 1);
+    setOrthographicFrustumHeight(maxDim * 1.6, { resetZoom:true });
+    camera.position.copy(center).addScaledVector(direction, distance);
+  } else {
+    const distance = maxDim / (2 * Math.tan(THREE.MathUtils.degToRad(perspectiveCamera.fov / 2))) * 1.6;
+    camera.position.copy(center).add(new THREE.Vector3(distance * .75, distance * .45, distance));
+  }
   camera.near = Math.max(maxDim / 10000, .0001);
   camera.far = Math.max(maxDim * 1000, 100);
   camera.updateProjectionMatrix();
@@ -1564,6 +1644,7 @@ function captureAppState() {
       directionalLight: currentDirectionalLightSettings(),
       viewportBackground: currentViewportSettings().background,
       cameraFov: currentViewportSettings().cameraFov,
+      orthographicStandardViews: currentViewportSettings().orthographicStandardViews,
       referenceWireMode: selectedReferenceWireMode(),
       referenceWireColor: selectedReferenceWireColor(),
       referenceImages: currentReferenceImageSettings(),
@@ -1668,9 +1749,14 @@ function restoreAppState(state) {
   $('lightElevation').value = String(directionalLight.elevation);
   $('lightIntensity').value = String(directionalLight.intensity);
   $('fillLightIntensity').value = String(directionalLight.fillIntensity);
-  const viewportSettings = normalizeViewportSettings({ background:display.viewportBackground, cameraFov:display.cameraFov });
+  const viewportSettings = normalizeViewportSettings({
+    background:display.viewportBackground,
+    cameraFov:display.cameraFov,
+    orthographicStandardViews:display.orthographicStandardViews
+  });
   $('viewportBackground').value = viewportSettings.background;
   $('cameraFov').value = String(viewportSettings.cameraFov);
+  orthographicStandardViews = viewportSettings.orthographicStandardViews;
   $('referenceWireMode').value = normalizeReferenceWireMode(display.referenceWireMode ?? (display.modelWireframe ? 'wire' : 'off'));
   $('referenceWireColor').value = normalizeReferenceWireColor(display.referenceWireColor);
   referenceImageSettings = normalizeReferenceImageSettings(display.referenceImages);
@@ -1701,6 +1787,8 @@ function restoreAppState(state) {
   updateMeshStats();
   setMode(state.mode);
   activateCommandTab(state.activeCommandTab);
+  if (activeStandardView !== 'perspective') setStandardView(activeStandardView, { targetOverride:orbit.target.clone() });
+  else useViewportCamera('perspective', { target:orbit.target });
   syncReferenceImageTransformControls();
 }
 
@@ -3298,7 +3386,12 @@ function setStandardView(kind, { targetOverride = null } = {}) {
     const box = new THREE.Box3().setFromObject(selectedCurve.group);
     if (!box.isEmpty()) target = box.getCenter(new THREE.Vector3());
   }
-  const distance = Math.max(camera.position.distanceTo(orbit.target), modelDiagonal * 1.2, 1);
+  const viewHeight = currentProjectionHeight(orbit.target);
+  const projection = standardViewProjection(kind, orthographicStandardViews);
+  useViewportCamera(projection, { target, viewHeight });
+  const distance = camera.isPerspectiveCamera
+    ? Math.max(viewHeight / (2 * Math.tan(THREE.MathUtils.degToRad(perspectiveCamera.fov / 2))), .0001)
+    : Math.max(camera.position.distanceTo(orbit.target), modelDiagonal * 1.2, 1);
   let direction = new THREE.Vector3(1, .65, 1).normalize();
   camera.up.set(0,1,0);
   if (kind === 'front') direction.set(0,0,1);
@@ -3309,9 +3402,21 @@ function setStandardView(kind, { targetOverride = null } = {}) {
   orbit.target.copy(target);
   camera.lookAt(target);
   orbit.update();
+  activeStandardView = kind;
+  const viewButtons = { perspective:'viewPerspectiveBtn', front:'viewFrontBtn', left:'viewLeftBtn', back:'viewBackBtn', top:'viewTopBtn' };
+  Object.entries(viewButtons).forEach(([viewName, id]) => $(id).classList.toggle('active', viewName === kind));
   syncGizmo();
+  syncReferenceImageTransformControls();
   applyReferenceImageDisplay();
-  setStatus(`${kind === 'perspective' ? 'Perspective' : kind[0].toUpperCase() + kind.slice(1)} View`);
+  const label = kind === 'perspective' ? 'Perspective' : kind[0].toUpperCase() + kind.slice(1);
+  setStatus(`${label} View · ${camera.isOrthographicCamera ? 'Orthographic · FOV 왜곡 없음' : `Perspective · FOV ${perspectiveCamera.fov}°`}`);
+}
+function toggleOrthographicStandardViews() {
+  orthographicStandardViews = !orthographicStandardViews;
+  updateProjectionToggleUI();
+  if (activeStandardView !== 'perspective') setStandardView(activeStandardView, { targetOverride:orbit.target.clone() });
+  markProjectChanged();
+  setStatus(`Ortho Views ${orthographicStandardViews ? 'ON · 표준 뷰 FOV 왜곡 제거' : 'OFF · 표준 뷰에도 Perspective FOV 적용'}`);
 }
 
 function cyclePoint(step) {
@@ -3675,6 +3780,7 @@ orbit.addEventListener('change', applyReferenceImageDisplay);
 $('clearGeneratedBtn').addEventListener('click', () => { history.begin('모든 Live Mesh 비활성화'); curves.forEach(c => { c.meshEnabled = false; removeCurveMesh(c); }); refreshCurveList(); syncModifierUIFromCurve(selectedCurve); updateControlVisibility(); setStatus('모든 Live Mesh 비활성화 · 커브와 Modifier 값은 유지'); history.commit(); });
 $('fitBtn').addEventListener('click', () => { if (surfaceMeshes.length) fitObject(modelRoot); else if (curves.length) fitObject(curvesRoot); });
 $('fitSelectedBtn').addEventListener('click', frameSelected);
+$('orthographicViewsToggleBtn').addEventListener('click', toggleOrthographicStandardViews);
 $('viewPerspectiveBtn').addEventListener('click', () => setStandardView('perspective'));
 $('viewFrontBtn').addEventListener('click', () => setStandardView('front'));
 $('viewLeftBtn').addEventListener('click', () => setStandardView('left'));

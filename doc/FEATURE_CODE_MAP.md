@@ -21,7 +21,7 @@ launch_server.py
 | 사용자 기능 | 주 진입점/DOM | 핵심 구현 | 보조 모듈·검증 |
 | --- | --- | --- | --- |
 | 앱 실행 | `launch_server.py:main()` | 로컬 서버 생성, 빈 포트 선택, 브라우저 열기 | 수동 HTTP 200 확인 |
-| Three.js 초기화/렌더 | `#viewport`, `scene`, `camera`, `renderer`, `animate()` | HTML composition root의 Scene/Camera/Renderer/Controls 조립 | 브라우저 Self-test |
+| Three.js 초기화/렌더 | `#viewport`, `scene`, `camera`, `perspectiveCamera`, `orthographicCamera`, `renderer`, `animate()` | HTML composition root의 Scene/Camera/Renderer/Controls 조립 | 브라우저 Self-test |
 | 기준 모델 Import | `#modelFile`, `loadModel()` | `normalizeMaterials()`, `fitObject()`, `applyModelDisplay()` | OBJ/FBX/GLTF Loader, 실제 브라우저 QA |
 | 표면/평면 Point 배치 | `#drawTarget`, `pointOnSurface()`, `pointInFreePlane()` | Raycaster로 모델 표면 또는 카메라 평면 좌표 계산 | `src/state/line-creation-policy.js` |
 | Line 생성/완료/취소 | `#newCurveBtn`, `beginLineCreation()`, `finishLineCreation()`, `cancelLineCreation()` | Draft curve 생성, 최소 Point 검사, 이전 선택 복원 | Node의 `line creation requires two points` |
@@ -49,6 +49,7 @@ launch_server.py
 | Reference Viewport 재질 | `#referenceMaterialPreset`, `applyModelDisplay()` | Auto/Original/Default Lit/MatCap 전역 적용 | `src/viewport/material-presets.js`, `src/viewport/reference-object-policy.js` |
 | Reference Mesh 관리 | `#referenceObjectList`, `refreshReferenceObjectUI()` | Mesh별 숨김/표시, 재질 override, 이미지 texture/UV 경고 | `src/viewport/reference-object-policy.js`, 다중 OBJ fixture |
 | Viewport 환경/조명 | `#viewportBackground`, `#cameraFov`, `#gridVisible`, `#light*`, `#fillLightIntensity` | `applyViewportDisplay()`, `applyLightingDisplay()` | `src/viewport/viewport-settings.js`, `src/viewport/lighting.js` |
+| 표준 뷰 투영 | `#orthographicViewsToggleBtn`, `#view*Btn`, `useViewportCamera()`, `setStandardView()` | Persp는 Perspective 고정, Front/Left/Back/Top은 토글에 따라 Orthographic/Perspective 전환 | `standardViewProjection()`, `matchedOrthographicHeight()`, Node/브라우저 QA |
 | Reference Wireframe | `#referenceWireMode`, `#referenceWireColor` | `ensureReferenceWireObject()`, `applyReferenceWireframeDisplay()`로 독립 `LineSegments` 관리 | `src/viewport/reference-wireframe.js`, 브라우저 QA |
 | Front/Left/Back 참조 Plane | `#referenceImageStrip`, `setReferenceImageTransformTool()`, `loadReferenceImage()` | Perspective 표시, 실제 Plane transform/gizmo, Back-face Cull, UV Flip, 프로젝트 파일명 대조와 자원 해제 | `src/viewport/reference-images.js`, `referenceImageTransformControls`, Node/브라우저 QA |
 | 프로젝트 저장 | `#saveProjectBtn`, `saveProject()` | 앱 상태 캡처 → versioned document → JSON 다운로드 | `src/state/project-format.js`, Node round-trip 테스트 |
@@ -77,6 +78,7 @@ launch_server.py
 | `projectDirty` | 마지막 명시 저장 이후 변경 여부 | `markProjectChanged()`, `updateProjectStatus()` |
 | `history` | Undo/Redo snapshot controller | `createHistory(...)` 생성부 |
 | `referenceImageSettings` / `referenceImageRuntime` | 저장 가능한 3방향 Plane transform/표시값 / 세션 전용 texture·plane·outline·Object URL | `currentReferenceImageSettings()`, `loadReferenceImage()`, `disposeReferenceImage()` |
+| `camera` / `perspectiveCamera` / `orthographicCamera` | active camera / FOV 원근 카메라 / 표준 뷰 정사영 카메라 | `useViewportCamera()`, `setStandardView()`, `resize()` |
 
 ## Curve record 구조
 

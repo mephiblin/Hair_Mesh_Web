@@ -30,7 +30,9 @@ import {
 } from '../src/viewport/reference-object-policy.js';
 import {
   DEFAULT_VIEWPORT_SETTINGS,
-  normalizeViewportSettings
+  matchedOrthographicHeight,
+  normalizeViewportSettings,
+  standardViewProjection
 } from '../src/viewport/viewport-settings.js';
 import {
   REFERENCE_WIRE_DEFAULTS,
@@ -158,9 +160,14 @@ test('reference object material policy keeps textured originals and brightens un
 });
 
 test('viewport settings normalize background color and clamp camera FOV', () => {
-  assert.deepEqual(normalizeViewportSettings({ background:'#A0b1C2', cameraFov:200 }), { background:'#a0b1c2', cameraFov:120 });
+  assert.deepEqual(normalizeViewportSettings({ background:'#A0b1C2', cameraFov:200 }), { background:'#a0b1c2', cameraFov:120, orthographicStandardViews:true });
   assert.deepEqual(normalizeViewportSettings({ background:'black', cameraFov:'bad' }), DEFAULT_VIEWPORT_SETTINGS);
   assert.equal(normalizeViewportSettings({ cameraFov:5 }).cameraFov, 15);
+  assert.equal(normalizeViewportSettings({ orthographicStandardViews:false }).orthographicStandardViews, false);
+  assert.equal(standardViewProjection('front', true), 'orthographic');
+  assert.equal(standardViewProjection('top', false), 'perspective');
+  assert.equal(standardViewProjection('perspective', true), 'perspective');
+  assert.ok(Math.abs(matchedOrthographicHeight(10, 45) - 8.284271247) < 1e-8);
 });
 
 test('reference wireframe accepts only owned modes and six-digit colors', () => {

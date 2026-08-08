@@ -8,8 +8,9 @@ Scene 초기화, picking, mode, TransformControls, axis guide, keyboard과 패�
 
 | 기능 | 심볼/DOM | 보조 모듈 |
 | --- | --- | --- |
-| Scene/Camera/Renderer | `scene`, `camera`, `renderer`, `orbit`, `animate()` | Three.js CDN imports |
-| Resize/frame | `resize()`, `fitObject()`, `frameSelected()` | — |
+| Scene/Camera/Renderer | `scene`, `camera`, `perspectiveCamera`, `orthographicCamera`, `renderer`, `orbit`, `animate()` | Three.js CDN imports |
+| Camera projection | `#orthographicViewsToggleBtn`, `useViewportCamera()`, `setStandardView()` | `viewport-settings.js` |
+| Resize/frame | `resize()`, `setOrthographicFrustumHeight()`, `fitObject()`, `frameSelected()` | `matchedOrthographicHeight()` |
 | Control visual | `rebuildControlVisuals()`, `updateControlVisuals()`, `applyControlAppearance()` | curve policy |
 | Visibility | `updateControlVisibility()`, `updateCurveSelectionStyles()` | viewport interaction policy |
 | Picking | `findControl()`, `selectControl()`, `findCurveAtEvent()`, `handleViewportClick()` | `interaction-policy.js`, `point-selection.js` |
@@ -37,6 +38,14 @@ transform: Curve root transform
 
 Reference Plane은 Curve mode와 별개의 `translate | rotate | scale | none` 도구 상태를 가진다. Plane gizmo를 켜면 앱 mode를 `orbit`으로 전환해 Curve/Point gizmo와 동시에 나타나지 않게 한다. 반대로 `edit`, `insert`, `transform`, `draw`로 들어가면 Plane gizmo를 숨긴다. `W/E/R`은 Plane gizmo가 활성화된 동안 Plane 도구를 바꾸며 `Q`는 gizmo를 숨긴다.
 
+## Camera projection 계약
+
+- `Persp`는 토글과 무관하게 항상 `perspectiveCamera`를 사용한다.
+- `Ortho Views` ON의 Front/Left/Back/Top은 `orthographicCamera`를 사용해 깊이에 따른 크기 왜곡을 없앤다. OFF에서는 표준 뷰도 `perspectiveCamera`를 사용한다.
+- 카메라 전환 전후의 target·보이는 세로 높이·방향을 맞춰 화면 크기가 급변하지 않게 한다. Orthographic 줌은 FOV가 아닌 `zoom`/frustum으로 처리한다.
+- active camera가 바뀐 즉시 `orbit.object`, 두 `TransformControls.camera`, picking/raycast에서 사용하는 `camera`를 같이 교체한다.
+- Orthographic 상태에서 `#cameraFov`를 비활성화하고, resize는 Perspective aspect와 Orthographic frustum을 모두 갱신한다.
+
 ## Picking 우선순위
 
 1. 현재 mode와 visibility가 Control pick을 허용하는지 검사한다.
@@ -54,6 +63,7 @@ Reference Plane은 Curve mode와 별개의 `translate | rotate | scale | none` �
 - `isTypingTarget()`이 text/number 입력 단축키 충돌을 막는가?
 - Mode 전환 시 stale gizmo 또는 axis drag가 남지 않는가?
 - Reference Plane과 Curve/Point TransformControls가 동시에 활성화되지 않고, 각 dragging 종료에서 OrbitControls와 Dirty 상태가 복구되는가?
+- Perspective↔Orthographic 전환 후 Orbit, Curve/Point·Reference Plane picking, 두 gizmo가 active camera를 계속 사용하는가?
 - Plane을 Viewport에서 클릭해 선택할 수 있고 W/E/R/Q가 입력 필드 포커스와 충돌하지 않는가?
 - Pointer cancel/up이 History transaction과 OrbitControls를 복구하는가?
 - Axis Lines OFF가 parent/child guide visibility, guide raycast, Translate gizmo 표시/입력을 모두 차단하고 다른 Point 선택을 막지 않는가? Rotate/Scale gizmo는 유지되어야 한다.
