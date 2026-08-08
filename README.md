@@ -9,6 +9,9 @@ Hair Mesh Web은 브라우저에서 Bézier 가이드를 그리고, 가이드를
 - Bézier Point/Handle 편집과 Point 추가·삭제·분할·평균화
 - 커브 전체 Transform과 Point별 단면 Offset/Rotate/Scale/Taper
 - Ribbon, Tube, Imported Mesh Brush 방식의 Live Mesh 생성
+- ZBrush 스타일 MatCap 재질로 Hair Mesh와 Import 모델 표시
+- 방향광 회전·강도·초기화와 Reference 전용 Wire Only / Surface + Wire 표시
+- Reference Wireframe 독립 선 색상과 Ground Grid 별도 표시
 - Quad/N-gon OBJ 및 실험적 FBX 7.4 ASCII 출력
 - 편집 가능한 `.hairmesh.json` 저장·열기
 - 브라우저 자동 복구와 최대 100단계 Undo/Redo
@@ -20,7 +23,7 @@ Hair Mesh Web은 브라우저에서 Bézier 가이드를 그리고, 가이드를
 - WebGL을 지원하는 최신 Chrome, Edge 또는 Firefox
 - 인터넷 연결
 
-Three.js와 Loader를 jsDelivr CDN에서 불러오므로 현재 버전은 최초 화면 로드와 모델 Import에 인터넷 연결이 필요합니다. 별도 `npm install`은 필요하지 않습니다.
+Three.js와 Loader를 jsDelivr CDN에서 불러오므로 현재 버전은 최초 화면 로드와 모델 Import에 인터넷 연결이 필요합니다. 앱 실행에는 `npm install`이 필요 없지만, 개발 검증과 Playwright 브라우저 QA를 실행하려면 먼저 `npm install`을 실행하십시오.
 
 ## 실행
 
@@ -50,7 +53,8 @@ HTML 파일을 직접 더블클릭하는 방식은 ES Module/CORS 제한 때문�
 4. Point, Bézier Handle 또는 `Point Cross-section` 값을 조정합니다.
 5. `Live Curve → Mesh`에서 Ribbon, Tube 또는 Imported Mesh Brush를 선택합니다.
 6. `Apply / Rebuild Live Mesh`를 누릅니다.
-7. `Save Project`로 편집본을 보존하거나 `Export` 탭에서 OBJ/FBX를 출력합니다.
+7. `Display → Viewport Material`에서 Hair와 Reference의 MatCap을 선택합니다. 필요하면 Lighting, Reference Wireframe, Grid를 각각 조정합니다.
+8. `Save Project`로 편집본을 보존하거나 `Export` 탭에서 OBJ/FBX를 출력합니다.
 
 프로젝트 자동 복구는 새로고침이나 비정상 종료에 대비한 보조 장치입니다. 중요한 작업은 `.hairmesh.json`으로 직접 저장하십시오. 기준 모델 자체는 프로젝트 파일에 포함되지 않습니다.
 
@@ -91,7 +95,7 @@ Hair_Mesh_Web/
 ├── src/
 │   ├── geometry/                  # Bézier·Sweep·메시 제한 계산
 │   ├── state/                     # History·프로젝트·선택·편집 정책
-│   ├── viewport/                  # Picking/축 드래그 정책
+│   ├── viewport/                  # Picking/축 드래그 + 재질/조명/Wire 표시 정책
 │   ├── ui/                        # 숫자 입력 Scrubber
 │   └── diagnostics/               # 브라우저 Self-test
 ├── tests/                         # Node 핵심 회귀 테스트와 Fixture
@@ -106,6 +110,7 @@ Hair_Mesh_Web/
 - 앱의 UI와 조립 로직 대부분은 `curve_mesh_hair_tool_v4.html`의 단일 `<script type="module">`에 있습니다.
 - FBX 출력은 ASCII 7.4 실험 기능이므로 대상 DCC에서 반드시 Import 결과를 확인해야 합니다.
 - 기준 모델은 세션 중 표면 배치용이며 `.hairmesh.json`에 직렬화되지 않습니다.
+- Viewport Material은 표시 전용입니다. Import 원본 재질은 보존되며 OBJ/FBX Export 형상에는 MatCap이 포함되지 않습니다.
 - 메시 예산은 Path Segments `2–512`, Tube Sides `3–64`로 제한됩니다.
 - 제품 평가, 안정화 근거와 후속 로드맵은 [재귀 제품 감사 보고서](docs/product-audit/recursive-audit.md)에 있습니다.
 

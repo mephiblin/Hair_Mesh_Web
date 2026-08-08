@@ -1,6 +1,6 @@
 ---
 name: hair-mesh-web-development
-description: Inspect, implement, debug, review, test, or document Hair Mesh Web features in this repository. Use for work involving curve creation/editing, Bézier handles, Three.js viewport interaction, Ribbon/Tube/Brush mesh generation, project save/recovery/history, model import, OBJ/FBX export, UI controls, or modularization of curve_mesh_hair_tool_v4.html.
+description: Inspect, implement, debug, review, test, or document Hair Mesh Web features in this repository. Use for work involving curve creation/editing, Bézier handles, Three.js viewport interaction, MatCap/material/light/wireframe display, Ribbon/Tube/Brush mesh generation, project save/recovery/history, model import, OBJ/FBX export, UI controls, or modularization of curve_mesh_hair_tool_v4.html.
 ---
 
 # Hair Mesh Web Development

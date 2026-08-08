@@ -2,7 +2,7 @@
 
 ## 범위
 
-Scene 초기화, picking, mode, TransformControls, axis guide, keyboard, 패널 availability와 display를 다룬다.
+Scene 초기화, picking, mode, TransformControls, axis guide, keyboard과 패널 availability를 다룬다. 재질·조명·Reference Wire·Grid는 [`viewport-display.md`](viewport-display.md)가 소유한다.
 
 ## 기능별 소유 심볼
 
@@ -18,7 +18,7 @@ Scene 초기화, picking, mode, TransformControls, axis guide, keyboard, 패널 
 | Gizmo | `syncGizmo()`, `beginGizmoDrag()`, `handleGizmoChange()`, `endGizmoDrag()` | TransformControls |
 | Axis guides | `syncAxisGuides()`, `startAxisGuideDrag()`, `updateAxisGuideDrag()` | `src/viewport/axis-guide-drag.js` |
 | UI availability | `updateCommandAvailability()`, `updatePointToolButtons()` | curve editability policy |
-| Display | `applyModelDisplay()`, `applyViewModeToCurve()` | HTML display inputs |
+| Curve mesh view | `applyViewModeToCurve()`, `#viewMode` | `viewport-display.md` |
 | Keyboard | `isTypingTarget()`, document `keydown` listener | README shortcut table |
 | Numeric scrub | `initNumericScrubbers()` | `src/ui/numeric-scrubber.js` |
 
@@ -56,4 +56,4 @@ transform: Curve root transform
 ## 검증
 
 - Self-test: visible-control pick policy, axis vector/plane/scalar.
-- Browser: 각 mode 전이, object/point/handle/axis picking, drag cancel, input focus shortcut, hidden/locked protection, narrow viewport layout.
+- Browser: 각 mode 전이, object/point/handle/axis picking, drag cancel, input focus shortcut, hidden/locked protection, narrow viewport layout. Display 변경은 `viewport-display.md`의 수용 시나리오를 추가한다.

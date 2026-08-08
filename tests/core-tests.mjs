@@ -11,6 +11,22 @@ import {
   parseProjectDocument,
   serializeProjectDocument
 } from '../src/state/project-format.js';
+import {
+  HAIR_MATERIAL_FALLBACK,
+  REFERENCE_MATERIAL_FALLBACK,
+  normalizeViewportMaterialPreset,
+  viewportMaterialDefinition
+} from '../src/viewport/material-presets.js';
+import {
+  DEFAULT_DIRECTIONAL_LIGHT,
+  directionalLightPosition,
+  normalizeDirectionalLightSettings
+} from '../src/viewport/lighting.js';
+import {
+  REFERENCE_WIRE_DEFAULTS,
+  normalizeReferenceWireColor,
+  normalizeReferenceWireMode
+} from '../src/viewport/reference-wireframe.js';
 
 const tests = [];
 function test(name, run) { tests.push({ name, run }); }
@@ -66,6 +82,31 @@ test('project parser rejects unrelated and future documents', () => {
     () => parseProjectDocument({ format: PROJECT_FORMAT, version: PROJECT_VERSION + 1, appState: { curves: [] } }),
     /더 새로운 프로젝트 버전/
   );
+});
+
+test('viewport material presets keep hair and imported reference fallbacks distinct', () => {
+  assert.equal(normalizeViewportMaterialPreset('red-wax'), 'red-wax');
+  assert.equal(normalizeViewportMaterialPreset('original'), HAIR_MATERIAL_FALLBACK);
+  assert.equal(normalizeViewportMaterialPreset('unknown'), HAIR_MATERIAL_FALLBACK);
+  assert.equal(normalizeViewportMaterialPreset('original', { allowOriginal: true }), REFERENCE_MATERIAL_FALLBACK);
+  assert.equal(viewportMaterialDefinition('silver').kind, 'matcap');
+  assert.equal(viewportMaterialDefinition('normal-check').kind, 'normal');
+});
+
+test('directional lighting clamps controls and maps default angles near the legacy position', () => {
+  const normalized = normalizeDirectionalLightSettings({ azimuth: 900, elevation: -200, intensity: -4 });
+  assert.deepEqual(normalized, { azimuth: 180, elevation: -89, intensity: 0, distance: DEFAULT_DIRECTIONAL_LIGHT.distance });
+  const position = directionalLightPosition(DEFAULT_DIRECTIONAL_LIGHT);
+  assert.ok(Math.abs(position.x - 3) < 0.02);
+  assert.ok(Math.abs(position.y - 5) < 0.001);
+  assert.ok(Math.abs(position.z - 4) < 0.02);
+});
+
+test('reference wireframe accepts only owned modes and six-digit colors', () => {
+  assert.equal(normalizeReferenceWireMode('overlay'), 'overlay');
+  assert.equal(normalizeReferenceWireMode('material-wire'), REFERENCE_WIRE_DEFAULTS.mode);
+  assert.equal(normalizeReferenceWireColor('#A0b1C2'), '#a0b1c2');
+  assert.equal(normalizeReferenceWireColor('red'), REFERENCE_WIRE_DEFAULTS.color);
 });
 
 let passed = 0;

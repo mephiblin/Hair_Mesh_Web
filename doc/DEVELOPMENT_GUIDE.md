@@ -7,7 +7,7 @@ Hair Mesh Web은 빌드 과정 없이 ES Module을 직접 제공하는 정적 �
 - `curve_mesh_hair_tool_v4.html`: UI 마크업/CSS, Three.js 객체 생명주기, 기능 조립을 소유합니다.
 - `src/geometry`: DOM과 무관한 Geometry 계산을 소유합니다.
 - `src/state`: 직렬화 가능한 상태와 사용자 행동 정책을 소유합니다.
-- `src/viewport`: Picking과 좌표 제약 계산을 소유합니다.
+- `src/viewport`: Picking/좌표 제약과 material/light/wire display 정규화 정책을 소유합니다.
 - `src/ui`: 재사용 가능한 DOM 상호작용을 소유합니다.
 - `src/diagnostics`: 실제 Three.js 런타임이 필요한 빠른 진단을 소유합니다.
 - `tests`: Node에서 실행 가능한 순수 정책/상태 회귀 테스트를 소유합니다.
@@ -21,6 +21,13 @@ python3 launch_server.py --port 8080
 ```
 
 수정 후 브라우저를 새로고침합니다. CDN 모듈을 사용하므로 네트워크가 필요합니다. 정적 파일만 제공하므로 별도 번들러나 개발 서버 의존성은 없습니다.
+
+최초 개발 검증 전에 Node 의존성과 Playwright Chromium을 준비합니다.
+
+```bash
+npm install
+npx playwright install chromium
+```
 
 커밋 전 최소 검증:
 

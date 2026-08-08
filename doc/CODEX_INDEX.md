@@ -22,8 +22,9 @@ external_runtime: three@0.180.0 via jsDelivr
 | Line, Curve, Point, Handle, Knot, Average, Insert, Delete | [`features/curve-editing.md`](features/curve-editing.md) | `makeCurveRecord`, `selectControl`, `BezierChainCurve` |
 | Ribbon, Tube, Brush, Sweep, topology, UV, cap, twist | [`features/mesh-generation.md`](features/mesh-generation.md) | `makeTopologyForCurve`, `rebuildCurveMesh` |
 | Save, Open, JSON, Recovery, Dirty, Undo, Redo, schema | [`features/project-state.md`](features/project-state.md) | `captureAppState`, `restoreAppState`, `createHistory` |
-| Viewport, picking, gizmo, mode, axis, keyboard, display | [`features/viewport-ui.md`](features/viewport-ui.md) | `setMode`, `syncGizmo`, `handleViewportClick` |
-| Reference model, OBJ/FBX/GLTF Import, Project/OBJ/FBX Export | [`features/io-export.md`](features/io-export.md) | `loadModel`, `loadBrushFile`, `exportQuadOBJ` |
+| Viewport, picking, gizmo, mode, axis, keyboard | [`features/viewport-ui.md`](features/viewport-ui.md) | `setMode`, `syncGizmo`, `handleViewportClick` |
+| Display, MatCap, material, directional light, wireframe, grid | [`features/viewport-display.md`](features/viewport-display.md) | `applyHairMaterialDisplay`, `applyLightingDisplay`, `applyReferenceWireframeDisplay` |
+| Reference model/material, OBJ/FBX/GLTF Import, Project/OBJ/FBX Export | [`features/io-export.md`](features/io-export.md) + material 변경이면 [`features/viewport-display.md`](features/viewport-display.md) | `loadModel`, `applyModelDisplay`, `exportQuadOBJ` |
 | 구조 분리, 새 모듈, 전반 개발 절차 | [`DEVELOPMENT_GUIDE.md`](DEVELOPMENT_GUIDE.md)와 관련 기능 문서 | HTML import block, `src/` exports |
 | 제품 평가, 우선순위, Blender 대비 범위 | [`../docs/product-audit/recursive-audit.md`](../docs/product-audit/recursive-audit.md) | 문서 목차 |
 
@@ -36,7 +37,7 @@ external_runtime: three@0.180.0 via jsDelivr
 | `curve_mesh_hair_tool_v4.html` | DOM, event wiring, Three.js Scene 객체, controller 조립 | 재사용 가능한 순수 정책의 장기 소유 |
 | `src/geometry/` | Bézier/Sweep/메시 제한 수학 | DOM, localStorage, 다운로드 |
 | `src/state/` | 직렬화, History, 선택·편집 정책 | Three.js Scene 생명주기 |
-| `src/viewport/` | Picking/axis constraint 정책 | 패널 UI와 프로젝트 저장 |
+| `src/viewport/` | Picking/axis constraint, material/light/wire 정규화 정책 | 패널 UI와 Three.js Scene 객체 생명주기 |
 | `src/ui/` | 재사용 DOM interaction | 앱 전역 상태 |
 | `src/diagnostics/` | 브라우저 런타임 self-check | Node-only 회귀 테스트 |
 | `tests/` | DOM 없는 계약과 fixture | 시각적/포인터 수용 테스트 |
@@ -67,6 +68,10 @@ path_segments: 2..512
 tube_sides: 3..64
 history_limit: 100
 project_reference_model_embedded: false
+project_reference_material_embedded: false
+viewport_material: display-only, preserve imported original
+reference_wireframe: independent LineSegments, never mutate imported material wireframe
+directional_light: azimuth/elevation/intensity persisted, MatCap unaffected
 export_topology: preserve logical quad/ngon faces
 resource_cleanup: dispose removed geometry and material
 ```
@@ -91,6 +96,7 @@ resource_cleanup: dispose removed geometry and material
 5. 숨김/잠금 Curve가 포인터, 숫자 입력, 단축키로 수정되지 않는지 확인한다.
 6. 프로젝트 저장/열기와 새로고침 자동 복구를 확인한다.
 7. 관련 변경이면 OBJ/FBX를 대상 DCC에 Import한다.
+8. Display 변경이면 Hair/Reference preset, 조명 reset, Wire Only/Surface + Wire, Wire color, Grid 독립 전환과 Recovery를 확인한다.
 
 ## 8. 탐색 명령
 

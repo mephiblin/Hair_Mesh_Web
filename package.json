@@ -6,5 +6,8 @@
   "scripts": {
     "test": "node tests/core-tests.mjs",
     "check": "npm test && node --check src/**/*.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.62.1"
   }
 }

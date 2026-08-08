@@ -35,6 +35,7 @@ settings/curve change
 | Tube | `makeTubeTopology()` | HTML composition root |
 | Brush sweep | `makeBrushTopology()` | HTML composition root |
 | 렌더 Geometry | `topologyToGeometry()`, `topologyToWireGeometry()` | HTML composition root |
+| Hair 표시 Material | `createViewportMaterial()`, `applyHairMaterialDisplay()` | HTML + `src/viewport/material-presets.js` |
 | Live lifecycle | `rebuildCurveMesh()`, `removeCurveMesh()`, `failCurveMesh()` | HTML composition root |
 | 상태 판정 | `hasReadyMesh()` | `src/state/curve-policy.js` |
 
@@ -68,11 +69,12 @@ UI의 체크/배지는 `meshEnabled`만 보지 말고 `curveHasReadyMesh()`를 �
 - Tube cap face winding과 normal이 올바른가?
 - 실패 시 이전 topology가 Ready처럼 남지 않는가?
 - rebuild/remove 시 이전 Geometry와 Material을 dispose하는가?
+- Hair material preset 변경 시 topology/UV/face가 유지되고 교체된 Material만 dispose되는가?
 - Brush가 프로젝트 복원 후에도 같은 topology를 생성하는가?
 
 ## 검증
 
 - Node: mesh budget clamp, Live-ready policy.
 - Self-test: sweep frame finite/continuity/twist correction.
-- Browser: Ribbon/Tube/Brush 생성, Segment 2/512, Sides 3/64, caps, UV, smooth/wire, invalid Brush error와 복구.
+- Browser: Ribbon/Tube/Brush 생성, Segment 2/512, Sides 3/64, caps, UV, smooth/wire, 모든 Hair material preset, invalid Brush error와 복구.
 - Export 영향이 있으면 `io-export.md` 검증도 수행한다.

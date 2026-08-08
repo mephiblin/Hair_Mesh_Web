@@ -17,6 +17,7 @@
 - [Mesh 생성](features/mesh-generation.md)
 - [프로젝트·History](features/project-state.md)
 - [Viewport·UI](features/viewport-ui.md)
+- [Viewport Display](features/viewport-display.md)
 - [Import·Export](features/io-export.md)
 
 루트의 기존 분석 자료도 보조 자료로 유지합니다.
