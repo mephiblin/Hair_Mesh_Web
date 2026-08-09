@@ -13,14 +13,14 @@ Line 생성, Curve/Point/Handle 선택, Bézier 계산, Point topology 변경, �
 | Bézier 평가 | `BezierChainCurve.getPoint()`, `.getTangent()` | `geometry/bezier-handles.js` | Point position/tangents |
 | Line 생성 | `beginLineCreation()`, `addPoint()`, `finishLineCreation()`, `cancelLineCreation()` | `state/line-creation-policy.js` | `drawingCurve`, `creationPreviousCurve`, `mode` |
 | Curve 선택 | `selectCurve()`, `toggleCurveSelection()`, `refreshCurveList()` | `state/curve-selection.js` | `selectedCurve`, `selectedCurveIds`, `lastControl` |
-| Control 선택 | `selectControl()`, `selectAllCurvePoints()` | `state/point-selection.js` | `selectedControl`, `selectedPointIndices` |
+| Control 선택 | `selectControl()`, `selectAllCurvePoints()` | `state/point-selection.js`의 `pointTransformIndices()` 포함 | `selectedControl`, `selectedPointIndices` |
 | Point split/insert | `splitCurveSegment()`, `insertPointAtRawParameter()`, `insertRelativeToSelected()` | — | `curve.points[]` |
 | Point 제거 | `#deletePointBtn`, `finishPointTopologyChange()` | line minimum policy | selection + points |
 | Knot/Handle | `setSelectedKnotType()`, `resetSelectedTangents()` | `geometry/bezier-handles.js` | tangent/type/mode fields |
 | Average | `averageSelectedGeometry()`, `#averageAmount` | Point selection module | selected point set |
 | Viewport RMB | `renderCurveContextMenu()`, `openViewportContextMenu()` | `ui/context-menu.js` 위치 clamp | active Curve/Point/Live state |
 | Root Transform | `setObjectTransformMode()`, `handleGizmoChange()` | — | `curve.group` transform |
-| Point/단면 Transform | `setPointTool()`, `applyPointUnitTransform()`, `handleGizmoChange()` | Handle constraint module | point position/offset/rotation/scale |
+| Point/단면 Transform | `setPointTool()`, `applyPointGroupTransform()`, `handleGizmoChange()` | Handle constraint module | point position/offset/rotation/scale |
 | 숫자 단면 | `updatePointPanel()`, `#applyPointValuesBtn`, `#makeTipBtn`, `#resetSectionBtn` | `ui/numeric-scrubber.js` | point section fields |
 
 ## Point 직렬화 스키마
@@ -71,6 +71,7 @@ point/handle transform
 - Curve root 선택은 0개도 유효하다. Select/Object 모드의 빈 Viewport 클릭 또는 단일 Curve 삭제는 남은 첫 Curve를 강제 선택하지 않고 `selectedCurve = null`, 빈 `selectedCurveIds`를 유지한다. 다중 Curve 중 active 하나만 삭제한 경우에는 남아 있던 선택의 마지막 Curve가 active가 된다.
 - Curve line/Live Mesh RMB는 포인터 아래 Curve를 활성화하고 Average, Curve Object, Live Mesh 명령을 제공한다. 각 메뉴 항목은 기존 panel/shortcut command를 호출하며 별도 편집 구현을 갖지 않는다.
 - 잠긴 Curve는 Viewport의 line/Live Mesh/control pick과 RMB 대상에서 제외한다. Scene Explorer 행은 계속 선택할 수 있어 잠금 상태를 확인하고 해제할 수 있다.
+- Point Move·Rotate·Scale은 선택된 Anchor 전체를 대상으로 하며 gizmo는 선택 위치의 평균 중심에 놓인다. Rotate/Scale은 그 공통 중심을 기준으로 모든 선택 Anchor, Tangent, 단면 변환을 함께 갱신한다. Section Move·Rotate·Scale과 개별 Bézier Handle 이동은 활성 Point 하나만 대상으로 한다.
 
 ## 변경 체크리스트
 
@@ -82,10 +83,11 @@ point/handle transform
 - Handle 이동 후 aligned/automatic 의존 Handle이 갱신되는가?
 - Live Mesh가 켜져 있으면 단 한 번의 의미 있는 rebuild가 일어나는가?
 - Drag 또는 연속 input이 한 번의 Undo로 복원되는가?
+- 다중 Anchor 선택 후 Point Move·Rotate·Scale의 gizmo가 공통 중심에 있고 선택 전체가 한 번의 Undo로 함께 복원되는가?
 - RMB Average/Object/Live Mesh 명령이 panel과 동일한 editability, History, Live 상태 전이를 사용하는가?
 
 ## 검증
 
-- Node: line minimum, Point/Curve selection normalize/toggle/active fallback.
+- Node: line minimum, Point/Curve selection normalize/toggle/active fallback, Point group transform 대상 집합.
 - Self-test: Bézier handle finite/constraint 관련 검사.
-- Browser: create/cancel/finish, Ctrl/⌘ Point 토글과 0개 해제/재선택, Scene Curve 행 다중 선택/활성 전환, split/delete, multi-select average, handle mode, root/point/section transform, Curve RMB Average/Object/Live toggle, Undo/Redo.
+- Browser: create/cancel/finish, Ctrl/⌘ Point 토글과 0개 해제/재선택, Scene Curve 행 다중 선택/활성 전환, split/delete, multi-select average, handle mode, 다중 Point 공통 중심 Move/Rotate/Scale, 단일 Point section transform, Curve RMB Average/Object/Live toggle, Undo/Redo.

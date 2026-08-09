@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { createHistory } from '../src/state/history.js';
 import { canFinishLine, lineCreationExitAction } from '../src/state/line-creation-policy.js';
-import { allPointIndices, normalizePointSelection, selectedPointIndices, togglePointSelection } from '../src/state/point-selection.js';
+import { allPointIndices, normalizePointSelection, pointTransformIndices, selectedPointIndices, togglePointSelection } from '../src/state/point-selection.js';
 import { activeCurveId, normalizeCurveSelection, selectedCurveIds, toggleCurveSelection } from '../src/state/curve-selection.js';
 import { applyControlSelection, controlSelectionOperation, orderedControlSelection } from '../src/state/control-selection.js';
 import { controlsInSelectionRectangle, selectionRectangle } from '../src/viewport/region-selection.js';
@@ -151,6 +151,15 @@ test('command-click point selection toggles indices within one curve', () => {
   selection = togglePointSelection(selection, 3, 5);
   assert.deepEqual(selectedPointIndices(selection, 5), []);
   assert.deepEqual(selectedPointIndices(togglePointSelection(selection, 9, 5), 5), []);
+});
+
+test('point transforms keep group tools on every selected anchor', () => {
+  const selection = new Set([0, 2, 3]);
+  assert.deepEqual(pointTransformIndices(selection, 4, 2, 'anchor', 'pointMove'), [0, 2, 3]);
+  assert.deepEqual(pointTransformIndices(selection, 4, 2, 'anchor', 'pointRotate'), [0, 2, 3]);
+  assert.deepEqual(pointTransformIndices(selection, 4, 2, 'anchor', 'pointScale'), [0, 2, 3]);
+  assert.deepEqual(pointTransformIndices(selection, 4, 2, 'anchor', 'sectionRotate'), [2]);
+  assert.deepEqual(pointTransformIndices(selection, 4, 2, 'in', 'tangentMove'), [2]);
 });
 
 test('command-click curve selection toggles rows and resolves an active curve', () => {

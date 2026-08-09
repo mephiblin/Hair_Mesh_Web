@@ -490,7 +490,7 @@ import { normalizeMeshBudget } from './src/geometry/mesh-limits.js';
 import { buildProxyTopology, defaultProxySettings, normalizeProxySettings, proxyTopologyStats } from './src/geometry/proxy-primitives.js';
 import { cloneFfdModifier, createFfdModifier, evaluateFfdStack, ffdControlPointPositions, normalizeFfdModifier, setFfdControlPointPosition } from './src/geometry/ffd-lattice.js';
 import { canFinishLine, lineCreationExitAction, MIN_LINE_POINTS } from './src/state/line-creation-policy.js';
-import { allPointIndices, normalizePointSelection, selectedPointIndices as orderedPointSelection, togglePointSelection } from './src/state/point-selection.js';
+import { allPointIndices, normalizePointSelection, pointTransformIndices, selectedPointIndices as orderedPointSelection, togglePointSelection } from './src/state/point-selection.js';
 import { activeCurveId, normalizeCurveSelection, selectedCurveIds as orderedCurveSelection, toggleCurveSelection as toggleCurveSelectionIds } from './src/state/curve-selection.js';
 import { applyControlSelection, controlSelectionOperation, normalizeControlSelection, orderedControlSelection } from './src/state/control-selection.js';
 import { controlsInSelectionRectangle, selectionRectangle } from './src/viewport/region-selection.js';
@@ -3955,20 +3955,27 @@ function syncGizmo() {
     const p = selectedPoint(); if (!p) return;
     const tangent = selectedControl.kind !== 'anchor';
     const operation = tangent ? 'translate' : (pointTool === 'pointRotate' || pointTool === 'sectionRotate') ? 'rotate' : (pointTool === 'pointScale' || pointTool === 'sectionScale') ? 'scale' : 'translate';
+    const pointIndices = pointTransformIndices(
+      selectedPointIndices,
+      selectedCurve.points.length,
+      selectedControl.pointIndex,
+      selectedControl.kind,
+      tangent ? 'tangentMove' : pointTool
+    );
     let position;
     if (tangent) {
       const local = p.position.clone().add(selectedControl.kind === 'in' ? p.inTangent : p.outTangent); position = selectedCurve.group.localToWorld(local);
     } else if (pointTool.startsWith('section')) {
       const e = evaluateControlPoint(selectedCurve, selectedControl.pointIndex); if (!e) return; position = selectedCurve.group.localToWorld(e.center.clone());
-    } else if (pointTool === 'pointMove' && selectedPointIndices.size > 1) {
-      position = averageWorldPosition(selectedCurve.group, selectedPointTargetIndices().map(index => selectedCurve.points[index].position));
+    } else if (pointIndices.length > 1) {
+      position = averageWorldPosition(selectedCurve.group, pointIndices.map(index => selectedCurve.points[index].position));
     } else position = pointWorldPosition(selectedCurve, p);
     const q = coordinateFrameQuaternion($('transformSpace').value, selectedCurve, selectedControl.pointIndex);
     setProxyTransform(position, q); transformControls.attach(gizmoProxy); transformControls.setMode(operation);
     transformControls.showX = true; transformControls.showY = pointTool !== 'sectionScale'; transformControls.showZ = true;
     const helperVisible = shouldShowTransformHelper({ axisGuidesEnabled, operation });
     transformControls.enabled = helperVisible; transformControls.getHelper().visible = helperVisible;
-    gizmoContext = { type:'point', curve:selectedCurve, pointIndex:selectedControl.pointIndex, pointIndices:!tangent && pointTool === 'pointMove' ? selectedPointTargetIndices() : [selectedControl.pointIndex], kind:selectedControl.kind, tool:tangent ? 'tangentMove' : pointTool, operation };
+    gizmoContext = { type:'point', curve:selectedCurve, pointIndex:selectedControl.pointIndex, pointIndices, kind:selectedControl.kind, tool:tangent ? 'tangentMove' : pointTool, operation };
     syncAxisGuides();
   }
 }
@@ -3989,8 +3996,8 @@ function beginGizmoDrag() {
   else if (ctx.tool === 'pointMove') gizmoDrag.pointStarts = new Map(ctx.pointIndices.map(index => [index, ctx.curve.points[index].position.clone()]));
   else if (ctx.tool === 'sectionRotate' || ctx.tool === 'sectionScale') gizmoDrag.targetStart = sectionWorldMatrix(ctx.curve, ctx.pointIndex);
   else if (ctx.tool === 'pointRotate' || ctx.tool === 'pointScale') {
-    gizmoDrag.pointStart = clonePointRecord(ctx.curve.points[ctx.pointIndex]);
-    gizmoDrag.sectionWorldStart = sectionWorldMatrix(ctx.curve, ctx.pointIndex);
+    gizmoDrag.pointStarts = new Map(ctx.pointIndices.map(index => [index, clonePointRecord(ctx.curve.points[index])]));
+    gizmoDrag.sectionWorldStarts = new Map(ctx.pointIndices.map(index => [index, sectionWorldMatrix(ctx.curve, index)]));
   }
 }
 function endGizmoDrag() { const wasFfd = gizmoDrag?.context?.type === 'ffd'; transformDragging = false; gizmoDrag = null; history.commit(); if (wasFfd && selectedProxy) syncProxyModifierUI(selectedProxy); updatePointPanel(); syncGizmo(); updateMeshStats(); }
@@ -4006,37 +4013,44 @@ function gizmoTranslationInLocalSpace(group) {
   return group.worldToLocal(currentWorld.clone()).sub(group.worldToLocal(startWorld.clone()));
 }
 
-function applyPointUnitTransform(curve, pointIndex, operation) {
-  const point = curve.points[pointIndex], start = gizmoDrag.pointStart;
-  if (!point || !start) return;
+function applyPointGroupTransform(curve, pointIndices, operation) {
+  const indices = pointIndices.filter(index => curve.points[index] && gizmoDrag.pointStarts?.has(index));
+  if (!indices.length) return;
   curve.group.updateMatrixWorld(true);
   const deltaWorld = currentDeltaMatrix();
   const localDelta = curve.group.matrixWorld.clone().invert().multiply(deltaWorld).multiply(curve.group.matrixWorld);
-  const anchor = start.position.clone().applyMatrix4(localDelta);
-  const inEnd = start.position.clone().add(start.inTangent).applyMatrix4(localDelta);
-  const outEnd = start.position.clone().add(start.outTangent).applyMatrix4(localDelta);
-  point.position.copy(anchor);
-  point.inTangent.copy(inEnd.sub(anchor));
-  point.outTangent.copy(outEnd.sub(anchor));
-
-  const desiredWorld = deltaWorld.multiply(gizmoDrag.sectionWorldStart);
-  const desiredLocal = curve.group.matrixWorld.clone().invert().multiply(desiredWorld);
-  const center = new THREE.Vector3(), orientation = new THREE.Quaternion(), scale = new THREE.Vector3();
-  desiredLocal.decompose(center, orientation, scale);
-  const evaluated = evaluateControlPoint(curve, pointIndex);
-  if (evaluated) {
-    const offset = center.sub(point.position);
-    const baseX = new THREE.Vector3(1,0,0).applyQuaternion(evaluated.baseQuat);
-    const baseY = new THREE.Vector3(0,1,0).applyQuaternion(evaluated.baseQuat);
-    const baseZ = new THREE.Vector3(0,0,1).applyQuaternion(evaluated.baseQuat);
-    point.offset.set(offset.dot(baseX), offset.dot(baseY), offset.dot(baseZ));
-    point.rotation.copy(evaluated.baseQuat.clone().invert().multiply(orientation).normalize());
-  }
-  if (operation === 'scale') {
-    point.scaleX = Math.max(Math.abs(scale.x), 0);
-    point.scaleZ = Math.max(Math.abs(scale.z), 0);
-  }
-  markPointHandlesTransformed(point);
+  indices.forEach(index => {
+    const point = curve.points[index], start = gizmoDrag.pointStarts.get(index);
+    const anchor = start.position.clone().applyMatrix4(localDelta);
+    const inEnd = start.position.clone().add(start.inTangent).applyMatrix4(localDelta);
+    const outEnd = start.position.clone().add(start.outTangent).applyMatrix4(localDelta);
+    point.position.copy(anchor);
+    point.inTangent.copy(inEnd.sub(anchor));
+    point.outTangent.copy(outEnd.sub(anchor));
+  });
+  indices.forEach(index => {
+    const point = curve.points[index];
+    const sectionWorldStart = gizmoDrag.sectionWorldStarts?.get(index);
+    if (!sectionWorldStart) return;
+    const desiredWorld = deltaWorld.clone().multiply(sectionWorldStart);
+    const desiredLocal = curve.group.matrixWorld.clone().invert().multiply(desiredWorld);
+    const center = new THREE.Vector3(), orientation = new THREE.Quaternion(), scale = new THREE.Vector3();
+    desiredLocal.decompose(center, orientation, scale);
+    const evaluated = evaluateControlPoint(curve, index);
+    if (evaluated) {
+      const offset = center.sub(point.position);
+      const baseX = new THREE.Vector3(1,0,0).applyQuaternion(evaluated.baseQuat);
+      const baseY = new THREE.Vector3(0,1,0).applyQuaternion(evaluated.baseQuat);
+      const baseZ = new THREE.Vector3(0,0,1).applyQuaternion(evaluated.baseQuat);
+      point.offset.set(offset.dot(baseX), offset.dot(baseY), offset.dot(baseZ));
+      point.rotation.copy(evaluated.baseQuat.clone().invert().multiply(orientation).normalize());
+    }
+    if (operation === 'scale') {
+      point.scaleX = Math.max(Math.abs(scale.x), 0);
+      point.scaleZ = Math.max(Math.abs(scale.z), 0);
+    }
+    markPointHandlesTransformed(point);
+  });
   updateControlVisuals(curve);
   updateCurveVisual(curve);
   if (curve.meshEnabled) rebuildCurveMesh(curve, false);
@@ -4072,7 +4086,7 @@ function handleGizmoChange() {
     ctx.pointIndices.forEach(index => refreshDependentNeighborhood(curve.points, index));
     updateControlVisuals(curve); updateCurveVisual(curve); if (curve.meshEnabled) rebuildCurveMesh(curve, false);
   } else if (ctx.tool === 'pointRotate' || ctx.tool === 'pointScale') {
-    applyPointUnitTransform(curve, ctx.pointIndex, ctx.operation);
+    applyPointGroupTransform(curve, ctx.pointIndices, ctx.operation);
   } else if (ctx.tool === 'sectionMove') {
     const local = curve.group.worldToLocal(gizmoProxy.position.clone()), path = curveObject(curve), raw = ctx.pointIndex / Math.max(1, curve.points.length - 1), arc = rawToArc(path, raw), sweep = evaluateSweep(curve, buildSweepContext(curve, Math.max(64, curve.settings.segments)), arc);
     const baseCenter = path.getPoint(raw), diff = local.sub(baseCenter);
@@ -5549,6 +5563,7 @@ if (new URLSearchParams(location.search).has('selftest')) {
       const ffdIndices = ffdSelectionIndices();
       const modifier = activeProxyModifier();
       const curvePath = curveObject(selectedCurve);
+      const curvePointIndices = selectedPointTargetIndices();
       let curveMidpoint = null;
       if (curvePath && selectedCurve) {
         selectedCurve.group.updateMatrixWorld(true);
@@ -5595,6 +5610,12 @@ if (new URLSearchParams(location.search).has('selftest')) {
         selectedCurveLocked:selectedCurve?.locked ?? null,
         selectedCurveMeshEnabled:selectedCurve?.meshEnabled ?? null,
         selectedCurveMidpointScreenPosition:curveMidpoint,
+        selectedCurvePointIndices:curvePointIndices,
+        selectedCurvePointPositions:selectedCurve?.points.map(point => point.position.toArray()) || [],
+        selectedCurveControlScreenPositions:selectedCurve?.points.map(point => screenPoint(point._visual.anchor)) || [],
+        pointTool,
+        gizmoPointIndices:gizmoContext?.type === 'point' ? [...gizmoContext.pointIndices] : [],
+        gizmoScreenPosition:gizmoContext ? screenPoint(gizmoProxy) : null,
         contextMenuVisible:!viewportContextMenu.hidden,
         contextMenuKind:viewportContextTarget?.kind || null,
         contextMenuCommands:[...viewportContextMenu.querySelectorAll('[data-context-command]')].map(button => ({

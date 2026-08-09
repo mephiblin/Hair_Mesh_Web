@@ -15,7 +15,7 @@ browser_regression: tests/viewport-regression.mjs
 project_format: .hairmesh.json, version 1
 external_runtime: three@0.180.0 via jsDelivr
 default_branch: master
-current_node_contracts: 31
+current_node_contracts: 32
 current_browser_self_checks: 24
 ```
 
@@ -75,6 +75,7 @@ active_root_object: selectedCurve와 selectedProxy는 상호 배타적이며 둘
 empty_root_selection: orbit/transform 빈 LMB는 root/control 선택과 gizmo를 해제; edit/ffd 빈 LMB는 root를 유지하고 sub-control만 해제
 modify_context: none XOR curve XOR proxy
 point_multi_selection: Ctrl/Cmd + active-curve anchor toggles membership, empty selection allowed
+point_group_transform: Point Move/Rotate/Scale use the full selected Anchor set and its shared center; Section tools and tangent handles remain active-point-only
 control_region_selection: left-to-right Window, right-to-left Crossing; Ctrl add, Alt remove
 max_viewport_navigation: MMB pan, Alt+MMB orbit, Ctrl+Alt+MMB zoom, wheel zoom
 max_viewport_views: direct T/B/F/L/P/U; V opens POV menu; V then K selects Back; disabled for typing targets

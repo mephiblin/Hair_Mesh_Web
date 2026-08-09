@@ -32,3 +32,13 @@ export function togglePointSelection(selection, pointIndex, pointCount) {
   else normalized.add(index);
   return normalized;
 }
+
+const GROUP_POINT_TOOLS = new Set(['pointMove', 'pointRotate', 'pointScale']);
+
+export function pointTransformIndices(selection, pointCount, activeIndex, kind = 'anchor', tool = 'pointMove') {
+  const count = normalizedPointCount(pointCount);
+  const active = Number(activeIndex);
+  if (!Number.isInteger(active) || active < 0 || active >= count) return [];
+  if (kind !== 'anchor' || !GROUP_POINT_TOOLS.has(tool)) return [active];
+  return selectedPointIndices(selection, count, active);
+}

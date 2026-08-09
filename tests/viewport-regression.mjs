@@ -60,6 +60,72 @@ try {
   const selfTest = await page.evaluate(() => globalThis.__CURVE_TOOL_SELF_TEST__);
   assert.equal(selfTest.passed, true, 'browser core self-test must pass');
 
+  const curvePage = await browser.newPage({ viewport:{ width:1600, height:900 } });
+  await curvePage.addInitScript(() => localStorage.clear());
+  await curvePage.goto(`${url}?selftest=1`, { waitUntil:'networkidle' });
+  await curvePage.evaluate(() => document.getElementById('newCurveBtn').click());
+  await curvePage.mouse.click(350, 220);
+  await curvePage.mouse.click(650, 220);
+  await curvePage.mouse.click(500, 460);
+  await curvePage.evaluate(() => document.getElementById('createEditBtn').click());
+  let curveRuntime = await curvePage.evaluate(() => globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__);
+  const curveControls = curveRuntime.selectedCurveControlScreenPositions;
+  await curvePage.mouse.click(curveControls[0].x, curveControls[0].y);
+  await curvePage.keyboard.down('Control');
+  await curvePage.mouse.click(curveControls[2].x, curveControls[2].y);
+  await curvePage.keyboard.up('Control');
+  curveRuntime = await curvePage.evaluate(() => globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__);
+  assert.deepEqual(curveRuntime.selectedCurvePointIndices, [0, 2], 'Ctrl-click must keep both Curve anchors selected');
+
+  await curvePage.keyboard.press('E');
+  curveRuntime = await curvePage.evaluate(() => globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__);
+  assert.equal(curveRuntime.pointTool, 'pointRotate');
+  assert.deepEqual(curveRuntime.gizmoPointIndices, [0, 2], 'Point Rotate must target every selected Curve anchor');
+  const pointPositionsBeforeRotate = curveRuntime.selectedCurvePointPositions;
+  const rotateGizmo = curveRuntime.gizmoScreenPosition;
+  await curvePage.mouse.move(rotateGizmo.x + 90, rotateGizmo.y);
+  await curvePage.mouse.down();
+  await curvePage.mouse.move(rotateGizmo.x, rotateGizmo.y - 90, { steps:18 });
+  await curvePage.mouse.up();
+  curveRuntime = await curvePage.evaluate(() => globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__);
+  const pointPositionsAfterRotate = curveRuntime.selectedCurvePointPositions;
+  assert.ok(pointPositionsAfterRotate[0].some((value, axis) => Math.abs(value - pointPositionsBeforeRotate[0][axis]) > 1e-5), 'Rotate gizmo drag must move the first selected Anchor');
+  assert.ok(pointPositionsAfterRotate[2].some((value, axis) => Math.abs(value - pointPositionsBeforeRotate[2][axis]) > 1e-5), 'Rotate gizmo drag must move the second selected Anchor');
+  assert.ok(pointPositionsAfterRotate[1].every((value, axis) => Math.abs(value - pointPositionsBeforeRotate[1][axis]) < 1e-8), 'Rotate gizmo drag must leave an unselected Anchor unchanged');
+  assert.ok(pointPositionsAfterRotate[0].map((value, axis) => (value + pointPositionsAfterRotate[2][axis]) * .5).every((value, axis) => Math.abs(value - (pointPositionsBeforeRotate[0][axis] + pointPositionsBeforeRotate[2][axis]) * .5) < 1e-8), 'Rotate gizmo drag must preserve the shared selection center');
+  await curvePage.keyboard.press('Control+z');
+  curveRuntime = await curvePage.evaluate(() => globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__);
+  assert.ok(curveRuntime.selectedCurvePointPositions.flatMap((point, index) => point.map((value, axis) => Math.abs(value - pointPositionsBeforeRotate[index][axis]))).every(delta => delta < 1e-8), 'one Undo must restore the multi-Point rotation');
+  await curvePage.keyboard.press('Control+y');
+  curveRuntime = await curvePage.evaluate(() => globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__);
+  assert.ok(curveRuntime.selectedCurvePointPositions.flatMap((point, index) => point.map((value, axis) => Math.abs(value - pointPositionsAfterRotate[index][axis]))).every(delta => delta < 1e-8), 'one Redo must restore the multi-Point rotation');
+  await curvePage.keyboard.press('Control+z');
+
+  await curvePage.keyboard.press('R');
+  curveRuntime = await curvePage.evaluate(() => globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__);
+  assert.equal(curveRuntime.pointTool, 'pointScale');
+  assert.deepEqual(curveRuntime.gizmoPointIndices, [0, 2], 'Point Scale must target every selected Curve anchor');
+  const pointPositionsBeforeScale = curveRuntime.selectedCurvePointPositions;
+  const scaleGizmo = curveRuntime.gizmoScreenPosition;
+  await curvePage.mouse.move(scaleGizmo.x + 58, scaleGizmo.y + 18);
+  await curvePage.mouse.down();
+  await curvePage.mouse.move(scaleGizmo.x + 110, scaleGizmo.y + 35, { steps:18 });
+  await curvePage.mouse.up();
+  curveRuntime = await curvePage.evaluate(() => globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__);
+  const pointPositionsAfterScale = curveRuntime.selectedCurvePointPositions;
+  assert.ok(pointPositionsAfterScale[0].some((value, axis) => Math.abs(value - pointPositionsBeforeScale[0][axis]) > 1e-5), 'Scale gizmo drag must move the first selected Anchor');
+  assert.ok(pointPositionsAfterScale[2].some((value, axis) => Math.abs(value - pointPositionsBeforeScale[2][axis]) > 1e-5), 'Scale gizmo drag must move the second selected Anchor');
+  assert.ok(pointPositionsAfterScale[1].every((value, axis) => Math.abs(value - pointPositionsBeforeScale[1][axis]) < 1e-8), 'Scale gizmo drag must leave an unselected Anchor unchanged');
+  assert.ok(pointPositionsAfterScale[0].map((value, axis) => (value + pointPositionsAfterScale[2][axis]) * .5).every((value, axis) => Math.abs(value - (pointPositionsBeforeScale[0][axis] + pointPositionsBeforeScale[2][axis]) * .5) < 1e-8), 'Scale gizmo drag must preserve the shared selection center');
+  await curvePage.keyboard.press('Control+z');
+  curveRuntime = await curvePage.evaluate(() => globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__);
+  assert.ok(curveRuntime.selectedCurvePointPositions.flatMap((point, index) => point.map((value, axis) => Math.abs(value - pointPositionsBeforeScale[index][axis]))).every(delta => delta < 1e-8), 'one Undo must restore the multi-Point scale');
+  await curvePage.keyboard.press('Control+y');
+  curveRuntime = await curvePage.evaluate(() => globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__);
+  assert.ok(curveRuntime.selectedCurvePointPositions.flatMap((point, index) => point.map((value, axis) => Math.abs(value - pointPositionsAfterScale[index][axis]))).every(delta => delta < 1e-8), 'one Redo must restore the multi-Point scale');
+  await curvePage.keyboard.press('Control+z');
+  await curvePage.close();
+
   await page.keyboard.press('T');
   let runtime = await page.evaluate(() => globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__);
   assert.equal(runtime.activeStandardView, 'top', 'T must open the 3ds Max Top view');
@@ -340,7 +406,7 @@ try {
   assert.ok(compactViewCube.x + compactViewCube.width <= compactViewport.x + compactViewport.width + 1);
   assert.deepEqual(runtimeErrors, [], 'browser runtime must not report errors');
 
-  console.log(`PASS viewport regression · self-test ${selfTest.tests.length}/${selfTest.tests.length} · 3ds T/B/F/L/P/U + V/K views · ViewCube face/drag/keyboard/Home · separate selection badge · empty object selection · Axis/gizmo split · FFD highlight/drag/toggle · context menus · locked object pick exclusion · 1024px layout`);
+  console.log(`PASS viewport regression · self-test ${selfTest.tests.length}/${selfTest.tests.length} · 3ds T/B/F/L/P/U + V/K views · ViewCube face/drag/keyboard/Home · separate selection badge · empty object selection · Axis/gizmo split · Curve multi-point Rotate/Scale targeting · FFD highlight/drag/toggle · context menus · locked object pick exclusion · 1024px layout`);
 } finally {
   if (browser) await browser.close();
   await stopServer(server);

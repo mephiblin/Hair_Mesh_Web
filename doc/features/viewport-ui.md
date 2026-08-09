@@ -57,6 +57,7 @@ Reference Plane은 Curve mode와 별개의 `translate | rotate | scale | none` �
 - FFD와 Curve Anchor의 빈 영역 LMB drag는 Rectangle Region이다. 좌→우 Window, 우→좌 Crossing 자동 방향을 사용한다.
 - Region의 Ctrl/⌘는 Add, Alt는 Remove다. Control Ctrl/⌘ 클릭은 기존 사용자 계약대로 Add/Toggle이고 Alt 클릭은 Remove다.
 - Move 도구에서 선택 Control을 직접 drag하면 camera-facing plane을 따라 이동하며, 선택이 여러 개면 selection center gizmo와 같은 집합을 움직인다.
+- Curve Point Move·Rotate·Scale gizmo는 선택된 Anchor 전체의 평균 위치를 공통 pivot으로 사용한다. Rotate/Scale도 활성 Anchor 하나로 축소하지 않고 같은 선택 집합을 변환한다.
 - Proxy Object Move 모드에서 Proxy 표면을 직접 drag하면 camera-facing plane을 따라 root object가 이동한다. FFD/Edit에서 drag되지 않은 click은 Scene object 선택으로 전달해 다른 Proxy 선택을 막지 않는다.
 - Direct drag 도중 Esc/pointer cancel은 시작 snapshot으로 되돌리고 History entry를 취소한다.
 - RMB는 카메라를 조작하지 않고 포인터 아래 Curve/Proxy를 대상으로 context menu를 연다. Line 생성 중 RMB는 draft를 취소하거나 선택을 바꾸지 않는다.
@@ -152,6 +153,7 @@ Region은 pointerdown에서 잠정 시작하므로 click/drag 분기는 반드�
 - MMB/Alt+MMB/Ctrl+Alt+MMB가 각각 Pan/Orbit/Zoom이고 LMB 빈 drag가 카메라를 회전하지 않는가?
 - Window/Crossing marquee가 방향에 맞는 실선/점선으로 보이며 release 후 사라지는가?
 - FFD/Curve 다중 선택 center와 direct/gizmo Move가 같은 control 집합을 움직이고 Esc 취소·Undo가 시작 상태를 복원하는가?
+- Curve 다중 Point Rotate/Scale이 공통 중심에서 선택 Anchor·Tangent·단면을 함께 바꾸고 한 번의 Undo/Redo로 왕복하는가?
 - Control x-ray/depth 설정과 visibility checkbox가 일치하는가?
 - 1024px 폭에서도 topbar와 양쪽 panel의 기능에 접근 가능한가?
 - Create·Modify·Display가 모두 닫힌 상태로 시작하고, 항목별 열림/닫힘과 ARIA 상태가 탭 왕복 후에도 유지되는가?
