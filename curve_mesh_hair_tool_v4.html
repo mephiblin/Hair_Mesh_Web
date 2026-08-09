@@ -208,6 +208,16 @@ input[type=checkbox]{accent-color:var(--accent)}
           </div>
 
           <div class="rollout collapsed">
+            <button class="rollout-header" type="button">Soft Selection</button>
+            <div class="rollout-body">
+              <label class="checkrow"><input id="softSelectionEnabled" type="checkbox" /> Use Soft Selection</label>
+              <label>Falloff · Curve Length<input id="softSelectionFalloff" type="number" value="1" min="0.001" max="10000" step="0.05" /></label>
+              <div id="softSelectionSummary" class="selected-label">OFF · Hard Selection only</div>
+              <p class="muted">선택 Anchor는 100%, 주변 Anchor는 Bézier Curve 길이에 따라 부드럽게 감소합니다. Move·Rotate·Scale에 적용됩니다.</p>
+            </div>
+          </div>
+
+          <div class="rollout collapsed">
             <button class="rollout-header" type="button">Curve Object</button>
             <div class="rollout-body">
               <button id="resetTransformBtn" class="wide" type="button">Reset Transform</button>
@@ -487,6 +497,7 @@ import { createHistory } from './src/state/history.js';
 import { createProjectDocument, parseProjectDocument, serializeProjectDocument } from './src/state/project-format.js';
 import { canEditCurve, hasReadyMesh } from './src/state/curve-policy.js';
 import { normalizeMeshBudget } from './src/geometry/mesh-limits.js';
+import { DEFAULT_SOFT_SELECTION_SETTINGS, curveSoftSelectionWeights, normalizeSoftSelectionSettings, softSelectedPointIndices } from './src/geometry/soft-selection.js';
 import { buildProxyTopology, defaultProxySettings, normalizeProxySettings, proxyTopologyStats } from './src/geometry/proxy-primitives.js';
 import { cloneFfdModifier, createFfdModifier, evaluateFfdStack, ffdControlPointPositions, normalizeFfdModifier, setFfdControlPointPosition } from './src/geometry/ffd-lattice.js';
 import { canFinishLine, lineCreationExitAction, MIN_LINE_POINTS } from './src/state/line-creation-policy.js';
@@ -804,6 +815,7 @@ proxyRoot.name = 'ProxyMeshes';
 scene.add(referenceImageRoot, modelRoot, proxyRoot, curvesRoot);
 
 const COLORS = { accent: 0x6da6ff, curve: 0x9bc1ff, tangent: 0xffb86b, selected: 0xffff8a, multiSelected: 0x8fc7c7, wire: 0xe8f1ff };
+const SOFT_SELECTION_COLORS = Object.freeze({ low:0x5795ff, middle:0x65d66e, high:0xffa34d });
 const AXIS_COLORS = Object.freeze({ X:0xff5a5a, Y:0x65d66e, Z:0x5795ff });
 const RECOVERY_KEY = 'hair-mesh-web:recovery:v1';
 const REFERENCE_ORIGINAL_MATERIAL = 'hairMeshOriginalMaterial';
@@ -868,6 +880,7 @@ let nextCurveId = 1;
 let mode = 'orbit';
 let objectTransformMode = 'translate';
 let pointTool = 'pointMove';
+let softSelectionSettings = normalizeSoftSelectionSettings(DEFAULT_SOFT_SELECTION_SETTINGS);
 let drawCameraOverride = false;
 let suppressModifierEvents = false;
 let suppressGizmo = false;
@@ -2122,6 +2135,7 @@ function captureAppState() {
     mode,
     objectTransformMode,
     pointTool,
+    softSelection:{ ...softSelectionSettings },
     activeCommandTab,
     display: {
       viewMode: $('viewMode').value,
@@ -2244,6 +2258,7 @@ function restoreAppState(state) {
   );
   objectTransformMode = state.objectTransformMode;
   pointTool = state.pointTool;
+  softSelectionSettings = normalizeSoftSelectionSettings(state.softSelection);
   const display = state.display || {};
   if (display.viewMode) $('viewMode').value = display.viewMode;
   $('hairMaterialPreset').value = normalizeViewportMaterialPreset(display.hairMaterialPreset, { fallback:HAIR_MATERIAL_FALLBACK });
@@ -2279,6 +2294,7 @@ function restoreAppState(state) {
   applyModelDisplay();
   applyHairMaterialDisplay();
   updateDrawTargetUI();
+  syncSoftSelectionUI();
   curves.forEach(curve => {
     updateControlVisuals(curve);
     if (curve.meshEnabled) rebuildCurveMesh(curve, false);
@@ -2420,6 +2436,7 @@ function rebuildControlVisuals(curve) {
 }
 
 function updateControlVisuals(curve) {
+  const softWeights = softSelectionWeightsForCurve(curve);
   curve.points.forEach((p, i) => {
     const v = p._visual; if (!v) return;
     const inPos = p.position.clone().add(p.inTangent), outPos = p.position.clone().add(p.outTangent);
@@ -2429,7 +2446,8 @@ function updateControlVisuals(curve) {
     v.tangentLines.geometry.getAttribute('position').needsUpdate = true;
     const activePoint = selectedControl?.curve === curve && selectedControl.pointIndex === i;
     const pointSelected = curve === selectedCurve && selectedPointIndices.has(i);
-    v.anchor.material.color.setHex(pointSelected ? COLORS.selected : COLORS.accent);
+    const softWeight = softWeights[i] || 0;
+    v.anchor.material.color.setHex(pointSelected ? COLORS.selected : softWeight > 0 ? softSelectionColor(softWeight) : COLORS.accent);
     v.inHandle.material.color.setHex(activePoint && selectedControl.kind === 'in' ? COLORS.selected : COLORS.tangent);
     v.outHandle.material.color.setHex(activePoint && selectedControl.kind === 'out' ? COLORS.selected : COLORS.tangent);
   });
@@ -3671,6 +3689,54 @@ function selectedPointTargetIndices() {
   if (!selectedCurve) return [];
   return orderedPointSelection(selectedPointIndices, selectedCurve.points.length, selectedControl?.pointIndex ?? null);
 }
+function curveWorldSoftSelectionPoints(curve) {
+  if (!curve) return [];
+  curve.group.updateMatrixWorld(true);
+  return curve.points.map(point => {
+    const position = curve.group.localToWorld(point.position.clone());
+    const inEnd = curve.group.localToWorld(point.position.clone().add(point.inTangent));
+    const outEnd = curve.group.localToWorld(point.position.clone().add(point.outTangent));
+    return {
+      position:position.toArray(),
+      inTangent:inEnd.sub(position).toArray(),
+      outTangent:outEnd.sub(position).toArray()
+    };
+  });
+}
+function softSelectionWeightsForCurve(curve = selectedCurve) {
+  if (!curve || curve !== selectedCurve || selectedControl?.curve !== curve || selectedControl.kind !== 'anchor') return new Array(curve?.points.length || 0).fill(0);
+  if (gizmoDrag?.context?.type === 'point' && gizmoDrag.context.curve === curve && Array.isArray(gizmoDrag.pointWeights)) return gizmoDrag.pointWeights;
+  return curveSoftSelectionWeights(curveWorldSoftSelectionPoints(curve), selectedPointTargetIndices(), softSelectionSettings);
+}
+function softSelectionColor(weight) {
+  const clamped = THREE.MathUtils.clamp(Number(weight) || 0, 0, 1);
+  if (clamped <= .5) return new THREE.Color(SOFT_SELECTION_COLORS.low).lerp(new THREE.Color(SOFT_SELECTION_COLORS.middle), clamped * 2).getHex();
+  return new THREE.Color(SOFT_SELECTION_COLORS.middle).lerp(new THREE.Color(SOFT_SELECTION_COLORS.high), (clamped - .5) * 2).getHex();
+}
+function syncSoftSelectionUI() {
+  const enabled = $('softSelectionEnabled');
+  const falloff = $('softSelectionFalloff');
+  if (!enabled || !falloff) return;
+  enabled.checked = softSelectionSettings.enabled;
+  enabled.disabled = !curveIsEditable();
+  falloff.value = String(softSelectionSettings.falloff);
+  falloff.disabled = !curveIsEditable() || !softSelectionSettings.enabled;
+  const hardIndices = selectedPointTargetIndices();
+  const hardSet = new Set(hardIndices);
+  const softCount = softSelectedPointIndices(softSelectionWeightsForCurve()).filter(index => !hardSet.has(index)).length;
+  $('softSelectionSummary').textContent = softSelectionSettings.enabled
+    ? `${hardIndices.length} Hard · ${softCount} Soft · Falloff ${softSelectionSettings.falloff.toFixed(3)}`
+    : 'OFF · Hard Selection only';
+}
+function updateSoftSelectionSettingsFromUI({ markChanged = false } = {}) {
+  softSelectionSettings = normalizeSoftSelectionSettings({
+    enabled:$('softSelectionEnabled').checked,
+    falloff:$('softSelectionFalloff').value
+  });
+  curves.forEach(updateControlVisuals);
+  syncSoftSelectionUI();
+  if (markChanged) markProjectChanged();
+}
 function selectAllCurvePoints() {
   if (!curveIsEditable() || !selectedCurve?.points.length) return false;
   selectedPointIndices = new Set(allPointIndices(selectedCurve.points.length));
@@ -3721,7 +3787,7 @@ function updatePointPanel() {
     ['averagePointBtn','averageHandlesBtn','averageBothBtn'].forEach(id => $(id).disabled = true);
     $('deletePointBtn').disabled = true; $('insertBeforeBtn').disabled = true; $('insertAfterBtn').disabled = true;
     $('prevPointBtn').disabled = pointCount < 1; $('nextPointBtn').disabled = pointCount < 1;
-    updateKnotTypeButtons(); updatePointToolButtons(); updateCommandAvailability(); return;
+    updateKnotTypeButtons(); updatePointToolButtons(); updateCommandAvailability(); syncSoftSelectionUI(); return;
   }
   const kind = selectedControl.kind === 'anchor' ? 'Anchor' : selectedControl.kind === 'in' ? 'Bezier In Handle' : 'Bezier Out Handle';
   label.textContent = selectionCount > 1
@@ -3739,7 +3805,7 @@ function updatePointPanel() {
   $('sx').value = p.scaleX.toFixed(5); $('sz').value = p.scaleZ.toFixed(5);
   const e = new THREE.Euler().setFromQuaternion(p.rotation, 'XYZ');
   $('rx').value = THREE.MathUtils.radToDeg(e.x).toFixed(3); $('ry').value = THREE.MathUtils.radToDeg(e.y).toFixed(3); $('rz').value = THREE.MathUtils.radToDeg(e.z).toFixed(3);
-  updateKnotTypeButtons(); updatePointToolButtons(); updateCommandAvailability();
+  updateKnotTypeButtons(); updatePointToolButtons(); updateCommandAvailability(); syncSoftSelectionUI();
 }
 
 function updatePointToolButtons() {
@@ -3955,6 +4021,7 @@ function syncGizmo() {
     const p = selectedPoint(); if (!p) return;
     const tangent = selectedControl.kind !== 'anchor';
     const operation = tangent ? 'translate' : (pointTool === 'pointRotate' || pointTool === 'sectionRotate') ? 'rotate' : (pointTool === 'pointScale' || pointTool === 'sectionScale') ? 'scale' : 'translate';
+    const groupPointTool = !tangent && ['pointMove','pointRotate','pointScale'].includes(pointTool);
     const pointIndices = pointTransformIndices(
       selectedPointIndices,
       selectedCurve.points.length,
@@ -3962,6 +4029,10 @@ function syncGizmo() {
       selectedControl.kind,
       tangent ? 'tangentMove' : pointTool
     );
+    const pointWeights = groupPointTool
+      ? softSelectionWeightsForCurve(selectedCurve)
+      : selectedCurve.points.map((_point, index) => pointIndices.includes(index) ? 1 : 0);
+    const affectedPointIndices = groupPointTool ? softSelectedPointIndices(pointWeights) : [...pointIndices];
     let position;
     if (tangent) {
       const local = p.position.clone().add(selectedControl.kind === 'in' ? p.inTangent : p.outTangent); position = selectedCurve.group.localToWorld(local);
@@ -3975,7 +4046,7 @@ function syncGizmo() {
     transformControls.showX = true; transformControls.showY = pointTool !== 'sectionScale'; transformControls.showZ = true;
     const helperVisible = shouldShowTransformHelper({ axisGuidesEnabled, operation });
     transformControls.enabled = helperVisible; transformControls.getHelper().visible = helperVisible;
-    gizmoContext = { type:'point', curve:selectedCurve, pointIndex:selectedControl.pointIndex, pointIndices, kind:selectedControl.kind, tool:tangent ? 'tangentMove' : pointTool, operation };
+    gizmoContext = { type:'point', curve:selectedCurve, pointIndex:selectedControl.pointIndex, pointIndices, affectedPointIndices, pointWeights, kind:selectedControl.kind, tool:tangent ? 'tangentMove' : pointTool, operation };
     syncAxisGuides();
   }
 }
@@ -3987,25 +4058,41 @@ function beginGizmoDrag() {
   transformDragging = true; gizmoProxy.updateMatrixWorld(true);
   gizmoDrag = { context:{...gizmoContext}, proxyStart:gizmoProxy.matrixWorld.clone(), proxyStartInv:gizmoProxy.matrixWorld.clone().invert() };
   const ctx = gizmoDrag.context;
+  if (ctx.type === 'point') gizmoDrag.pointWeights = Array.isArray(ctx.pointWeights) ? [...ctx.pointWeights] : ctx.curve.points.map((_point, index) => ctx.pointIndices.includes(index) ? 1 : 0);
   if (ctx.type === 'object') { ctx.target.group.updateMatrixWorld(true); gizmoDrag.targetStart = ctx.target.group.matrixWorld.clone(); }
   else if (ctx.type === 'ffd') {
     gizmoDrag.ffdInput = proxyModifierInputTopology(ctx.proxy, ctx.modifierId);
     gizmoDrag.ffdModifierStart = cloneFfdModifier(activeProxyModifier(ctx.proxy));
     gizmoDrag.ffdControlStarts = ffdControlPointPositions(gizmoDrag.ffdInput, gizmoDrag.ffdModifierStart);
   }
-  else if (ctx.tool === 'pointMove') gizmoDrag.pointStarts = new Map(ctx.pointIndices.map(index => [index, ctx.curve.points[index].position.clone()]));
+  else if (ctx.tool === 'pointMove') gizmoDrag.pointStarts = new Map(ctx.affectedPointIndices.map(index => [index, ctx.curve.points[index].position.clone()]));
   else if (ctx.tool === 'sectionRotate' || ctx.tool === 'sectionScale') gizmoDrag.targetStart = sectionWorldMatrix(ctx.curve, ctx.pointIndex);
   else if (ctx.tool === 'pointRotate' || ctx.tool === 'pointScale') {
-    gizmoDrag.pointStarts = new Map(ctx.pointIndices.map(index => [index, clonePointRecord(ctx.curve.points[index])]));
-    gizmoDrag.sectionWorldStarts = new Map(ctx.pointIndices.map(index => [index, sectionWorldMatrix(ctx.curve, index)]));
+    gizmoDrag.pointStarts = new Map(ctx.affectedPointIndices.map(index => [index, clonePointRecord(ctx.curve.points[index])]));
+    gizmoDrag.sectionWorldStarts = new Map(ctx.affectedPointIndices.map(index => [index, sectionWorldMatrix(ctx.curve, index)]));
   }
 }
-function endGizmoDrag() { const wasFfd = gizmoDrag?.context?.type === 'ffd'; transformDragging = false; gizmoDrag = null; history.commit(); if (wasFfd && selectedProxy) syncProxyModifierUI(selectedProxy); updatePointPanel(); syncGizmo(); updateMeshStats(); }
+function endGizmoDrag() { const wasFfd = gizmoDrag?.context?.type === 'ffd'; transformDragging = false; gizmoDrag = null; history.commit(); if (wasFfd && selectedProxy) syncProxyModifierUI(selectedProxy); if (selectedCurve) updateControlVisuals(selectedCurve); updatePointPanel(); syncGizmo(); updateMeshStats(); }
 function worldMatrixToLocalObject(object, worldMatrix) {
   const parentInv = object.parent ? object.parent.matrixWorld.clone().invert() : new THREE.Matrix4();
   const local = parentInv.multiply(worldMatrix); local.decompose(object.position, object.quaternion, object.scale); object.updateMatrixWorld(true);
 }
 function currentDeltaMatrix() { gizmoProxy.updateMatrixWorld(true); return gizmoProxy.matrixWorld.clone().multiply(gizmoDrag.proxyStartInv); }
+function currentWeightedDeltaMatrix(weight) {
+  gizmoProxy.updateMatrixWorld(true);
+  const clampedWeight = THREE.MathUtils.clamp(Number(weight) || 0, 0, 1);
+  if (clampedWeight >= 1 - Number.EPSILON) return currentDeltaMatrix();
+  const startPosition = new THREE.Vector3(), startQuaternion = new THREE.Quaternion(), startScale = new THREE.Vector3();
+  const currentPosition = new THREE.Vector3(), currentQuaternion = new THREE.Quaternion(), currentScale = new THREE.Vector3();
+  gizmoDrag.proxyStart.decompose(startPosition, startQuaternion, startScale);
+  gizmoProxy.matrixWorld.decompose(currentPosition, currentQuaternion, currentScale);
+  const weightedMatrix = new THREE.Matrix4().compose(
+    startPosition.lerp(currentPosition, clampedWeight),
+    startQuaternion.slerp(currentQuaternion, clampedWeight),
+    startScale.lerp(currentScale, clampedWeight)
+  );
+  return weightedMatrix.multiply(gizmoDrag.proxyStartInv);
+}
 function gizmoTranslationInLocalSpace(group) {
   group.updateMatrixWorld(true);
   const startWorld = new THREE.Vector3().setFromMatrixPosition(gizmoDrag.proxyStart);
@@ -4013,14 +4100,16 @@ function gizmoTranslationInLocalSpace(group) {
   return group.worldToLocal(currentWorld.clone()).sub(group.worldToLocal(startWorld.clone()));
 }
 
-function applyPointGroupTransform(curve, pointIndices, operation) {
+function applyPointGroupTransform(curve, pointIndices, operation, pointWeights = []) {
   const indices = pointIndices.filter(index => curve.points[index] && gizmoDrag.pointStarts?.has(index));
   if (!indices.length) return;
   curve.group.updateMatrixWorld(true);
-  const deltaWorld = currentDeltaMatrix();
-  const localDelta = curve.group.matrixWorld.clone().invert().multiply(deltaWorld).multiply(curve.group.matrixWorld);
+  const groupWorld = curve.group.matrixWorld.clone();
+  const groupWorldInv = groupWorld.clone().invert();
   indices.forEach(index => {
     const point = curve.points[index], start = gizmoDrag.pointStarts.get(index);
+    const deltaWorld = currentWeightedDeltaMatrix(pointWeights[index] || 0);
+    const localDelta = groupWorldInv.clone().multiply(deltaWorld).multiply(groupWorld);
     const anchor = start.position.clone().applyMatrix4(localDelta);
     const inEnd = start.position.clone().add(start.inTangent).applyMatrix4(localDelta);
     const outEnd = start.position.clone().add(start.outTangent).applyMatrix4(localDelta);
@@ -4032,8 +4121,9 @@ function applyPointGroupTransform(curve, pointIndices, operation) {
     const point = curve.points[index];
     const sectionWorldStart = gizmoDrag.sectionWorldStarts?.get(index);
     if (!sectionWorldStart) return;
+    const deltaWorld = currentWeightedDeltaMatrix(pointWeights[index] || 0);
     const desiredWorld = deltaWorld.clone().multiply(sectionWorldStart);
-    const desiredLocal = curve.group.matrixWorld.clone().invert().multiply(desiredWorld);
+    const desiredLocal = groupWorldInv.clone().multiply(desiredWorld);
     const center = new THREE.Vector3(), orientation = new THREE.Quaternion(), scale = new THREE.Vector3();
     desiredLocal.decompose(center, orientation, scale);
     const evaluated = evaluateControlPoint(curve, index);
@@ -4082,11 +4172,11 @@ function handleGizmoChange() {
     constrainMovedHandle(p, ctx.kind); updateControlVisuals(curve); updateCurveVisual(curve); if (curve.meshEnabled) rebuildCurveMesh(curve, false);
   } else if (ctx.tool === 'pointMove') {
     const localDelta = gizmoTranslationInLocalSpace(curve.group);
-    ctx.pointIndices.forEach(index => curve.points[index].position.copy(gizmoDrag.pointStarts.get(index)).add(localDelta));
-    ctx.pointIndices.forEach(index => refreshDependentNeighborhood(curve.points, index));
+    ctx.affectedPointIndices.forEach(index => curve.points[index].position.copy(gizmoDrag.pointStarts.get(index)).addScaledVector(localDelta, gizmoDrag.pointWeights[index] || 0));
+    ctx.affectedPointIndices.forEach(index => refreshDependentNeighborhood(curve.points, index));
     updateControlVisuals(curve); updateCurveVisual(curve); if (curve.meshEnabled) rebuildCurveMesh(curve, false);
   } else if (ctx.tool === 'pointRotate' || ctx.tool === 'pointScale') {
-    applyPointGroupTransform(curve, ctx.pointIndices, ctx.operation);
+    applyPointGroupTransform(curve, ctx.affectedPointIndices, ctx.operation, gizmoDrag.pointWeights);
   } else if (ctx.tool === 'sectionMove') {
     const local = curve.group.worldToLocal(gizmoProxy.position.clone()), path = curveObject(curve), raw = ctx.pointIndex / Math.max(1, curve.points.length - 1), arc = rawToArc(path, raw), sweep = evaluateSweep(curve, buildSweepContext(curve, Math.max(64, curve.settings.segments)), arc);
     const baseCenter = path.getPoint(raw), diff = local.sub(baseCenter);
@@ -4532,8 +4622,8 @@ function finishDirectViewportMove(event, cancel = false) {
       if (modifierIndex >= 0) ctx.proxy.modifiers[modifierIndex] = cloneFfdModifier(gizmoDrag.ffdModifierStart);
       rebuildProxyMesh(ctx.proxy, { rebuildLattice:false, syncUi:false });
     } else if (ctx.tool === 'pointMove') {
-      ctx.pointIndices.forEach(index => ctx.curve.points[index].position.copy(gizmoDrag.pointStarts.get(index)));
-      ctx.pointIndices.forEach(index => refreshDependentNeighborhood(ctx.curve.points, index));
+      ctx.affectedPointIndices.forEach(index => ctx.curve.points[index].position.copy(gizmoDrag.pointStarts.get(index)));
+      ctx.affectedPointIndices.forEach(index => refreshDependentNeighborhood(ctx.curve.points, index));
       updateControlVisuals(ctx.curve); updateCurveVisual(ctx.curve); if (ctx.curve.meshEnabled) rebuildCurveMesh(ctx.curve, false);
     }
     transformDragging = false; gizmoDrag = null; history.cancel(); syncGizmo(); updateMeshStats();
@@ -5153,6 +5243,20 @@ $('pointScaleBtn').addEventListener('click', () => setPointTool('pointScale'));
 $('sectionMoveBtn').addEventListener('click', () => setPointTool('sectionMove'));
 $('sectionRotateBtn').addEventListener('click', () => setPointTool('sectionRotate'));
 $('sectionScaleBtn').addEventListener('click', () => setPointTool('sectionScale'));
+$('softSelectionEnabled').addEventListener('change', () => {
+  updateSoftSelectionSettingsFromUI({ markChanged:true });
+  syncGizmo();
+  setStatus(`Soft Selection ${softSelectionSettings.enabled ? 'ON' : 'OFF'} · Along Curve Falloff`);
+});
+$('softSelectionFalloff').addEventListener('input', () => {
+  updateSoftSelectionSettingsFromUI();
+  syncGizmo();
+});
+$('softSelectionFalloff').addEventListener('change', () => {
+  updateSoftSelectionSettingsFromUI({ markChanged:true });
+  syncGizmo();
+  setStatus(`Soft Selection Falloff ${softSelectionSettings.falloff.toFixed(3)}`);
+});
 Object.entries(KNOT_TYPE_BUTTONS).forEach(([type, id]) => $(id).addEventListener('click', () => setSelectedKnotType(type)));
 $('resetTangentsBtn').addEventListener('click', resetSelectedTangents);
 $('averagePointBtn').addEventListener('click', () => averageSelectedGeometry({ pointPosition:true }));
@@ -5545,7 +5649,7 @@ initNumericScrubbers(document, {
   onEnd: ({ label, value }) => { history.commit(); setStatus(`${label}: ${value}`); }
 });
 animate();
-refreshCurveList(); refreshProxyList(); refreshBrushUI(); syncModifyContext(); updateControlVisibility(); updatePointPanel();
+refreshCurveList(); refreshProxyList(); refreshBrushUI(); syncModifyContext(); updateControlVisibility(); updatePointPanel(); syncSoftSelectionUI();
 updateAverageAmountOutput(); updateObjectTransformButtons(); updateHint(); updateSelectionBadge(); updateMeshTypeUI(); updateDrawTargetUI(); refreshReferenceObjectUI(); syncReferenceImageUI(); applyViewportDisplay(); applyReferenceImageDisplay(); applyLightingDisplay(); applyHairMaterialDisplay(); applyModelDisplay(); setMode('orbit');
 const recoveredProject = restoreRecovery();
 if (!recoveredProject) { activateCommandTab('create'); updateProjectStatus('saved', 'Empty'); }
@@ -5564,6 +5668,7 @@ if (new URLSearchParams(location.search).has('selftest')) {
       const modifier = activeProxyModifier();
       const curvePath = curveObject(selectedCurve);
       const curvePointIndices = selectedPointTargetIndices();
+      const curveSoftWeights = softSelectionWeightsForCurve(selectedCurve);
       let curveMidpoint = null;
       if (curvePath && selectedCurve) {
         selectedCurve.group.updateMatrixWorld(true);
@@ -5613,8 +5718,13 @@ if (new URLSearchParams(location.search).has('selftest')) {
         selectedCurvePointIndices:curvePointIndices,
         selectedCurvePointPositions:selectedCurve?.points.map(point => point.position.toArray()) || [],
         selectedCurveControlScreenPositions:selectedCurve?.points.map(point => screenPoint(point._visual.anchor)) || [],
+        selectedCurveControlColors:selectedCurve?.points.map(point => point._visual.anchor.material.color.getHex()) || [],
+        softSelectionSettings:{ ...softSelectionSettings },
+        softSelectionWeights:[...curveSoftWeights],
+        softSelectionSummary:$('softSelectionSummary').textContent,
         pointTool,
         gizmoPointIndices:gizmoContext?.type === 'point' ? [...gizmoContext.pointIndices] : [],
+        gizmoAffectedPointIndices:gizmoContext?.type === 'point' ? [...gizmoContext.affectedPointIndices] : [],
         gizmoScreenPosition:gizmoContext ? screenPoint(gizmoProxy) : null,
         contextMenuVisible:!viewportContextMenu.hidden,
         contextMenuKind:viewportContextTarget?.kind || null,

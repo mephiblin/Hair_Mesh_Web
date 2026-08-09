@@ -14,6 +14,7 @@ Scene 초기화, picking, mode, TransformControls, axis guide, keyboard과 패�
 | 3ds Max POV keys/menu | `#viewportViewMenu`, `#viewportViewGrid`, `openViewportViewMenu()`, `applyViewportView()` | `src/viewport/view-shortcuts.js` |
 | Resize/frame | `resize()`, `setOrthographicFrustumHeight()`, `fitObject()`, `frameSelected()` | `matchedOrthographicHeight()` |
 | Control visual | `rebuildControlVisuals()`, `updateControlVisuals()`, `applyControlAppearance()` | curve policy |
+| Curve Soft Selection visual | `softSelectionColor()`, `softSelectionWeightsForCurve()`, `syncSoftSelectionUI()` | `src/geometry/soft-selection.js` |
 | Visibility | `updateControlVisibility()`, `updateCurveSelectionStyles()` | viewport interaction policy |
 | Picking | `findControl()`, `selectControl()`, `findFfdControl()`, `selectFfdControl()`, `findSceneObjectAtEvent()`, `handleViewportClick()` | `interaction-policy.js`의 `canPickViewportObject()`, `point-selection.js` |
 | Root 선택 해제 | `clearObjectSelection()`, `handleViewportClick()` | 무선택 상태, `NONE` Modify, Scene row/강조/gizmo 동기화 |
@@ -58,6 +59,7 @@ Reference Plane은 Curve mode와 별개의 `translate | rotate | scale | none` �
 - Region의 Ctrl/⌘는 Add, Alt는 Remove다. Control Ctrl/⌘ 클릭은 기존 사용자 계약대로 Add/Toggle이고 Alt 클릭은 Remove다.
 - Move 도구에서 선택 Control을 직접 drag하면 camera-facing plane을 따라 이동하며, 선택이 여러 개면 selection center gizmo와 같은 집합을 움직인다.
 - Curve Point Move·Rotate·Scale gizmo는 선택된 Anchor 전체의 평균 위치를 공통 pivot으로 사용한다. Rotate/Scale도 활성 Anchor 하나로 축소하지 않고 같은 선택 집합을 변환한다.
+- Soft Selection ON에서도 gizmo pivot과 노란 표시는 직접 선택 Anchor 집합이 소유한다. Curve 길이 기반 간접 영향 Point는 가중치 색을 따로 보이고 Move/Rotate/Scale에만 포함되며, drag 시작에 대상과 weight를 freeze한다.
 - Proxy Object Move 모드에서 Proxy 표면을 직접 drag하면 camera-facing plane을 따라 root object가 이동한다. FFD/Edit에서 drag되지 않은 click은 Scene object 선택으로 전달해 다른 Proxy 선택을 막지 않는다.
 - Direct drag 도중 Esc/pointer cancel은 시작 snapshot으로 되돌리고 History entry를 취소한다.
 - RMB는 카메라를 조작하지 않고 포인터 아래 Curve/Proxy를 대상으로 context menu를 연다. Line 생성 중 RMB는 draft를 취소하거나 선택을 바꾸지 않는다.

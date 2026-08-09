@@ -49,7 +49,7 @@ curl -I http://127.0.0.1:8080/curve_mesh_hair_tool_v4.html
 
 이 앱에는 서로 연결된 두 종류의 상태가 있습니다.
 
-1. **직렬화 상태**: Curve/Point/Brush, Proxy primitive parameters/transform/FFD stack, 선택, 모드, 표시 설정. `captureAppState()`가 반환하고 JSON/History/Recovery가 사용합니다.
+1. **직렬화 상태**: Curve/Point/Brush, Proxy primitive parameters/transform/FFD stack, 선택, Soft Selection 설정, 모드, 표시 설정. `captureAppState()`가 반환하고 JSON/History/Recovery가 사용합니다.
 2. **파생 Scene 상태**: Three.js Group, Control mesh, Line, BufferGeometry, TransformControls. `restoreAppState()`와 각 `rebuild*` 함수가 직렬화 상태로부터 재구성합니다.
 
 Scene 객체를 JSON에 직접 넣지 않습니다. 새 기능을 저장하려면 최소 데이터만 직렬화 상태에 넣고 Scene 객체는 복원 시 다시 만드십시오.
@@ -74,11 +74,12 @@ Reference 파일 자체와 Mesh별 표시/재질/수동 텍스처는 Import 세�
 - Draft Line을 취소하면 생성 전 Curve 선택을 복원합니다.
 - Point `Ctrl/⌘` 토글은 활성 Curve 안에서만 동작하며 0개 선택을 허용합니다.
 - Scene Curve 다중 선택은 `selectedCurveIds`와 활성 `selectedCurve`를 함께 유지하고, Modifier/Gizmo는 활성 Curve 하나만 편집합니다.
+- Curve Soft Selection은 `selectedPointIndices`를 변경하지 않는 파생 영향입니다. `src/geometry/soft-selection.js`의 world-space Bézier 길이·Falloff weight를 사용하고, hard Anchor만 pivot/노란 표시를 소유하며, Move/Rotate/Scale drag 시작에 대상과 weight를 freeze합니다. Section/Handle tool에는 적용하지 않습니다.
 - Front/Left/Back 참조 Plane은 Perspective를 포함한 모든 View에서 보이지만 모델 surface raycast와 Mesh Export에는 참여하지 않습니다.
 - `Persp`와 ViewCube edge/corner/Home은 Perspective Camera이며, Ortho Views ON의 표준 6면은 Orthographic Camera입니다. ViewCube 좌클릭 drag는 현재 투영과 target을 유지하는 `custom` 자유 뷰입니다. active camera를 바꾸면 OrbitControls, 두 TransformControls, ViewCube inverse orientation, picking/raycast, resize/frame 경로를 함께 검사하십시오.
 - 전역 `T/B/F/L/P/U`와 `V` 메뉴는 `src/viewport/view-shortcuts.js`를 단일 키 매핑 source로 사용하고 모두 `applyViewportView()`로 합류시킵니다. `P/U`는 방향과 target을 보존하며 Back은 direct key가 아닌 `V→K`입니다. 입력 필드에서는 실행하지 않습니다.
 
-관련 정책은 `src/state/curve-policy.js`, `curve-selection.js`, `point-selection.js`, `line-creation-policy.js`, `src/geometry/mesh-limits.js`, `proxy-primitives.js`에 있으며 Node 테스트가 계약을 고정합니다.
+관련 정책은 `src/state/curve-policy.js`, `curve-selection.js`, `point-selection.js`, `line-creation-policy.js`, `src/geometry/soft-selection.js`, `mesh-limits.js`, `proxy-primitives.js`에 있으며 Node 테스트가 계약을 고정합니다.
 
 ### Viewport 입력 회귀 방지
 
@@ -171,6 +172,7 @@ Proxy primitive 또는 FFD를 추가/변경할 때는 [`features/proxy-mesh.md`]
 - History transaction과 양방향 복원
 - 프로젝트 문서 round-trip/버전 거부
 - Viewport material/light/wire/object/환경, 표준 뷰 projection/matched height, Front/Left/Back 참조 Plane 설정·초기 배치·custom 3D transform 정규화
+- Curve 경로 거리, Falloff clamp, finite/symmetric Soft Selection weight
 
 새 순수 모듈은 이 테스트에 직접 import하여 회귀를 추가합니다.
 
@@ -190,6 +192,7 @@ globalThis.__CURVE_TOOL_SELF_TEST__
 2. Point/Handle 이동 후 Undo/Redo
    - 같은 Curve의 Anchor를 Ctrl/⌘ 클릭해 0개까지 토글하고 일반 클릭으로 복귀
    - Scene Explorer Curve 행을 Ctrl/⌘ 클릭해 다중 선택/활성 전환/전체 해제
+   - Soft Selection을 켜고 Falloff·가중치 색을 확인한 뒤 Move/Rotate/Scale, Live Mesh 재생성, 한 단계 Undo/Redo, ON/OFF 복귀를 확인
 3. Ribbon과 Tube 생성, Segment/Sides 경계값 확인
 4. Brush fixture Import 후 Brush Mesh 생성
 5. Proxy 4종 생성, 크기/Segments/Sides/Rings 변경, Curve↔Proxy Modify 전환과 W/E/R/Frame/Clone/Delete 확인. Axis Lines OFF에서 긴 선은 숨고 기본 XYZ gizmo는 유지되는지, `W` Proxy 표면 drag/Undo와 FFD 상태의 다른 Proxy 클릭 선택을 먼저 확인합니다. FFD 관련 변경이면 2/4/8 추가, Window/Crossing·Ctrl/Alt 다중 선택과 선택 전체 노란 표시, 직접/기즈모 다중 Move, Edit/Finish lattice 토글, 한 단계 Undo/Redo, stack reorder/ON/OFF/reset/remove, Proxy Surface Line과 Proxy/Curve RMB command parity도 확인

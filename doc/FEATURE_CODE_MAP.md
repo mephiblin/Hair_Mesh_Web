@@ -26,6 +26,7 @@ launch_server.py
 | 표면/평면 Point 배치 | `#drawTarget`, `updateDrawTargetUI()`, `pointOnSurface()`, `pointInFreePlane()` | Raycaster로 보이는 Reference/Proxy 중 최근접 표면 또는 카메라 평면 좌표 계산 | `src/state/line-creation-policy.js` |
 | Line 생성/완료/취소 | `#newCurveBtn`, `beginLineCreation()`, `finishLineCreation()`, `cancelLineCreation()` | Draft curve 생성, 최소 Point 검사, 이전 선택 복원 | Node의 `line creation requires two points` |
 | Curve/Point 선택 | `selectCurve()`, `toggleCurveSelection()`, `selectControl()`, `#curveList` | Ctrl/⌘ 토글, 활성 Curve/Point, UI/Gizmo 동기화 | `src/state/curve-selection.js`, `src/state/point-selection.js` |
+| Curve Soft Selection | `#softSelectionEnabled`, `#softSelectionFalloff`, `softSelectionWeightsForCurve()`, `applyPointGroupTransform()` | world-space Bézier 길이 Falloff에서 파생한 weight로 Point Move/Rotate/Scale; hard selection pivot, drag 중 weight freeze | `src/geometry/soft-selection.js`, Node weight 계약 + Playwright Live Mesh/Undo/Redo |
 | Curve 표시/잠금 | `setCurveVisible()`, `setCurveLocked()` | Scene row와 편집 가능 상태 동기화, 잠금 시 Viewport pick 제외 | `src/state/curve-policy.js`, `canPickViewportObject()` 및 정책 테스트 |
 | Curve 복제/삭제 | `#duplicateCurveBtn`, `deleteSelectedCurve()` | Curve state 복제/폐기와 History transaction | 브라우저 QA + Undo/Redo |
 | Proxy 4종 생성 | `#create*ProxyBtn`, `createProxyPrimitive()` | Orbit target에 Box/Sphere/Quad Sphere/Cylinder 생성 | `src/geometry/proxy-primitives.js`, Node topology 테스트 |
@@ -91,6 +92,7 @@ launch_server.py
 | `selectedCurveIds` | Scene Explorer 다중 선택 Curve ID Set | `toggleCurveSelection()`, `captureAppState()` |
 | `selectedControl` | Point 또는 in/out Handle 선택 | `selectControl()`, `captureAppState()` |
 | `selectedPointIndices` | 다중 Point 선택 Set | `src/state/point-selection.js`로 정규화 |
+| `softSelectionSettings` | Curve 간접 영향 ON/OFF와 world-unit Falloff. Point weight는 매번 파생 | `normalizeSoftSelectionSettings()`, `captureAppState()`, `restoreAppState()` |
 | `drawingCurve` | 아직 완료하지 않은 Line draft | `beginLineCreation()`/`finishLineCreation()` |
 | `brushes` | Import된 Brush topology 배열 | `brushState()`/`brushFromState()` |
 | `mode` | `orbit`, `draw`, `edit`, `insert`, `transform`, `ffd` | `setMode()`, 키보드/Toolbar event |

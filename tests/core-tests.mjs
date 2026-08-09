@@ -7,6 +7,13 @@ import { applyControlSelection, controlSelectionOperation, orderedControlSelecti
 import { controlsInSelectionRectangle, selectionRectangle } from '../src/viewport/region-selection.js';
 import { normalizeMeshBudget } from '../src/geometry/mesh-limits.js';
 import {
+  curvePointDistances,
+  curveSoftSelectionWeights,
+  normalizeSoftSelectionSettings,
+  softSelectedPointIndices,
+  softSelectionWeight
+} from '../src/geometry/soft-selection.js';
+import {
   buildProxyTopology,
   defaultProxySettings,
   normalizeProxySettings,
@@ -162,6 +169,29 @@ test('point transforms keep group tools on every selected anchor', () => {
   assert.deepEqual(pointTransformIndices(selection, 4, 2, 'in', 'tangentMove'), [2]);
 });
 
+test('curve soft selection follows Bezier distance with a smooth finite falloff', () => {
+  const points = [0, 1, 2, 3].map(x => ({
+    position:[x, 0, 0],
+    inTangent:[-1 / 3, 0, 0],
+    outTangent:[1 / 3, 0, 0]
+  }));
+  assert.deepEqual(curvePointDistances(points).map(value => Number(value.toFixed(6))), [0, 1, 2, 3]);
+  const weights = curveSoftSelectionWeights(points, [1], { enabled:true, falloff:2.1 });
+  assert.equal(weights[1], 1);
+  assert.ok(weights[0] > weights[3] && weights[3] > 0);
+  assert.ok(weights.every(weight => Number.isFinite(weight) && weight >= 0 && weight <= 1));
+  assert.deepEqual(softSelectedPointIndices(weights), [0, 1, 2, 3]);
+  assert.equal(softSelectionWeight(2.1, 2.1), 0);
+});
+
+test('curve soft selection keeps hard selections exact and clamps settings', () => {
+  const points = [0, 1, 2].map(x => ({ position:[x, 0, 0], inTangent:[0, 0, 0], outTangent:[0, 0, 0] }));
+  assert.deepEqual(curveSoftSelectionWeights(points, [0, 2], { enabled:false, falloff:100 }), [1, 0, 1]);
+  assert.deepEqual(curveSoftSelectionWeights(points, [], { enabled:true, falloff:100 }), [0, 0, 0]);
+  assert.equal(normalizeSoftSelectionSettings({ enabled:true, falloff:-5 }).falloff, 0.001);
+  assert.equal(normalizeSoftSelectionSettings({ enabled:true, falloff:Infinity }).falloff, 1);
+});
+
 test('command-click curve selection toggles rows and resolves an active curve', () => {
   let selection = normalizeCurveSelection([1, 99], [1, 2, 3]);
   selection = toggleCurveSelection(selection, 2, [1, 2, 3]);
@@ -308,6 +338,7 @@ test('project document round-trips versioned application state', () => {
     nextCurveId:2,
     nextProxyId:2,
     nextProxyModifierId:2,
+    softSelection:{ enabled:true, falloff:2.5 },
     selectedObjectKind:'proxy',
     selectedProxyId:1,
     curves:[{ id:1, name:'HairCard' }],

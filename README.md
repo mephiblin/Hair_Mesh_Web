@@ -8,6 +8,7 @@ Hair Mesh Web은 브라우저에서 Bézier 가이드를 그리고, 가이드를
 - OBJ, FBX, GLB/GLTF 기준 모델 또는 Proxy Mesh 표면에 커브 생성
 - Bézier Point/Handle 편집과 Point 추가·삭제·분할·평균화
 - `Ctrl/⌘` 클릭으로 같은 Curve의 Point와 Scene Explorer의 Curve 행 다중 선택/해제
+- Curve 길이를 따라 이웃 Point에 가중치를 주는 Soft Selection과 Falloff, 가중 Move/Rotate/Scale
 - 커브 전체 Transform과 Point별 단면 Offset/Rotate/Scale/Taper
 - Ribbon, Tube, Imported Mesh Brush 방식의 Live Mesh 생성
 - Box, Sphere, 모든 면이 Quad인 Quad Sphere, Cylinder 프록시 생성과 크기·세그먼트 비파괴 조정
@@ -60,7 +61,7 @@ HTML 파일을 직접 더블클릭하는 방식은 ES Module/CORS 제한 때문�
 1. `Create` 탭에서 `+ Line`을 누릅니다.
 2. 모델 표면 또는 빈 뷰포트에 Point를 두 개 이상 배치합니다.
 3. `Finish & Edit`으로 생성 모드를 끝냅니다.
-4. Point, Bézier Handle 또는 `Point Cross-section` 값을 조정합니다.
+4. Point, Bézier Handle 또는 `Point Cross-section` 값을 조정합니다. 넓은 형상 수정은 `Modify → Soft Selection`을 켜고 Falloff를 조정한 뒤 `W/E/R`을 사용합니다. 노란 Point는 직접 선택(100%), 청록→초록→주황 Point는 Curve 길이에 따른 간접 영향입니다.
 5. `Live Curve → Mesh`에서 Ribbon, Tube 또는 Imported Mesh Brush를 선택합니다.
 6. `Apply / Rebuild Live Mesh`를 누릅니다.
 7. `Display → Viewport Material`에서 전체 Reference 재질을 고르고, `Reference Objects`에서 Mesh별 표시·재질·텍스처를 조정합니다.
@@ -135,9 +136,9 @@ npm run check
 npm run test:viewport
 ```
 
-`npm run test:viewport`는 임시 로컬 서버와 Chromium을 자동으로 실행해 3ds Max식 `T/B/F/L/P/U`와 `V→K`, 입력 필드 단축키 차단, ViewCube 면/드래그/키보드/Home과 Ortho 연동, ViewCube와 우하단 선택 배지 분리, 빈 공간 클릭·단일 삭제 뒤 무선택 상태, Axis Lines/기본 XYZ gizmo 분리, Proxy 직접 drag/Undo, FFD 다중 선택의 노란 표시·동시 drag·편집 토글, FFD 모드의 Proxy 선택 전달, Proxy/Curve 우클릭 메뉴 명령, 잠긴 Curve/Proxy의 Viewport LMB·RMB 선택 차단과 1024px 레이아웃을 검사합니다. 브라우저 핵심 진단은 실행 주소 뒤에 `?selftest=1`을 붙여 확인할 수 있으며 결과는 개발자 도구의 `globalThis.__CURVE_TOOL_SELF_TEST__`, 회귀 진단 상태는 `globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__`에서 조회할 수 있습니다.
+`npm run test:viewport`는 임시 로컬 서버와 Chromium을 자동으로 실행해 Curve Soft Selection Falloff/가중치 색/다중 Point Move·Rotate·Scale/Live Mesh/Undo·Redo, 3ds Max식 `T/B/F/L/P/U`와 `V→K`, 입력 필드 단축키 차단, ViewCube 면/드래그/키보드/Home과 Ortho 연동, ViewCube와 우하단 선택 배지 분리, 빈 공간 클릭·단일 삭제 뒤 무선택 상태, Axis Lines/기본 XYZ gizmo 분리, Proxy 직접 drag/Undo, FFD 다중 선택의 노란 표시·동시 drag·편집 토글, FFD 모드의 Proxy 선택 전달, Proxy/Curve 우클릭 메뉴 명령, 잠긴 Curve/Proxy의 Viewport LMB·RMB 선택 차단과 1024px 레이아웃을 검사합니다. 브라우저 핵심 진단은 실행 주소 뒤에 `?selftest=1`을 붙여 확인할 수 있으며 결과는 개발자 도구의 `globalThis.__CURVE_TOOL_SELF_TEST__`, 회귀 진단 상태는 `globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__`에서 조회할 수 있습니다.
 
-원격 기능 기준 커밋 `969a05e`는 GitHub Actions Validate(run `31267391750`)를 통과했습니다. ViewCube·3ds Max POV 키와 무선택 변경을 포함한 현재 작업 트리는 `npm run check` 31/31, 브라우저 self-test 24/24와 `npm run test:viewport` 통과를 확인했습니다.
+Soft Selection 작업 직전 원격 체크포인트는 `c243711`입니다. 현재 Soft Selection 작업 트리는 `npm run check` 34/34, 브라우저 self-test 24/24와 `npm run test:viewport` 통과를 기준으로 합니다.
 
 ## 저장소 구조
 

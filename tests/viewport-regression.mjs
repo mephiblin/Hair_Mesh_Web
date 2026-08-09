@@ -78,6 +78,7 @@ try {
   assert.deepEqual(curveRuntime.selectedCurvePointIndices, [0, 2], 'Ctrl-click must keep both Curve anchors selected');
 
   await curvePage.keyboard.press('E');
+  await curvePage.waitForTimeout(50);
   curveRuntime = await curvePage.evaluate(() => globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__);
   assert.equal(curveRuntime.pointTool, 'pointRotate');
   assert.deepEqual(curveRuntime.gizmoPointIndices, [0, 2], 'Point Rotate must target every selected Curve anchor');
@@ -102,6 +103,7 @@ try {
   await curvePage.keyboard.press('Control+z');
 
   await curvePage.keyboard.press('R');
+  await curvePage.waitForTimeout(50);
   curveRuntime = await curvePage.evaluate(() => globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__);
   assert.equal(curveRuntime.pointTool, 'pointScale');
   assert.deepEqual(curveRuntime.gizmoPointIndices, [0, 2], 'Point Scale must target every selected Curve anchor');
@@ -125,6 +127,117 @@ try {
   assert.ok(curveRuntime.selectedCurvePointPositions.flatMap((point, index) => point.map((value, axis) => Math.abs(value - pointPositionsAfterScale[index][axis]))).every(delta => delta < 1e-8), 'one Redo must restore the multi-Point scale');
   await curvePage.keyboard.press('Control+z');
   await curvePage.close();
+
+  const softPage = await browser.newPage({ viewport:{ width:1600, height:900 } });
+  const softRuntimeErrors = [];
+  softPage.on('pageerror', error => softRuntimeErrors.push(error.message));
+  softPage.on('console', message => { if (message.type() === 'error') softRuntimeErrors.push(message.text()); });
+  await softPage.addInitScript(() => localStorage.clear());
+  await softPage.goto(`${url}?selftest=1`, { waitUntil:'networkidle' });
+  await softPage.evaluate(() => document.getElementById('newCurveBtn').click());
+  for (const x of [300, 420, 540, 660, 780]) await softPage.mouse.click(x, 300);
+  await softPage.evaluate(() => document.getElementById('createEditBtn').click());
+  let softRuntime = await softPage.evaluate(() => globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__);
+  const softControls = softRuntime.selectedCurveControlScreenPositions;
+  await softPage.mouse.click(softControls[2].x, softControls[2].y);
+  await softPage.locator('button.rollout-header', { hasText:'Soft Selection' }).click();
+  await softPage.locator('#softSelectionEnabled').click();
+  softRuntime = await softPage.evaluate(() => globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__);
+  const initialSoftWeights = softRuntime.softSelectionWeights;
+  assert.equal(softRuntime.softSelectionSettings.enabled, true);
+  assert.equal(initialSoftWeights[2], 1, 'hard-selected Curve Anchor must keep weight 1');
+  assert.ok(initialSoftWeights[1] > 0 && initialSoftWeights[1] < 1 && initialSoftWeights[3] > 0 && initialSoftWeights[3] < 1, 'adjacent Curve Anchors must receive partial soft-selection weights');
+  assert.equal(initialSoftWeights[0], 0);
+  assert.equal(initialSoftWeights[4], 0);
+  assert.deepEqual(softRuntime.gizmoAffectedPointIndices, [1, 2, 3], 'Point Move must include hard and soft-selected Anchors');
+  assert.equal(softRuntime.selectedCurveControlColors[2], 0xffff8a, 'hard selection must retain the yellow active color');
+  assert.notEqual(softRuntime.selectedCurveControlColors[1], 0x6da6ff, 'soft-selected Anchors must expose a visible weight color');
+  assert.match(softRuntime.softSelectionSummary, /1 Hard · 2 Soft/);
+  await softPage.locator('#softSelectionFalloff').fill('0.5');
+  await softPage.locator('#softSelectionFalloff').press('Tab');
+  softRuntime = await softPage.evaluate(() => globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__);
+  assert.deepEqual(softRuntime.softSelectionWeights, [0, 0, 1, 0, 0], 'reducing Falloff must remove Anchors outside the Curve-length range');
+  await softPage.locator('#softSelectionFalloff').fill('1');
+  await softPage.locator('#softSelectionFalloff').press('Tab');
+  await softPage.locator('#softSelectionEnabled').click();
+  softRuntime = await softPage.evaluate(() => globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__);
+  assert.deepEqual(softRuntime.softSelectionWeights, [0, 0, 1, 0, 0], 'Soft Selection OFF must leave only the hard selection weighted');
+  await softPage.locator('#softSelectionEnabled').click();
+  softRuntime = await softPage.evaluate(() => globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__);
+  assert.ok(softRuntime.softSelectionWeights[1] > 0 && softRuntime.softSelectionWeights[3] > 0, 'Soft Selection ON must restore the derived neighboring weights');
+  if (process.env.HAIR_MESH_QA_SCREENSHOTS) await softPage.screenshot({ path:'/tmp/hair-mesh-soft-selection-1600.png', scale:'css' });
+
+  await softPage.locator('button.rollout-header', { hasText:'Live Curve → Mesh' }).click();
+  await softPage.locator('#enableLiveMesh').click();
+  softRuntime = await softPage.evaluate(() => globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__);
+  assert.equal(softRuntime.selectedCurveMeshEnabled, true, 'Soft Selection transforms must be exercised with Live Mesh enabled');
+
+  const positionsBeforeSoftMove = softRuntime.selectedCurvePointPositions;
+  await softPage.mouse.move(softControls[2].x, softControls[2].y);
+  await softPage.mouse.down();
+  await softPage.mouse.move(softControls[2].x, softControls[2].y - 80, { steps:12 });
+  await softPage.mouse.up();
+  softRuntime = await softPage.evaluate(() => globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__);
+  const moveDeltas = softRuntime.selectedCurvePointPositions.map((point, index) => Math.hypot(...point.map((value, axis) => value - positionsBeforeSoftMove[index][axis])));
+  assert.ok(moveDeltas[2] > moveDeltas[1] && moveDeltas[1] > 0, 'soft Point Move must diminish away from the hard selection');
+  assert.ok(Math.abs(moveDeltas[1] - moveDeltas[3]) < 1e-8, 'equal Curve distances must receive equal Move influence');
+  assert.equal(moveDeltas[0], 0);
+  assert.equal(moveDeltas[4], 0);
+  await softPage.keyboard.press('Control+z');
+  softRuntime = await softPage.evaluate(() => globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__);
+  assert.equal(softRuntime.softSelectionSettings.enabled, true, 'Undoing geometry must preserve the enabled Soft Selection tool state');
+  assert.ok(softRuntime.selectedCurvePointPositions.flatMap((point, index) => point.map((value, axis) => Math.abs(value - positionsBeforeSoftMove[index][axis]))).every(delta => delta < 1e-8), 'one Undo must restore the weighted Point Move');
+  await softPage.keyboard.press('Control+y');
+  softRuntime = await softPage.evaluate(() => globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__);
+  assert.ok(softRuntime.selectedCurvePointPositions[1].some((value, axis) => Math.abs(value - positionsBeforeSoftMove[1][axis]) > 1e-5), 'one Redo must restore the weighted Point Move');
+  await softPage.keyboard.press('Control+z');
+
+  await softPage.keyboard.press('E');
+  await softPage.waitForTimeout(50);
+  softRuntime = await softPage.evaluate(() => globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__);
+  const positionsBeforeSoftRotate = softRuntime.selectedCurvePointPositions;
+  const softRotateGizmo = softRuntime.gizmoScreenPosition;
+  assert.deepEqual(softRuntime.gizmoAffectedPointIndices, [1, 2, 3], 'Point Rotate must keep the same soft influence set');
+  await softPage.mouse.move(softRotateGizmo.x + 90, softRotateGizmo.y);
+  await softPage.mouse.down();
+  await softPage.mouse.move(softRotateGizmo.x, softRotateGizmo.y - 90, { steps:18 });
+  await softPage.mouse.up();
+  softRuntime = await softPage.evaluate(() => globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__);
+  const rotateDeltas = softRuntime.selectedCurvePointPositions.map((point, index) => Math.hypot(...point.map((value, axis) => value - positionsBeforeSoftRotate[index][axis])));
+  assert.ok(rotateDeltas[1] > 1e-5 && rotateDeltas[3] > 1e-5, 'soft Point Rotate must move both influenced neighbors');
+  assert.ok(rotateDeltas[2] < 1e-8, 'the hard-selected Anchor at the rotation pivot must remain in place');
+  assert.equal(rotateDeltas[0], 0);
+  assert.equal(rotateDeltas[4], 0);
+  await softPage.keyboard.press('Control+z');
+
+  await softPage.keyboard.press('R');
+  await softPage.waitForTimeout(50);
+  softRuntime = await softPage.evaluate(() => globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__);
+  const positionsBeforeSoftScale = softRuntime.selectedCurvePointPositions;
+  const softScaleGizmo = softRuntime.gizmoScreenPosition;
+  assert.deepEqual(softRuntime.gizmoAffectedPointIndices, [1, 2, 3], 'Point Scale must keep the same soft influence set');
+  await softPage.mouse.move(softScaleGizmo.x + 58, softScaleGizmo.y + 18);
+  await softPage.mouse.down();
+  await softPage.mouse.move(softScaleGizmo.x + 110, softScaleGizmo.y + 35, { steps:18 });
+  await softPage.mouse.up();
+  softRuntime = await softPage.evaluate(() => globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__);
+  const scaleDeltas = softRuntime.selectedCurvePointPositions.map((point, index) => Math.hypot(...point.map((value, axis) => value - positionsBeforeSoftScale[index][axis])));
+  assert.ok(scaleDeltas[1] > 1e-5 && scaleDeltas[3] > 1e-5, 'soft Point Scale must move both influenced neighbors');
+  assert.ok(scaleDeltas[2] < 1e-8, 'the hard-selected Anchor at the scale pivot must remain in place');
+  assert.equal(scaleDeltas[0], 0);
+  assert.equal(scaleDeltas[4], 0);
+  assert.equal(softRuntime.selectedCurveMeshEnabled, true, 'weighted Rotate/Scale must keep Live Mesh enabled and rebuilt');
+  await softPage.keyboard.press('Control+z');
+  await softPage.setViewportSize({ width:1024, height:768 });
+  const softPanel = await softPage.locator('#softSelectionEnabled').evaluate(element => {
+    const body = element.closest('.rollout-body').getBoundingClientRect();
+    const input = element.getBoundingClientRect();
+    return { bodyLeft:body.left, bodyRight:body.right, inputLeft:input.left, inputRight:input.right };
+  });
+  assert.ok(softPanel.inputLeft >= softPanel.bodyLeft && softPanel.inputRight <= softPanel.bodyRight, 'Soft Selection controls must remain inside the compact Modify panel');
+  if (process.env.HAIR_MESH_QA_SCREENSHOTS) await softPage.screenshot({ path:'/tmp/hair-mesh-soft-selection-1024.png', scale:'css' });
+  assert.deepEqual(softRuntimeErrors, [], 'Soft Selection browser flow must not report runtime errors');
+  await softPage.close();
 
   await page.keyboard.press('T');
   let runtime = await page.evaluate(() => globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__);
@@ -406,7 +519,7 @@ try {
   assert.ok(compactViewCube.x + compactViewCube.width <= compactViewport.x + compactViewport.width + 1);
   assert.deepEqual(runtimeErrors, [], 'browser runtime must not report errors');
 
-  console.log(`PASS viewport regression · self-test ${selfTest.tests.length}/${selfTest.tests.length} · 3ds T/B/F/L/P/U + V/K views · ViewCube face/drag/keyboard/Home · separate selection badge · empty object selection · Axis/gizmo split · Curve multi-point Rotate/Scale targeting · FFD highlight/drag/toggle · context menus · locked object pick exclusion · 1024px layout`);
+  console.log(`PASS viewport regression · self-test ${selfTest.tests.length}/${selfTest.tests.length} · Curve Soft Selection Move/Rotate/Scale + Undo/Redo · 3ds T/B/F/L/P/U + V/K views · ViewCube face/drag/keyboard/Home · separate selection badge · empty object selection · Axis/gizmo split · Curve multi-point Rotate/Scale targeting · FFD highlight/drag/toggle · context menus · locked object pick exclusion · 1024px layout`);
 } finally {
   if (browser) await browser.close();
   await stopServer(server);

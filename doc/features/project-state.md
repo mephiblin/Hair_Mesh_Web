@@ -44,9 +44,9 @@ open/recovery/undo/redo
 
 ## 저장 경계
 
-저장됨: Curve/Point/Brush, Curve transform/settings/live flag, Proxy type/settings/transform/visibility/lock과 FFD modifier stack·활성 modifier·`lastFfdControlIndices`, `nextProxyId`, `nextProxyModifierId`, `selectedObjectKind`와 활성 Curve/Proxy ID, 다중 `selectedCurveIds`, 활성 Control과 `selectedPointIndices`, mode, Hair/Reference material preset, 방향광 azimuth/elevation/intensity, Environment Fill, Viewport background/FOV·`orthographicStandardViews`, Reference wire mode/color, Front/Left/Back Plane의 position/rotation/scale·표시·Flip·Back-face Cull과 파일명 힌트, Grid visibility를 포함한 display 설정과 ID counter.
+저장됨: Curve/Point/Brush, Curve transform/settings/live flag, Curve Soft Selection `enabled`/`falloff`, Proxy type/settings/transform/visibility/lock과 FFD modifier stack·활성 modifier·`lastFfdControlIndices`, `nextProxyId`, `nextProxyModifierId`, `selectedObjectKind`와 활성 Curve/Proxy ID, 다중 `selectedCurveIds`, 활성 Control과 `selectedPointIndices`, mode, Hair/Reference material preset, 방향광 azimuth/elevation/intensity, Environment Fill, Viewport background/FOV·`orthographicStandardViews`, Reference wire mode/color, Front/Left/Back Plane의 position/rotation/scale·표시·Flip·Back-face Cull과 파일명 힌트, Grid visibility를 포함한 display 설정과 ID counter.
 
-저장되지 않음: Reference model binary/scene, Reference Mesh별 visibility/material/수동 texture, Front/Left/Back 이미지 binary/data URL/texture plane, camera/orbit position, transient pointer/gizmo drag, GPU objects, Object URL.
+저장되지 않음: Soft Selection으로 파생된 Point weight/대상 index, Reference model binary/scene, Reference Mesh별 visibility/material/수동 texture, Front/Left/Back 이미지 binary/data URL/texture plane, camera/orbit position, transient pointer/gizmo drag, GPU objects, Object URL.
 
 ## 스키마 변경 규칙
 
@@ -79,6 +79,7 @@ open/recovery/undo/redo
 - 이전 문서의 `selectedCurveId`만 있어도 단일 `selectedCurveIds`로 복원되고, 새 문서는 다중 Curve 선택과 활성 Curve를 함께 복원하는가?
 - Recovery 실패가 앱 부팅을 막지 않는가?
 - 이전 프로젝트에 material preset 필드가 없어도 Hair는 Studio Clay, Reference는 Auto로 복원되고 명시적 Original 값은 유지되는가?
+- `softSelection`이 없는 이전 프로젝트는 OFF/Falloff `1`로 열리고, 새 프로젝트는 설정만 왕복하며 파생 weight를 JSON에 저장하지 않는가?
 - 이전 `modelWireframe: true`는 `referenceWireMode: wire`로 복원되고, 새 display 필드가 없으면 조명/Wire/Grid 기본값을 쓰는가?
 - `referenceImages` 또는 view별 `transform/backfaceCulling`이 없는 이전 문서는 기존 frame/layout과 기본 Back-face Cull로 열리고, 새 문서는 세 Plane의 3D transform·Flip·Cull과 파일명 힌트를 저장하되 이미지 픽셀을 포함하지 않는가?
 - `orthographicStandardViews`가 없는 이전 문서는 ON으로 열리고, false를 저장한 문서는 표준 뷰에서 Perspective Camera를 복원하는가?
@@ -88,5 +89,5 @@ open/recovery/undo/redo
 
 ## 검증
 
-- Node: History undo/redo, project round-trip, unrelated/future document reject.
+- Node: History undo/redo, Soft Selection optional settings를 포함한 project round-trip, unrelated/future document reject.
 - Browser: save → mutate → open, Proxy 4종의 parameters/transform/visibility/lock/FFD stack/활성 Modify 문맥, FFD 다중 Control 선택 집합의 저장 왕복, 다중 drag 한 단계 Undo/Redo와 Clone modifier ID 분리, Brush 및 참조 Plane 3D transform/Flip/Cull 포함 저장/열기, 이미지 binary 미포함, reload recovery, corrupt recovery fallback, unsaved warning, Undo/Redo 후 Live Mesh/selection 일치.

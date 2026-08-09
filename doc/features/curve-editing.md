@@ -14,6 +14,7 @@ Line 생성, Curve/Point/Handle 선택, Bézier 계산, Point topology 변경, �
 | Line 생성 | `beginLineCreation()`, `addPoint()`, `finishLineCreation()`, `cancelLineCreation()` | `state/line-creation-policy.js` | `drawingCurve`, `creationPreviousCurve`, `mode` |
 | Curve 선택 | `selectCurve()`, `toggleCurveSelection()`, `refreshCurveList()` | `state/curve-selection.js` | `selectedCurve`, `selectedCurveIds`, `lastControl` |
 | Control 선택 | `selectControl()`, `selectAllCurvePoints()` | `state/point-selection.js`의 `pointTransformIndices()` 포함 | `selectedControl`, `selectedPointIndices` |
+| Soft Selection | `#softSelectionEnabled`, `#softSelectionFalloff`, `softSelectionWeightsForCurve()`, `syncSoftSelectionUI()` | `geometry/soft-selection.js` | `softSelectionSettings`, drag 중 frozen weights |
 | Point split/insert | `splitCurveSegment()`, `insertPointAtRawParameter()`, `insertRelativeToSelected()` | — | `curve.points[]` |
 | Point 제거 | `#deletePointBtn`, `finishPointTopologyChange()` | line minimum policy | selection + points |
 | Knot/Handle | `setSelectedKnotType()`, `resetSelectedTangents()` | `geometry/bezier-handles.js` | tangent/type/mode fields |
@@ -73,6 +74,15 @@ point/handle transform
 - 잠긴 Curve는 Viewport의 line/Live Mesh/control pick과 RMB 대상에서 제외한다. Scene Explorer 행은 계속 선택할 수 있어 잠금 상태를 확인하고 해제할 수 있다.
 - Point Move·Rotate·Scale은 선택된 Anchor 전체를 대상으로 하며 gizmo는 선택 위치의 평균 중심에 놓인다. Rotate/Scale은 그 공통 중심을 기준으로 모든 선택 Anchor, Tangent, 단면 변환을 함께 갱신한다. Section Move·Rotate·Scale과 개별 Bézier Handle 이동은 활성 Point 하나만 대상으로 한다.
 
+## Soft Selection 계약
+
+- Modify의 `Soft Selection` rollout은 Curve Anchor 편집에만 적용한다. Point 직접 선택 집합은 변경하지 않고, 이 집합은 항상 weight `1`(노란색)이다.
+- `curvePointDistances()`는 Curve root transform을 반영한 world-space cubic Bézier 길이를 근사한다. 각 Anchor의 weight는 가장 가까운 직접 선택 Anchor까지의 Curve 경로 거리와 Falloff에서 파생한다.
+- 파생 weight는 project/History에 저장하지 않는다. 저장 상태는 `softSelectionSettings.enabled`/`falloff`뿐이며 이전 파일 fallback은 OFF/`1` world unit이다.
+- Point gizmo pivot은 간접 영향 Point가 아닌 직접 선택 Anchor의 평균이다. Move/Rotate/Scale drag 시작 시 weight와 대상 index를 freeze하여 변형 중 거리가 바뀌어도 influence가 자기 자신을 재계산하지 않게 한다.
+- 가중 Rotate/Scale은 공통 hard-selection pivot에서 Anchor·Tangent·section transform을 함께 변형한다. Section tool과 in/out Handle drag는 Soft Selection을 소비하지 않는다.
+- 표시 색은 직접 선택 노란색을 최우선으로 유지하고, 간접 영향은 낮은 가중치의 파랑·청록에서 높은 가중치의 주황으로 표시한다.
+
 ## 변경 체크리스트
 
 - 숨김/잠금 Curve에서 모든 진입 경로가 차단되는가?
@@ -84,10 +94,12 @@ point/handle transform
 - Live Mesh가 켜져 있으면 단 한 번의 의미 있는 rebuild가 일어나는가?
 - Drag 또는 연속 input이 한 번의 Undo로 복원되는가?
 - 다중 Anchor 선택 후 Point Move·Rotate·Scale의 gizmo가 공통 중심에 있고 선택 전체가 한 번의 Undo로 함께 복원되는가?
+- Soft Selection ON/OFF·Falloff 변경이 즉시 색과 대상 index를 갱신하고, drag 중에는 weight가 freeze되며, hard selection/pivot은 변하지 않는가?
+- 가중 Move·Rotate·Scale가 Live Mesh를 재생성하고 한 번의 Undo/Redo로 Anchor·Tangent·section을 함께 복원하는가?
 - RMB Average/Object/Live Mesh 명령이 panel과 동일한 editability, History, Live 상태 전이를 사용하는가?
 
 ## 검증
 
-- Node: line minimum, Point/Curve selection normalize/toggle/active fallback, Point group transform 대상 집합.
+- Node: line minimum, Point/Curve selection normalize/toggle/active fallback, Point group transform 대상 집합, Bézier 길이 기반 Soft Selection weight/Falloff clamp.
 - Self-test: Bézier handle finite/constraint 관련 검사.
-- Browser: create/cancel/finish, Ctrl/⌘ Point 토글과 0개 해제/재선택, Scene Curve 행 다중 선택/활성 전환, split/delete, multi-select average, handle mode, 다중 Point 공통 중심 Move/Rotate/Scale, 단일 Point section transform, Curve RMB Average/Object/Live toggle, Undo/Redo.
+- Browser: create/cancel/finish, Ctrl/⌘ Point 토글과 0개 해제/재선택, Scene Curve 행 다중 선택/활성 전환, split/delete, multi-select average, handle mode, 다중 Point 공통 중심 Move/Rotate/Scale, Soft Selection ON/OFF/Falloff/가중치 색과 Live Mesh 상태의 가중 Move/Rotate/Scale·Undo/Redo, 단일 Point section transform, Curve RMB Average/Object/Live toggle.

@@ -15,7 +15,7 @@ browser_regression: tests/viewport-regression.mjs
 project_format: .hairmesh.json, version 1
 external_runtime: three@0.180.0 via jsDelivr
 default_branch: master
-current_node_contracts: 32
+current_node_contracts: 34
 current_browser_self_checks: 24
 ```
 
@@ -23,7 +23,7 @@ current_browser_self_checks: 24
 
 | 요청 신호 | 추가로 읽을 문서 | 첫 검색 앵커 |
 | --- | --- | --- |
-| Line, Curve, Point, Handle, Knot, Average, Insert, Delete | [`features/curve-editing.md`](features/curve-editing.md) | `makeCurveRecord`, `selectControl`, `BezierChainCurve` |
+| Line, Curve, Point, Handle, Knot, Average, Soft Selection, Falloff, Insert, Delete | [`features/curve-editing.md`](features/curve-editing.md) | `makeCurveRecord`, `selectControl`, `softSelectionWeightsForCurve`, `BezierChainCurve` |
 | Ribbon, Tube, Brush, Sweep, topology, UV, cap, twist | [`features/mesh-generation.md`](features/mesh-generation.md) | `makeTopologyForCurve`, `rebuildCurveMesh` |
 | Proxy Mesh, Box, Sphere, Quad Sphere, Cylinder, FFD 2/4/8, Modifier Stack, Proxy Surface | [`features/proxy-mesh.md`](features/proxy-mesh.md) | `buildProxyTopology`, `evaluateFfdStack`, `rebuildProxyMesh`, `syncModifyContext` |
 | Save, Open, JSON, Recovery, Dirty, Undo, Redo, schema | [`features/project-state.md`](features/project-state.md) | `captureAppState`, `restoreAppState`, `createHistory` |
@@ -76,6 +76,7 @@ empty_root_selection: orbit/transform 빈 LMB는 root/control 선택과 gizmo를
 modify_context: none XOR curve XOR proxy
 point_multi_selection: Ctrl/Cmd + active-curve anchor toggles membership, empty selection allowed
 point_group_transform: Point Move/Rotate/Scale use the full selected Anchor set and its shared center; Section tools and tangent handles remain active-point-only
+curve_soft_selection: Along Curve weights are derived from hard Anchor selection; hard selection owns the pivot, weights freeze for each drag, and only Point Move/Rotate/Scale consume them
 control_region_selection: left-to-right Window, right-to-left Crossing; Ctrl add, Alt remove
 max_viewport_navigation: MMB pan, Alt+MMB orbit, Ctrl+Alt+MMB zoom, wheel zoom
 max_viewport_views: direct T/B/F/L/P/U; V opens POV menu; V then K selects Back; disabled for typing targets
