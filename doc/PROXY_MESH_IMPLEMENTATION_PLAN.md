@@ -1,6 +1,6 @@
 # Proxy Mesh · Object-aware Modify 구현 계획
 
-> 구현 상태: 2026-08-09 기준 primitive 1–7단계, FFD stack 8–12단계, 다중 Control 선택·이동과 3ds Max식 Viewport 조작 13–15단계, Viewport 회귀 고정 16단계, FFD 선택 피드백·편집 토글·대상별 RMB 메뉴 17단계, 잠긴 root의 Viewport 선택 차단 18단계 완료. 현재 동작 계약과 코드 지도는 [`features/proxy-mesh.md`](features/proxy-mesh.md)를 우선한다. 이 문서는 도입 당시 IA와 단계별 의사결정 기록이다.
+> 구현 상태: 2026-08-09 기준 primitive 1–7단계, FFD stack 8–12단계, 다중 Control 선택·이동과 3ds Max식 Viewport 조작 13–15단계, Viewport 회귀 고정 16단계, FFD 선택 피드백·편집 토글·대상별 RMB 메뉴 17단계, 잠긴 root의 Viewport 선택 차단 18단계, Curve/Proxy 무선택 상태 19단계 완료. 현재 동작 계약과 코드 지도는 [`features/proxy-mesh.md`](features/proxy-mesh.md)를 우선한다. 이 문서는 도입 당시 IA와 단계별 의사결정 기록이다.
 
 ## IA thesis
 
@@ -105,6 +105,7 @@ FFD modifier는 `resolution`, `enabled`, 정규화된 control `offsets`만 저�
 16. Regression hardening: Axis Lines와 기본 XYZ helper 소유권을 분리하고 Proxy `W` 표면 drag, FFD/Edit click-through Scene picking을 복원. `tests/viewport-regression.mjs`와 CI gate로 고정.
 17. DCC interaction feedback: 선택된 FFD Control 전체를 노란색으로 통일하고 active를 scale로 구분, `Edit Control Points`를 진입/종료 토글로 변경, Proxy/Curve RMB 메뉴를 기존 panel command에 위임.
 18. Locked root pick policy: 잠긴 Curve/Proxy를 Viewport LMB·RMB·직접 drag·Edit/FFD click-through raycast 후보에서 제외하고, 잠금 해제를 위해 Scene Explorer 선택 경로는 유지.
+19. Empty root selection: `orbit`/`transform` 빈 LMB와 단일 root 삭제를 `clearObjectSelection()`으로 통합해 Scene 강조, Control 선택, lattice, gizmo와 Modify 문맥을 함께 비우고 첫 객체 fallback을 제거.
 
 ## Acceptance gates
 
@@ -122,11 +123,12 @@ FFD modifier는 `resolution`, `enabled`, 정규화된 control `offsets`만 저�
 - Ctrl/Region으로 고른 모든 FFD Control은 노란색으로 보이고 다중 drag 뒤에도 유지되며, Finish Editing은 stack을 보존한 채 lattice를 숨긴다.
 - Proxy/Curve RMB 메뉴가 포인터 대상을 사용하고 panel과 같은 History·rebuild·UI sync 경로를 실행한다.
 - 잠긴 Curve/Proxy는 Viewport LMB·RMB와 직접 drag로 선택되지 않으며 Scene Explorer에서는 선택하고 잠금을 해제할 수 있다.
+- Select/Object 모드의 빈 공간 클릭과 단일 Proxy 삭제 뒤에는 첫 Curve/Proxy를 강제 선택하지 않고 `No Selection`/Modify `NONE`/gizmo 해제 상태가 된다.
 - Reference가 없어도 보이는 Proxy 표면에 Line Point를 배치하고, Export에는 최종 FFD 결과를 bake한다.
 
 ## 완료 검증 기록
 
-- Node `npm run check`: 29/29 계약 통과. 4종 parameter clamp/topology/winding, FFD resolution/identity/Bernstein/stack/order/project round-trip, Control 선택 연산, Window/Crossing 판정, context menu 화면 clamp와 hidden/locked Viewport pick 정책 포함.
+- Node `npm run check`: 31/31 계약 통과. 4종 parameter clamp/topology/winding, FFD resolution/identity/Bernstein/stack/order/project round-trip, Control 선택 연산, Window/Crossing 판정, 3ds Max POV direct/V-menu key mapping, ViewCube face/edge/corner·방향/up-vector/drag 회전량, context menu 화면 clamp와 hidden/locked Viewport pick 정책 포함.
 - Browser self-test: 24/24 통과.
 - 1600×900: Box 생성 → 축별 Segments 변경 → Quad Sphere 변환 → Clone → Undo/Redo → Project Save → OBJ 2-object 출력 확인.
 - 실제 canvas 입력으로 Proxy X축 gizmo drag 후 OBJ world vertex 평균 X 이동, Curve↔Proxy 선택에 따른 Modify 문맥 전환, Show Edges/Smooth 왕복과 Frame을 확인.
@@ -136,5 +138,5 @@ FFD modifier는 `resolution`, `enabled`, 정규화된 control `offsets`만 저�
 - FFD 8×8×8: 512 Control Point/lattice 표시와 브라우저 오류 없음 확인. 1600×900 및 1024×768에서 패널·viewport clipping 없음.
 - 3ds Max식 입력: Window 영역으로 FFD 4/8 선택, Ctrl 영역으로 8/8 추가, Alt 영역으로 4/8 제외. 선택 4개 직접 drag에서 동일 local delta, Undo에서 네 offset이 0으로 복원되고 선택 집합 프로젝트 왕복 확인.
 - Viewport navigation: 실제 canvas MMB Pan, Alt+MMB Orbit, Ctrl+Alt+MMB Zoom 전후 프레임 변화와 오류 없음 확인.
-- Viewport regression: Axis Lines OFF에서 긴 guide hidden + 기본 Translate helper visible/enabled, Proxy 표면 drag와 한 단계 Undo, FFD Ctrl 다중 선택의 노란 표시·동시 drag·Edit/Finish 토글, `Sphere002 → Box001` click-through 선택, Proxy/Curve RMB 명령, 잠긴 Curve/Proxy의 LMB·RMB 차단과 Scene Explorer 복구, 1024×768 overflow 0을 `npm run test:viewport`로 자동 확인.
+- Viewport regression: 3ds Max `T/B/F/L/P/U`·`V→K`와 typing 차단, ViewCube face/free-drag/keyboard/Home·Ortho/compact bounds와 선택 배지 분리, 빈 공간 클릭·단일 삭제 뒤 무선택, Axis Lines OFF에서 긴 guide hidden + 기본 Translate helper visible/enabled, Proxy 표면 drag와 한 단계 Undo, FFD Ctrl 다중 선택의 노란 표시·동시 drag·Edit/Finish 토글, `Sphere002 → Box001` click-through 선택, Proxy/Curve RMB 명령, 잠긴 Curve/Proxy의 LMB·RMB 차단과 Scene Explorer 복구, 1024×768 overflow 0을 `npm run test:viewport`로 자동 확인.
 - 남은 외부 검증: FBX는 실험 기능이므로 최종 호환 판정 전에 3ds Max/Blender Import가 필요하다.

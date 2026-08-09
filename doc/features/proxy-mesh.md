@@ -86,7 +86,7 @@ proxy
 
 ## UI와 편집 불변조건
 
-- 활성 root object는 Curve 또는 Proxy 중 하나다. `selectCurve()`와 `selectProxy()`는 반대 종류의 선택을 해제한다.
+- 활성 root object는 Curve 또는 Proxy 중 최대 하나이며 둘 다 없는 상태도 유효하다. `selectCurve()`와 `selectProxy()`는 반대 종류의 선택을 해제하고, `clearObjectSelection()`은 두 root와 하위 Control 선택을 함께 비운다.
 - FFD row의 순서는 Base에 가까운 항목부터 Top 방향이다. `Move Up`은 나중에, `Move Down`은 먼저 평가되도록 이동한다.
 - row checkbox를 끄면 데이터는 보존하고 평가만 건너뛴다. 편집 중인 FFD를 끄면 안전하게 Object/Camera 모드로 나온다.
 - `Edit Control Points`는 선택 modifier의 lattice만 표시하며 같은 버튼을 다시 누르면 `Finish Editing`으로 동작해 Object/Camera mode로 돌아가고 lattice·FFD gizmo를 숨긴다. FFD 값과 Control 선택 기억은 그대로 유지한다.
@@ -101,6 +101,7 @@ proxy
 - Clone은 stack 값은 복제하지만 modifier ID는 새로 할당해 원본과 독립 편집한다.
 - hidden/locked Proxy는 primitive, modifier, name, transform, clone/delete 변경을 막는다.
 - locked Proxy는 solid/edge가 보여도 Viewport LMB·RMB·직접 drag·FFD click-through raycast 후보에서 제외한다. Scene Explorer 행은 잠금 해제를 위해 계속 선택 가능하다.
+- Select/Object 모드의 빈 Viewport 클릭과 단일 Proxy 삭제는 다른 Proxy/Curve를 자동 선택하지 않는다. Scene row의 노란 활성 표시, lattice와 Transform gizmo가 사라지고 Modify 문맥은 `NONE`이 된다.
 - `Show Edges`와 FFD lattice line은 Hair/Reference wire 설정과 독립된 자체 line layer다.
 - 보이는 Proxy solid는 `Reference / Proxy Surface`의 raycast 후보이며 Reference와 겹치면 카메라에서 가장 가까운 hit를 사용한다.
 - Proxy 표면 RMB는 FFD 2/4/8 추가, Control 편집 진입/종료, active FFD Reset/Remove, Smooth Shading, Show Edges를 제공한다. 메뉴 명령은 패널과 같은 `addFfdModifierToSelected()`/`toggleFfdControlEditing()` 또는 같은 DOM command를 호출하며 별도 mutation 경로를 만들지 않는다.
@@ -142,6 +143,7 @@ UI의 `min/max`는 안내이며 실제 안전 경계는 순수 normalize 함수�
 - `Edit Control Points → Finish Editing → Edit Control Points` 왕복에서 lattice와 gizmo가 숨김/복원되고 stack/선택이 보존되는가?
 - Proxy RMB 각 명령이 패널과 동일한 History·rebuild·UI 동기화를 사용하며 잠긴 Proxy에는 메뉴 자체가 열리지 않는가?
 - 잠긴 Proxy 표면이 LMB/RMB/direct drag로 선택되지 않고 뒤의 편집 가능한 root는 선택되며, Scene Explorer 잠금 해제 경로는 남는가?
+- 빈 Viewport 클릭과 단일 Proxy 삭제 뒤 남은 첫 객체가 강제 선택되지 않고 완전한 무선택 상태가 유지되는가?
 
 ## 검증 기준
 

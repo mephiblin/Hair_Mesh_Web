@@ -34,6 +34,7 @@ launch_server.py
 | FFD Control 편집 | `findFfdControl()`, `setFfdControlSelection()`, `rebuildProxyLatticeVisual()`, `toggleFfdControlEditing()`, `syncGizmo()` | 단일/영역 다중 선택, 선택 전체 노란 표시, Edit/Finish lattice 토글, 선택 중심 직접/기즈모 Move와 최종 Proxy 재평가 | `control-selection.js`, `region-selection.js`, FFD 좌표 함수 |
 | 객체별 Modify 문맥 | `syncModifyContext()`, `#curveModifyContext`, `#proxyModifyContext` | 활성 Curve/Proxy에 해당하는 rollout만 표시 | `features/proxy-mesh.md` |
 | Proxy 선택/표시/잠금 | `selectProxy()`, `refreshProxyList()`, `setProxyVisible()`, `setProxyLocked()` | Scene Explorer 선택은 유지하고 잠긴 root는 Viewport LMB/RMB/direct drag에서 제외 | `canPickViewportObject()`, 브라우저 QA + Project restore |
+| Curve/Proxy 선택 해제 | `clearObjectSelection()`, `handleViewportClick()` | `orbit`/`transform` 빈 LMB와 단일 삭제 후 root/control Set, Scene 강조, gizmo, Modify 문맥을 함께 비움 | `features/viewport-ui.md`, `tests/viewport-regression.mjs` |
 | Proxy 복제/삭제 | `#duplicateCurveBtn`, `deleteSelectedProxy()` | 파라미터/transform 복제와 GPU 자원 폐기 | History + 브라우저 QA |
 | Bézier 곡선 평가 | `BezierChainCurve` | `getPoint()`, `getTangent()`이 Cubic Bézier 계산 | `src/geometry/bezier-handles.js` |
 | Handle/Knot 편집 | `setSelectedKnotType()`, `resetSelectedTangents()` | Handle 모드 적용, 인접 Handle 재계산 | `bezier-handles.js`, Self-test |
@@ -43,6 +44,7 @@ launch_server.py
 | Point Transform | `setPointTool()`, `applyPointUnitTransform()`, `handleGizmoChange()` | Point, Handle, 단면 Transform을 선택 문맥에 맞게 적용 | `coordinateFrameQuaternion()` |
 | 축 가이드 이동 | `toggleAxisGuides()`, `startAxisGuideDrag()`, `updateAxisGuideDrag()` | 화면 Pick → 제약 평면 → 축 Scalar 적용, OFF 시 긴 guide만 숨기고 기본 Translate gizmo 유지 | `src/viewport/axis-guide-drag.js`, `interaction-policy.js`, Self-test |
 | 3ds Max Viewport 입력 | `beginMaxViewportNavigation()`, `beginSelectionRegion()`, `beginDirectViewportMove()` | MMB Pan, Alt+MMB Orbit, Ctrl+Alt+MMB Zoom, Window/Crossing Control 선택, Proxy 표면 Move drag | `src/state/control-selection.js`, `src/viewport/region-selection.js` |
+| 3ds Max POV 키/메뉴 | `#viewportViewMenu`, `openViewportViewMenu()`, `applyViewportView()`, `setViewportProjectionView()` | 전역 T/B/F/L/P/U, 포인터 위치 V 메뉴와 V→K Back, typing target 차단 | `src/viewport/view-shortcuts.js`, Node mapping + Browser regression |
 | 대상별 RMB 메뉴 | `openViewportContextMenu()`, `renderProxyContextMenu()`, `renderCurveContextMenu()` | 포인터 아래 Proxy/Curve 선택, 기존 panel/shortcut command 재사용, 가장자리 clamp/닫힘 | `src/ui/context-menu.js`, `features/viewport-ui.md` |
 | 단면 수치 편집 | `#applyPointValuesBtn`, `updatePointPanel()` | Position/Offset/Scale/Rotation 입력과 Live rebuild | `src/ui/numeric-scrubber.js` |
 | Tip/단면 초기화 | `#makeTipBtn`, `#resetSectionBtn` | Point의 `scaleX/scaleZ` 또는 단면 Transform 초기화 | History + 브라우저 QA |
@@ -58,7 +60,8 @@ launch_server.py
 | Reference Viewport 재질 | `#referenceMaterialPreset`, `applyModelDisplay()` | Auto/Original/Default Lit/MatCap 전역 적용 | `src/viewport/material-presets.js`, `src/viewport/reference-object-policy.js` |
 | Reference Mesh 관리 | `#referenceObjectList`, `refreshReferenceObjectUI()` | Mesh별 숨김/표시, 재질 override, 이미지 texture/UV 경고 | `src/viewport/reference-object-policy.js`, 다중 OBJ fixture |
 | Viewport 환경/조명 | `#viewportBackground`, `#cameraFov`, `#gridVisible`, `#light*`, `#fillLightIntensity` | `applyViewportDisplay()`, `applyLightingDisplay()` | `src/viewport/viewport-settings.js`, `src/viewport/lighting.js` |
-| 표준 뷰 투영 | `#orthographicViewsToggleBtn`, `#view*Btn`, `useViewportCamera()`, `setStandardView()` | Persp는 Perspective 고정, Front/Left/Back/Top은 토글에 따라 Orthographic/Perspective 전환 | `standardViewProjection()`, `matchedOrthographicHeight()`, Node/브라우저 QA |
+| 표준 뷰 투영 | `#orthographicViewsToggleBtn`, `#view*Btn`, `useViewportCamera()`, `setStandardView()` | Persp/사선/Home은 Perspective, 표준 6면은 토글에 따라 Orthographic/Perspective 전환 | `standardViewProjection()`, `matchedOrthographicHeight()`, Node/브라우저 QA |
+| ViewCube 카메라 내비게이션 | `#viewCubeStage`, `#viewCubeHome`, `beginViewCubeDrag()`, `updateViewCubeDrag()`, `setViewportDirection()`, `applyViewCubeTarget()`, `syncViewCubeOrientation()` | inverse camera quaternion 표시, threshold click/drag 분리, 자유 orbit, face/edge/corner 6면·사선·Home·키보드 전환 | `src/viewport/view-cube.js`, Node classifier/drag delta + `tests/viewport-regression.mjs` |
 | Reference Wireframe | `#referenceWireMode`, `#referenceWireColor` | `ensureReferenceWireObject()`, `applyReferenceWireframeDisplay()`로 독립 `LineSegments` 관리 | `src/viewport/reference-wireframe.js`, 브라우저 QA |
 | Front/Left/Back 참조 Plane | `#referenceImageStrip`, `setReferenceImageTransformTool()`, `loadReferenceImage()` | Perspective 표시, 실제 Plane transform/gizmo, Back-face Cull, UV Flip, 프로젝트 파일명 대조와 자원 해제 | `src/viewport/reference-images.js`, `referenceImageTransformControls`, Node/브라우저 QA |
 | 프로젝트 저장 | `#saveProjectBtn`, `saveProject()` | 앱 상태 캡처 → versioned document → JSON 다운로드 | `src/state/project-format.js`, Node round-trip 테스트 |
@@ -67,7 +70,7 @@ launch_server.py
 | Undo/Redo | `history`, `history.begin()/commit()` | 변경 전 snapshot과 transaction label 관리 | `src/state/history.js`, Node 양방향 복원 테스트 |
 | OBJ Export | `#exportQuadObjBtn`, `activeExportMeshes()`, `exportQuadOBJ()` | 표시 중인 Curve Live/Proxy의 World Transform 적용 후 논리 Quad/N-gon 직렬화 | 대상 DCC Import 확인 |
 | FBX Export | `#exportFbxBtn`, `activeExportMeshes()`, `exportAsciiFBX()` | Curve/Proxy FBX 7.4 ASCII Geometry/Normal/UV 작성 | 실험 기능, 대상 DCC Import 확인 |
-| 단축키 | `document.addEventListener('keydown', ...)` | 저장, History, 선택, 모드, Transform dispatch | README 단축키 표와 함께 갱신 |
+| 단축키 | `document.addEventListener('keydown', ...)` | 저장, History, 선택, 모드, Transform, POV dispatch | README 단축키 표·`view-shortcuts.js`와 함께 갱신 |
 | Command rollout | `.rollout-header`, `setRolloutCollapsed()`, `initializeRollouts()` | Create/Modify/Display 기본 닫힘, 탭 전환 중 DOM 상태 유지, ARIA 동기화 | `features/viewport-ui.md`, 브라우저 QA |
 | 내장 진단 | URL `?selftest=1`, `runCoreSelfChecks()`, `__CURVE_TOOL_RUNTIME_DIAGNOSTICS__` | 순수 Geometry/Policy smoke test와 selftest 전용 runtime 상태 노출 | `src/diagnostics/core-self-check.js` |
 | Viewport 자동 회귀 | `npm run test:viewport` | 임시 서버+Chromium으로 Axis/gizmo 분리, Proxy drag/Undo, FFD 선택 표시·다중 drag·편집 토글/click-through, Proxy/Curve RMB, 잠긴 root의 LMB/RMB 제외, 1024px 검사 | `tests/viewport-regression.mjs`, GitHub Validate `viewport` job |

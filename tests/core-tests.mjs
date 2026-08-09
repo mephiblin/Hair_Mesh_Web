@@ -66,6 +66,14 @@ import {
   referenceImagePlaneLayout
 } from '../src/viewport/reference-images.js';
 import { contextMenuPosition } from '../src/ui/context-menu.js';
+import {
+  VIEW_CUBE_HOME_DIRECTION,
+  viewCubeDragRotation,
+  viewCubeDirectionForView,
+  viewCubeTargetFromPoint,
+  viewCubeUpVector
+} from '../src/viewport/view-cube.js';
+import { VIEWPORT_VIEW_MENU_ITEMS, viewportViewFromShortcut } from '../src/viewport/view-shortcuts.js';
 
 const tests = [];
 function test(name, run) { tests.push({ name, run }); }
@@ -99,6 +107,35 @@ test('viewport context menu honors a safe margin at the top-left', () => {
   }), { left:8, top:8 });
 });
 
+test('view cube resolves face, edge, corner, and stable camera axes', () => {
+  assert.deepEqual(viewCubeTargetFromPoint([0.1, -0.05, 0.5]), {
+    direction:[0, 0, 1], kind:'face', label:'Front', viewName:'front'
+  });
+  assert.deepEqual(viewCubeTargetFromPoint([0.5, 0.02, 0.48]), {
+    direction:[1, 0, 1], kind:'edge', label:'Front Right', viewName:null
+  });
+  assert.deepEqual(viewCubeTargetFromPoint([-0.5, 0.48, -0.49]), {
+    direction:[-1, 1, -1], kind:'corner', label:'Top Back Left', viewName:null
+  });
+  assert.deepEqual(viewCubeDirectionForView('right'), [1, 0, 0]);
+  assert.deepEqual(viewCubeDirectionForView('unknown'), [...VIEW_CUBE_HOME_DIRECTION]);
+  assert.deepEqual(viewCubeUpVector([0, 1, 0]), [0, 0, -1]);
+  assert.deepEqual(viewCubeUpVector([1, 1, 1]), [0, 1, 0]);
+  assert.deepEqual(viewCubeDragRotation(10, -5), { theta:-0.12, phi:0.06 });
+});
+
+test('3ds Max viewport shortcuts distinguish direct views from the V menu', () => {
+  assert.equal(viewportViewFromShortcut('T'), 'top');
+  assert.equal(viewportViewFromShortcut('B'), 'bottom');
+  assert.equal(viewportViewFromShortcut('F'), 'front');
+  assert.equal(viewportViewFromShortcut('L'), 'left');
+  assert.equal(viewportViewFromShortcut('P'), 'perspective');
+  assert.equal(viewportViewFromShortcut('U'), 'user');
+  assert.equal(viewportViewFromShortcut('K'), null);
+  assert.equal(viewportViewFromShortcut('K', { menuOpen:true }), 'back');
+  assert.equal(VIEWPORT_VIEW_MENU_ITEMS.at(-1).shortcut, null);
+});
+
 test('point selection normalizes invalid and duplicate indices', () => {
   const selection = normalizePointSelection([3, 1, 3, -1, 99], 4, 0);
   assert.deepEqual(selectedPointIndices(selection, 4), [1, 3]);
@@ -124,6 +161,9 @@ test('command-click curve selection toggles rows and resolves an active curve', 
   selection = toggleCurveSelection(selection, 2, [1, 2, 3]);
   assert.deepEqual(selectedCurveIds(selection, [1, 2, 3]), [1]);
   assert.equal(activeCurveId(selection, 2), 1);
+  selection = toggleCurveSelection(selection, 1, [1, 2, 3]);
+  assert.deepEqual(selectedCurveIds(selection, [1, 2, 3]), []);
+  assert.equal(activeCurveId(selection, 1), null);
   assert.deepEqual(selectedCurveIds([], [1, 2, 3], 3), [3]);
 });
 

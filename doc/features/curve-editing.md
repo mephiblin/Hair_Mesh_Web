@@ -68,6 +68,7 @@ point/handle transform
 - 일반 Scene Explorer Curve 행 클릭은 해당 Curve 하나만 선택한다.
 - Curve 행 `Ctrl/⌘` 클릭은 `selectedCurveIds` membership을 토글한다. 새로 추가한 Curve가 `selectedCurve` 활성 대상이며, 활성 Curve를 해제하면 남은 선택 중 마지막 Curve가 활성화된다.
 - 여러 Curve가 선택되어도 Modifier/Gizmo 명령은 활성 `selectedCurve` 하나만 대상으로 한다. 다중 Curve 삭제/변환은 이 계약의 범위가 아니다.
+- Curve root 선택은 0개도 유효하다. Select/Object 모드의 빈 Viewport 클릭 또는 단일 Curve 삭제는 남은 첫 Curve를 강제 선택하지 않고 `selectedCurve = null`, 빈 `selectedCurveIds`를 유지한다. 다중 Curve 중 active 하나만 삭제한 경우에는 남아 있던 선택의 마지막 Curve가 active가 된다.
 - Curve line/Live Mesh RMB는 포인터 아래 Curve를 활성화하고 Average, Curve Object, Live Mesh 명령을 제공한다. 각 메뉴 항목은 기존 panel/shortcut command를 호출하며 별도 편집 구현을 갖지 않는다.
 - 잠긴 Curve는 Viewport의 line/Live Mesh/control pick과 RMB 대상에서 제외한다. Scene Explorer 행은 계속 선택할 수 있어 잠금 상태를 확인하고 해제할 수 있다.
 

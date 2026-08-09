@@ -15,26 +15,26 @@ Overall status: COMPLETE · maintenance audit synchronized on 2026-08-09
 
 - Repository / surface: `mephiblin/Hair_Mesh_Web`, `curve_mesh_hair_tool_v4.html`
 - Historical baseline: `b1b121a84e845d1afd215a63a7f03e9e6533b33a`, 2026-08-07
-- Current implementation basis: default branch `master`, feature commit `969a05eb5cd714047207da19b0d3a20bca3b6e7e`, revalidated on 2026-08-09. GitHub Actions Validate run `31267391750` succeeded. Historical review anchor: `51508d86cb60cee5276d105a0d851680b93893de`.
+- Current implementation basis: default branch `master`, published feature commit `969a05eb5cd714047207da19b0d3a20bca3b6e7e` plus local 2026-08-09 empty-selection/ViewCube maintenance changes. GitHub Actions Validate run `31267391750` succeeded for the published basis; current local gates are recorded below. Historical review anchor: `51508d86cb60cee5276d105a0d851680b93893de`.
 - Runtime / test entry points: `python3 launch_server.py`, `?selftest=1`, `npm run check`, `npm run test:viewport`
 - Existing documentation: `PROJECT_AUDIT.md`, `BLENDER_FEATURE_RESEARCH.md`, `MODULARIZATION.md`
 
 ## Current conclusion
 
-Hair Card MVP의 Bézier 편집과 Curve-to-Mesh 생성에 더해 버전형 프로젝트 저장/열기, 자동복구, Brush topology 영속성, 숨김·잠금·LIVE 상태, 메시 입력 예산이 검증됐다. 이후 ZBrush식 MatCap, Reference 독립 Wire, Directional/Environment 조명, Viewport 배경/FOV/Grid와 정사영 표준 뷰, 다중 Reference Mesh 표시·재질·수동 텍스처, 3방향 Reference Plane, Point/Curve/FFD 다중 선택, Proxy primitive와 영구 FFD stack, 3ds Max식 Viewport 조작, FFD 선택 피드백과 Proxy/Curve 대상별 RMB 메뉴까지 통합됐다. Reference binary 재연결, Proxy Object 다중 박스 선택, 다중 Curve 일괄 변환/삭제, Blender식 Grooming 확장은 잔여 백로그이며 현재 Hair Card MVP 완료 계약을 막지 않는다.
+Hair Card MVP의 Bézier 편집과 Curve-to-Mesh 생성에 더해 버전형 프로젝트 저장/열기, 자동복구, Brush topology 영속성, 숨김·잠금·LIVE 상태, 메시 입력 예산이 검증됐다. 이후 ZBrush식 MatCap, Reference 독립 Wire, Directional/Environment 조명, Viewport 배경/FOV/Grid와 정사영 표준 뷰, 다중 Reference Mesh 표시·재질·수동 텍스처, 3방향 Reference Plane, Point/Curve/FFD 다중 선택, Proxy primitive와 영구 FFD stack, 3ds Max식 Viewport 마우스와 `T/B/F/L/P/U`·`V` POV 메뉴, FFD 선택 피드백, Proxy/Curve 대상별 RMB 메뉴, 완전한 root 무선택 상태와 click snap/자유 drag 카메라 연동 ViewCube까지 통합됐다. Reference binary 재연결, Proxy Object 다중 박스 선택, 다중 Curve 일괄 변환/삭제, Blender식 Grooming 확장은 잔여 백로그이며 현재 Hair Card MVP 완료 계약을 막지 않는다.
 
 ## Current verification snapshot
 
 | Check | Current result |
 | --- | --- |
-| Node policy/state regression | `npm run check` · 29/29 tests |
+| Node policy/state regression | `npm run check` · 31/31 tests |
 | Browser core self-check | 24/24 |
-| Viewport regression | `npm run test:viewport` · Axis/gizmo 분리, Proxy drag/Undo, FFD 선택 표시·다중 drag·편집 토글/click-through, Proxy/Curve RMB, locked root LMB/RMB 제외, 1024px PASS |
+| Viewport regression | `npm run test:viewport` · 3ds Max `T/B/F/L/P/U`·`V→K`/typing 차단, ViewCube face/free-drag/keyboard/Home/Ortho와 선택 배지 분리, root 무선택, Axis/gizmo 분리, Proxy drag/Undo, FFD 선택 표시·다중 drag·편집 토글/click-through, Proxy/Curve RMB, locked root LMB/RMB 제외, 1024px PASS |
 | Reference display acceptance | 공식 Three.js FBX Import → MatCap Silver, 다중 OBJ Mesh별 visibility/material/texture, Wire Overlay 확인 |
 | Selection acceptance | Point 3→2→1→0 Ctrl/⌘ 토글, Curve 2→1→0 행 토글, 일반 클릭 복귀 확인 |
 | Persistence acceptance | Viewport 환경과 다중 Curve/Point 선택을 Recovery 후 복원 |
 | Layout/runtime | 1600×900 및 1024×768, 가로 overflow 없음, console/page error 0 |
-| GitHub | 기본 브랜치 `master` Validate 성공 |
+| GitHub | 마지막 published `master` Validate 성공; 현재 local 변경은 publish 전 |
 
 아래 Cycle 1의 7/7·22/22 수치는 당시 안정화 사이클의 역사적 증거이며, 현재 총계는 위 표를 사용한다.
 
@@ -52,6 +52,9 @@ Hair Card MVP의 Bézier 편집과 Curve-to-Mesh 생성에 더해 버전형 프�
 | M-008 | P2 | Viewport RMB가 브라우저 메뉴만 막고 대상별 작업 메뉴를 제공하지 않았다. | Proxy FFD/Display와 Curve Average/Object/Live Mesh 메뉴를 추가하고 기존 panel command에 위임했다. | 실제 Proxy/Curve surface RMB와 mutation 결과 browser assertion |
 | M-009 | P1 | 다중 FFD drag Undo는 offset/선택 Set을 복원했지만 lattice가 선택 복원 전 생성되어 노란 표시가 사라졌다. | `restoreAppState()`가 mode 복원 뒤 active lattice 위치·색·scale을 다시 동기화한다. | 다중 drag one-step Undo/Redo와 restore 후 yellow color browser assertion |
 | M-010 | P1 | 편집 잠금이 mutation만 막고 root mesh는 Viewport object raycast 후보에 남아 Curve/Proxy를 다시 선택하거나 RMB 대상으로 삼을 수 있었다. | 공통 `canPickViewportObject()`로 locked root를 LMB/RMB/direct drag/Edit·FFD click-through 후보에서 제외하고 Scene Explorer 선택은 유지했다. | Curve/Proxy 각각 실제 LMB·RMB 차단 + Scene Explorer recovery browser assertion |
+| M-011 | P1 | 빈 Viewport 클릭과 단일 root 삭제가 선택을 비우지 않거나 첫 Curve/Proxy로 fallback해 항상 노란 active 객체가 남았다. | `clearObjectSelection()`으로 root/control Set, Scene 강조, Modify `NONE`, lattice/gizmo를 함께 비우고 삭제·생성취소 fallback을 제거했다. | 실제 빈 canvas LMB + 단일 Proxy Delete 뒤 `No Selection` browser assertion |
+| M-012 | P2 | 카메라 방향을 공간적으로 확인하거나 면/edge/corner로 즉시 전환하고 큐브에서 바로 자유 회전할 ViewCube가 없었다. | inverse camera quaternion을 쓰는 독립 overlay renderer와 순수 face/edge/corner/drag 정책, threshold click snap, 투영/target 보존 자유 drag, 6면/사선/Home·키보드 조작을 추가했다. 선택 배지는 우하단으로 분리했다. | Node direction/up-vector/drag delta + Front face/free drag/Right keyboard/Home/Ortho/selection preservation/1024px browser assertion |
+| M-013 | P1 | 3ds Max식 POV 키와 `V` 메뉴가 없어 `T/F/B/L/P/U`가 시점을 바꾸지 않았고 기존 ViewCube 전용 `B=Back`은 공식 `B=Bottom`과 충돌했다. | DOM-free shortcut map과 포인터 위치 2열 Viewport Views 메뉴를 추가하고 direct `T/B/F/L/P/U`, `V→K` Back, typing 차단, `P/U` viewing-angle 보존으로 통일했다. | Node direct/menu mapping + 실제 T/B/F/L/P/U, V open/K Back, typing target browser assertions |
 
 이번 감사에서 새 P0 또는 미해결 P1은 발견되지 않았다. 다만 Viewport 포인터 동작은 DOM 없는 Node 테스트만으로 충분히 보호할 수 없으므로 Chromium 회귀 job을 필수 게이트로 유지한다.
 

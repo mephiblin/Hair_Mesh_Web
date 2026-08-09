@@ -7,7 +7,7 @@ Hair Mesh Web은 빌드 과정 없이 ES Module을 직접 제공하는 정적 �
 - `curve_mesh_hair_tool_v4.html`: UI 마크업/CSS, Three.js 객체 생명주기, 기능 조립을 소유합니다.
 - `src/geometry`: DOM과 무관한 Geometry 계산을 소유합니다.
 - `src/state`: 직렬화 가능한 상태와 사용자 행동 정책을 소유합니다.
-- `src/viewport`: Picking/좌표 제약과 material/light/wire/reference-image display 정규화 정책을 소유합니다.
+- `src/viewport`: Picking/좌표 제약, ViewCube 방향 판정, 3ds Max POV key mapping과 material/light/wire/reference-image display 정규화 정책을 소유합니다.
 - `src/ui`: 재사용 가능한 DOM 상호작용을 소유합니다.
 - `src/diagnostics`: 실제 Three.js 런타임이 필요한 빠른 진단을 소유합니다.
 - `tests`: Node에서 실행 가능한 순수 정책/상태 회귀 테스트를 소유합니다.
@@ -75,7 +75,8 @@ Reference 파일 자체와 Mesh별 표시/재질/수동 텍스처는 Import 세�
 - Point `Ctrl/⌘` 토글은 활성 Curve 안에서만 동작하며 0개 선택을 허용합니다.
 - Scene Curve 다중 선택은 `selectedCurveIds`와 활성 `selectedCurve`를 함께 유지하고, Modifier/Gizmo는 활성 Curve 하나만 편집합니다.
 - Front/Left/Back 참조 Plane은 Perspective를 포함한 모든 View에서 보이지만 모델 surface raycast와 Mesh Export에는 참여하지 않습니다.
-- `Persp`는 항상 Perspective Camera이며, Ortho Views ON의 Front/Left/Back/Top은 Orthographic Camera입니다. active camera를 바꾸면 OrbitControls, 두 TransformControls, picking/raycast, resize/frame 경로를 함께 검사하십시오.
+- `Persp`와 ViewCube edge/corner/Home은 Perspective Camera이며, Ortho Views ON의 표준 6면은 Orthographic Camera입니다. ViewCube 좌클릭 drag는 현재 투영과 target을 유지하는 `custom` 자유 뷰입니다. active camera를 바꾸면 OrbitControls, 두 TransformControls, ViewCube inverse orientation, picking/raycast, resize/frame 경로를 함께 검사하십시오.
+- 전역 `T/B/F/L/P/U`와 `V` 메뉴는 `src/viewport/view-shortcuts.js`를 단일 키 매핑 source로 사용하고 모두 `applyViewportView()`로 합류시킵니다. `P/U`는 방향과 target을 보존하며 Back은 direct key가 아닌 `V→K`입니다. 입력 필드에서는 실행하지 않습니다.
 
 관련 정책은 `src/state/curve-policy.js`, `curve-selection.js`, `point-selection.js`, `line-creation-policy.js`, `src/geometry/mesh-limits.js`, `proxy-primitives.js`에 있으며 Node 테스트가 계약을 고정합니다.
 
@@ -87,6 +88,7 @@ Reference 파일 자체와 Mesh별 표시/재질/수동 텍스처는 Import 세�
 - FFD 선택 표시는 `selectedFfdControlIndices` 하나를 source of truth로 사용합니다. 단일/Control Ctrl·Alt/Window·Crossing/restore 모든 경로는 `syncFfdLatticePositions()`를 지나 선택 전체를 노란색으로 만들고 active만 더 크게 표시해야 합니다.
 - `Edit Control Points`는 진입 명령이 아니라 `ffd ↔ orbit` 토글입니다. 종료 시 `setMode('orbit')`가 lattice, TransformControls, Axis guide를 같은 frame에 숨겨야 하며 modifier/선택 데이터는 삭제하지 않습니다.
 - RMB 메뉴는 `findSceneObjectAtEvent()`로 대상을 정하고 기존 함수 또는 DOM command에만 위임합니다. 별도 mutation을 넣으면 panel과 History/dirty/recovery/rebuild가 갈라집니다. Line 생성 중 RMB는 draft를 건드리지 않습니다.
+- root 선택은 0개도 정상 상태입니다. 빈 Viewport 클릭이나 단일 삭제에서 `curves[0]`/`proxies[0]` fallback을 넣지 말고 `clearObjectSelection()`으로 Curve/Proxy/Control Set, Scene 강조, Modify `NONE`, lattice와 gizmo를 같은 frame에 비웁니다. `edit`/`ffd`의 빈 클릭은 sub-control만 해제합니다.
 - Pointer routing을 바꾸면 `tests/viewport-regression.mjs`의 Axis OFF, Proxy drag/Undo, FFD 선택 색/다중 drag/Edit 토글/Proxy click-through, Proxy·Curve RMB, 잠긴 Curve/Proxy의 LMB·RMB 제외와 Scene Explorer 복구, 1024px 검사를 먼저 확장하고 `npm run test:viewport`를 실행합니다.
 
 ## 5. 기능 구현 패턴
@@ -197,8 +199,8 @@ globalThis.__CURVE_TOOL_SELF_TEST__
 8. 변경 후 새로고침하여 복구 확인
 9. Curve+Proxy OBJ/FBX Export 후 대상 DCC Import 확인
 10. Front/Left/Back Plane이 Perspective에서도 보이고 Move/Rotate/Scale, Back-face Cull, Flip Horizontal이 동작하는지 확인
-11. Ortho Views ON의 Front/Left/Back/Top에서 FOV 왜곡이 없고 FOV 입력이 비활성화되는지, OFF/Persp에서 원근 카메라가 복원되는지 확인
-12. 카메라 전환 후 MMB Pan, Alt+MMB Orbit, Ctrl+Alt+MMB Zoom, Wheel Zoom, Plane/Curve/Proxy picking, gizmo drag, 프로젝트 설정 왕복 확인
+11. Ortho Views ON의 Front/Left/Back/Top과 ViewCube 6면에서 FOV 왜곡이 없고 FOV 입력이 비활성화되는지, ViewCube edge/corner/Home 및 OFF/Persp에서 원근 카메라가 복원되는지 확인
+12. 전역 `T/B/F/L/P/U`, `V→K`, V 메뉴 click Right와 typing target 차단을 확인하고, ViewCube 방향 표시·면/edge/corner click snap·좌클릭 자유 drag·Home·방향키 전환 후 투영/target/객체 선택 유지, MMB Pan, Alt+MMB Orbit, Ctrl+Alt+MMB Zoom, Wheel Zoom, Plane/Curve/Proxy picking, gizmo drag, 프로젝트 설정 왕복 확인
 13. 선택 Control Set이 프로젝트 저장/열기와 자동 복구에서 복원되는지 확인
 14. 좁은 뷰포트에서 Toolbar와 패널 접근 확인
 

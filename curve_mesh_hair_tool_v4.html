@@ -41,10 +41,12 @@ input[type=checkbox]{accent-color:var(--accent)}
 .file-status,.muted{color:var(--muted);font-size:11px;line-height:1.4}.wide{width:100%}.row{display:grid;grid-template-columns:1fr 1fr;gap:4px}.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}.row4{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}.coords{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}.coords2{display:grid;grid-template-columns:repeat(2,1fr);gap:4px}
 .scene-collections{flex:1;min-height:0;display:grid;grid-template-rows:auto minmax(82px,1fr) auto minmax(82px,1fr)}.scene-collection-title{padding:6px 7px 4px;background:#414141;border-top:1px solid #2b2b2b;color:#ddd;font-size:11px;font-weight:600}.scene-list{min-height:0;overflow:auto;padding:3px;background:#383838}.scene-row{display:grid;grid-template-columns:25px minmax(0,1fr) 25px;gap:2px;align-items:center;margin:1px 0}.scene-row-main{text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.scene-row.selected .scene-row-main{background:#475d60;border-color:#7fa5a7}.scene-row.active-selection .scene-row-main{background:#557071;border-color:#b6eded;box-shadow:inset 2px 0 0 var(--accent-strong)}.scene-row-meta{color:#bdbdbd;font-size:10px;margin-left:4px}.scene-eye,.scene-lock{padding:2px;min-width:24px}.scene-row.hidden-object{opacity:.55}.scene-row.locked-object .scene-row-main{font-style:italic}
 .viewport-wrap{position:relative;min-width:0;min-height:0;background:var(--viewport)}.viewport{position:absolute;inset:0;overflow:hidden;background:radial-gradient(circle at 50% 45%,#1b2027,#0d1014 72%)}.viewport canvas{display:block}
-.hint{position:absolute;left:8px;top:8px;z-index:5;background:rgba(42,42,42,.92);border:1px solid #707070;padding:5px 7px;font-size:11px;pointer-events:none;max-width:calc(100% - 16px)}
-.viewport-badge{position:absolute;right:8px;top:8px;z-index:5;background:rgba(42,42,42,.9);border:1px solid #666;padding:4px 7px;font-size:11px;pointer-events:none}
+.hint{position:absolute;left:8px;top:8px;z-index:5;background:rgba(42,42,42,.92);border:1px solid #707070;padding:5px 7px;font-size:11px;pointer-events:none;max-width:calc(100% - 132px)}
+.viewport-badge{position:absolute;right:8px;bottom:8px;z-index:5;background:rgba(42,42,42,.9);border:1px solid #666;padding:4px 7px;font-size:11px;pointer-events:none}
+.view-cube{position:absolute;right:8px;top:8px;z-index:12;width:104px;height:106px;user-select:none;filter:drop-shadow(0 4px 7px rgba(0,0,0,.48))}.view-cube-stage{position:absolute;isolation:isolate;inset:0 0 14px;overflow:hidden;border-radius:5px;background:radial-gradient(circle at 50% 44%,rgba(86,101,109,.28),rgba(18,22,26,.05) 64%,transparent 66%);cursor:grab;touch-action:none}.view-cube-stage.dragging{cursor:grabbing}.view-cube-stage:after{content:'';position:absolute;z-index:0;left:9px;right:9px;bottom:5px;height:21px;border:2px solid rgba(184,204,211,.66);border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.45)}.view-cube-stage canvas{position:relative;z-index:1;width:100%!important;height:100%!important;outline:none}.view-cube-home{position:absolute;z-index:2;left:50%;bottom:0;transform:translateX(-50%);width:24px;min-width:24px;height:20px;padding:0;border-radius:2px;background:#343b40;border-color:#77868d;color:#dce8ec;font:700 12px/1 "Segoe UI Symbol","Segoe UI",sans-serif}.view-cube-home:hover,.view-cube-home:focus-visible{background:#527074;border-color:var(--accent-strong);outline:none}.view-cube-label{position:absolute;z-index:2;left:50%;bottom:18px;transform:translateX(-50%);max-width:92px;padding:1px 4px;border-radius:2px;background:rgba(27,32,36,.82);color:#d8e6e9;font-size:9px;line-height:14px;letter-spacing:.04em;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .08s}.view-cube:hover .view-cube-label,.view-cube:focus-within .view-cube-label{opacity:1}
 .selection-marquee{position:fixed;z-index:50;display:none;pointer-events:none;border:1px solid #8fc7c7;background:rgba(92,174,182,.12);box-shadow:0 0 0 1px rgba(0,0,0,.3)}.selection-marquee.crossing{border-style:dashed;border-color:#fff174;background:rgba(255,241,116,.09)}
 .viewport-context-menu{position:fixed;z-index:120;width:238px;max-height:calc(100vh - 16px);overflow:auto;padding:4px;background:#323232;border:1px solid #777;box-shadow:0 8px 24px rgba(0,0,0,.52),inset 0 1px rgba(255,255,255,.05);border-radius:3px}.viewport-context-menu[hidden]{display:none}.context-menu-title{padding:5px 7px;color:var(--accent-strong);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.context-menu-section{padding:5px 7px 2px;color:#aaa;font-size:10px;text-transform:uppercase;letter-spacing:.06em;border-top:1px solid #222}.context-menu-section:first-of-type{border-top:0}.context-menu-item{display:grid;grid-template-columns:18px minmax(0,1fr) auto;align-items:center;width:100%;min-height:25px;padding:3px 7px;border:0;background:transparent;text-align:left}.context-menu-item:hover,.context-menu-item:focus-visible{background:#557071;outline:1px solid var(--accent);outline-offset:-1px}.context-menu-item.danger{color:#ffc0c0}.context-menu-item-mark{color:var(--select);text-align:center}.context-menu-shortcut{color:#aaa;margin-left:8px;font-size:10px}.context-menu-item:disabled{background:transparent;color:#888}.context-menu-empty{padding:8px;color:var(--muted)}
+.viewport-view-menu{width:264px;padding:5px}.viewport-view-menu .context-menu-title{display:flex;align-items:center;justify-content:space-between;padding:4px 6px 7px;color:#d9e7e9}.viewport-view-menu .context-menu-title kbd{min-width:20px;padding:1px 5px;border:1px solid #6c7c81;background:#252a2d;color:var(--accent-strong);text-align:center;font:700 10px/15px "Segoe UI",sans-serif}.viewport-view-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px}.viewport-view-menu .context-menu-item{grid-template-columns:22px minmax(0,1fr);min-height:29px}.viewport-view-key{display:grid;place-items:center;width:18px;height:18px;border:1px solid #69777b;background:#292e31;color:var(--accent-strong);font-size:10px;font-weight:700}.viewport-view-key.empty{color:#7e878a}.viewport-view-menu .context-menu-item.active{background:#455d60;color:#fff}.viewport-view-menu .context-menu-item.active .viewport-view-key{border-color:var(--accent-strong);background:#2f484b}
 .command-tabs{height:37px;display:grid;grid-template-columns:repeat(4,1fr);gap:1px;padding:3px;background:#383838;border-bottom:1px solid #222}.command-tab{font-size:15px;height:30px}.command-tab.active{background:#5c6f70;border-color:var(--accent)}
 .command-content{flex:1;min-height:0;overflow:hidden}.tab-panel{height:100%;overflow:auto;padding:4px}.hidden{display:none!important}
 .object-header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px;padding:4px 2px 6px}.object-type{display:flex;align-items:center;justify-content:center;min-width:62px;padding:0 6px;border:1px solid #222;background:#42666a;color:var(--accent-strong);font-size:10px;font-weight:700;letter-spacing:.04em}.proxy-parameter-group{padding-top:2px}.proxy-buttons{display:grid;grid-template-columns:1fr 1fr;gap:4px}.proxy-buttons button{min-height:34px}.proxy-empty{padding:18px 10px;text-align:center;color:var(--muted);border:1px dashed #707070;background:#3c3c3c}
@@ -54,7 +56,7 @@ input[type=checkbox]{accent-color:var(--accent)}
 .material-picker{display:grid;grid-template-columns:38px minmax(0,1fr);gap:7px;align-items:center;margin:5px 0;padding:5px;background:#3d3d3d;border:1px solid #626262}.material-picker label{margin:0!important}.material-preview{width:32px;height:32px;border-radius:50%;border:1px solid rgba(255,255,255,.35);box-shadow:inset -6px -8px 12px rgba(0,0,0,.42),0 1px 0 #1d1d1d;justify-self:center}.material-picker small{display:block;margin-top:3px;color:var(--muted);font-size:10px}
 .reference-object-list{max-height:150px;overflow:auto;background:#363636;border:1px solid #616161;padding:3px}.reference-object-row{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:3px;align-items:center;margin:1px 0}.reference-object-row.selected .reference-object-select{background:#557071;border-color:#9bcaca}.reference-object-row.hidden-object{opacity:.55}.reference-object-select{min-width:0;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.reference-object-mode{max-width:92px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:10px}.texture-status{min-height:34px;display:flex;align-items:center;gap:7px;padding:5px;margin-top:5px;background:#363636;border:1px solid #616161;color:var(--muted);overflow:hidden}.texture-swatch{width:28px;height:28px;flex:0 0 28px;background:linear-gradient(135deg,#595959 25%,#303030 25% 50%,#595959 50% 75%,#303030 75%);background-size:12px 12px;border:1px solid #777;object-fit:cover}.texture-status span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .reference-image-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin-bottom:7px}.reference-image-card{position:relative;display:grid;grid-template-rows:52px auto;gap:2px;min-width:0;padding:3px;background:#343434;border:1px solid #606060;color:var(--muted);text-align:left;overflow:hidden}.reference-image-card:hover{background:#414141}.reference-image-card.active{border-color:var(--accent-strong);box-shadow:inset 0 0 0 1px #2d5b5e;color:var(--accent-strong)}.reference-image-card.loaded:after{content:'';position:absolute;right:5px;top:5px;width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 1px #243424}.reference-image-thumb{position:relative;display:grid;place-items:center;overflow:hidden;background:linear-gradient(135deg,#292d31,#1d2023);border:1px solid #555}.reference-image-thumb img{width:100%;height:100%;object-fit:cover}.reference-image-placeholder{font:700 21px/1 "Segoe UI",sans-serif;color:#7f898c}.reference-image-card strong{display:block;font-size:10px;letter-spacing:.08em}.reference-image-card small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:inherit;font-size:9px}.reference-image-actions{display:grid;grid-template-columns:1.25fr .75fr;gap:4px;margin:5px 0}.reference-image-tool-row{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;padding:4px;background:#34383a;border:1px solid #62696b}.reference-image-tool-row button{padding:2px 3px;font-size:10px}.reference-image-status{min-height:35px}
-@media(max-width:1080px){.editor-shell{grid-template-rows:72px minmax(0,1fr) 24px}.topbar{height:72px;align-content:center;flex-wrap:wrap;overflow:visible}.workspace{grid-template-columns:200px minmax(300px,1fr) 320px}.brand,.tool-label,.project-state{display:none}.viewport-badge{top:auto;bottom:8px}.hint{max-width:calc(100% - 16px)}}
+@media(max-width:1080px){.editor-shell{grid-template-rows:72px minmax(0,1fr) 24px}.topbar{height:72px;align-content:center;flex-wrap:wrap;overflow:visible}.workspace{grid-template-columns:200px minmax(300px,1fr) 320px}.brand,.tool-label,.project-state{display:none}.hint{max-width:calc(100% - 132px)}}
 @media(max-width:820px){html,body{overflow:auto}.editor-shell{height:auto;min-height:100vh;grid-template-rows:auto 1fr auto}.topbar{flex-wrap:wrap}.workspace{grid-template-columns:1fr;grid-template-rows:240px 62vh auto}.scene-panel{border-right:0}.command-panel{border-left:0}.viewport-wrap{grid-row:2}.command-panel{grid-row:3;height:650px}}
 </style>
 </head>
@@ -127,6 +129,11 @@ input[type=checkbox]{accent-color:var(--accent)}
     <main class="viewport-wrap">
       <div id="viewport" class="viewport">
         <div id="viewportHint" class="hint">Object / Camera: 드래그 회전 · 휠 줌</div>
+        <div id="viewCube" class="view-cube" aria-label="ViewCube camera navigation">
+          <div id="viewCubeStage" class="view-cube-stage"></div>
+          <span id="viewCubeLabel" class="view-cube-label">Perspective</span>
+          <button id="viewCubeHome" class="view-cube-home" type="button" title="Perspective Home View" aria-label="Perspective Home View">⌂</button>
+        </div>
         <div id="viewportBadge" class="viewport-badge">No Selection</div>
         <div id="selectionMarquee" class="selection-marquee" aria-hidden="true"></div>
       </div>
@@ -470,6 +477,10 @@ input[type=checkbox]{accent-color:var(--accent)}
 </div>
 
 <div id="viewportContextMenu" class="viewport-context-menu" role="menu" aria-label="Viewport context menu" hidden></div>
+<div id="viewportViewMenu" class="viewport-context-menu viewport-view-menu" role="menu" aria-label="Viewport Views" hidden>
+  <div class="context-menu-title"><span>Viewport Views</span><kbd>V</kbd></div>
+  <div id="viewportViewGrid" class="viewport-view-grid"></div>
+</div>
 
 <script type="module">
 import { createHistory } from './src/state/history.js';
@@ -522,6 +533,13 @@ import {
   normalizeViewportSettings
 } from './src/viewport/viewport-settings.js';
 import {
+  viewCubeDragRotation,
+  viewCubeDirectionForView,
+  viewCubeTargetFromPoint,
+  viewCubeUpVector
+} from './src/viewport/view-cube.js';
+import { VIEWPORT_VIEW_MENU_ITEMS, viewportViewFromShortcut } from './src/viewport/view-shortcuts.js';
+import {
   REFERENCE_WIRE_DEFAULTS,
   normalizeReferenceWireColor,
   normalizeReferenceWireMode,
@@ -561,6 +579,190 @@ const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 viewport.appendChild(renderer.domElement);
+
+function createViewCubeTexture(label, fill) {
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = 256;
+  const context = canvas.getContext('2d');
+  const gradient = context.createLinearGradient(0, 0, 256, 256);
+  gradient.addColorStop(0, '#f1f5f6');
+  gradient.addColorStop(1, fill);
+  context.fillStyle = gradient;
+  context.fillRect(0, 0, 256, 256);
+  context.strokeStyle = 'rgba(34,48,54,.2)';
+  context.lineWidth = 5;
+  context.strokeRect(5, 5, 246, 246);
+  context.fillStyle = '#26343a';
+  context.font = '700 36px "Segoe UI", sans-serif';
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  context.fillText(label, 128, 132);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = Math.min(renderer.capabilities.getMaxAnisotropy(), 4);
+  return texture;
+}
+
+const viewCubeStage = $('viewCubeStage');
+const viewCubeLabel = $('viewCubeLabel');
+const viewCubeRenderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+viewCubeRenderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+viewCubeRenderer.setSize(104, 92, false);
+viewCubeRenderer.outputColorSpace = THREE.SRGBColorSpace;
+viewCubeRenderer.domElement.tabIndex = 0;
+viewCubeRenderer.domElement.setAttribute('role', 'button');
+viewCubeRenderer.domElement.setAttribute('aria-label', 'ViewCube. 드래그해 자유 회전하거나 면, 모서리, 꼭짓점을 클릭해 카메라 방향을 전환합니다.');
+viewCubeRenderer.domElement.title = 'ViewCube · 좌클릭 드래그 자유 회전 · 면/모서리/꼭짓점 클릭 · Enter Home';
+viewCubeStage.appendChild(viewCubeRenderer.domElement);
+const viewCubeScene = new THREE.Scene();
+const viewCubeCamera = new THREE.OrthographicCamera(-1.75, 1.75, 1.55, -1.55, .1, 20);
+viewCubeCamera.position.set(0, 0, 6);
+viewCubeCamera.lookAt(0, 0, 0);
+const viewCubeRoot = new THREE.Group();
+viewCubeScene.add(viewCubeRoot);
+const viewCubeMaterials = [
+  ['RIGHT', '#bdcbd0'], ['LEFT', '#b6c4c9'],
+  ['TOP', '#dbe4e7'], ['BOTTOM', '#aebcc2'],
+  ['FRONT', '#cad7db'], ['BACK', '#b8c7cc']
+].map(([label, fill]) => new THREE.MeshBasicMaterial({ map:createViewCubeTexture(label, fill) }));
+const viewCubeMesh = new THREE.Mesh(new THREE.BoxGeometry(1.34, 1.34, 1.34), viewCubeMaterials);
+viewCubeMesh.name = 'ViewportViewCube';
+viewCubeRoot.add(viewCubeMesh);
+const viewCubeEdges = new THREE.LineSegments(
+  new THREE.EdgesGeometry(viewCubeMesh.geometry),
+  new THREE.LineBasicMaterial({ color:0x243137, transparent:true, opacity:.9 })
+);
+viewCubeRoot.add(viewCubeEdges);
+const viewCubeHoverMaterial = new THREE.MeshBasicMaterial({
+  color:0xaeeff0,
+  transparent:true,
+  opacity:.46,
+  depthWrite:false,
+  polygonOffset:true,
+  polygonOffsetFactor:-2
+});
+let viewCubeHoverMesh = null;
+let viewCubeHoverTarget = null;
+let viewCubeDrag = null;
+let suppressViewCubeClick = false;
+const viewCubeRaycaster = new THREE.Raycaster();
+const viewCubePointer = new THREE.Vector2();
+
+function setViewCubeHover(target) {
+  if (viewCubeHoverMesh) {
+    viewCubeRoot.remove(viewCubeHoverMesh);
+    viewCubeHoverMesh.geometry.dispose();
+    viewCubeHoverMesh = null;
+  }
+  viewCubeHoverTarget = target;
+  const activeLabel = activeStandardView === 'perspective'
+    ? 'Perspective'
+    : activeStandardView === 'custom'
+      ? 'Free View'
+      : activeStandardView[0].toUpperCase() + activeStandardView.slice(1);
+  viewCubeLabel.textContent = target?.label || activeLabel;
+  if (!target) return;
+  const half = .67;
+  const thickness = target.kind === 'face' ? .035 : .16;
+  const size = target.direction.map(component => component ? thickness : 1.24);
+  const position = target.direction.map(component => component ? component * (half + thickness * .34) : 0);
+  viewCubeHoverMesh = new THREE.Mesh(new THREE.BoxGeometry(...size), viewCubeHoverMaterial);
+  viewCubeHoverMesh.position.fromArray(position);
+  viewCubeHoverMesh.renderOrder = 3;
+  viewCubeRoot.add(viewCubeHoverMesh);
+}
+
+function syncViewCubeOrientation() {
+  viewCubeRoot.quaternion.copy(camera.quaternion).invert();
+  viewCubeRoot.updateMatrixWorld(true);
+}
+
+function viewCubeTargetAtEvent(event) {
+  const rect = viewCubeRenderer.domElement.getBoundingClientRect();
+  viewCubePointer.set(
+    ((event.clientX - rect.left) / Math.max(rect.width, 1)) * 2 - 1,
+    -((event.clientY - rect.top) / Math.max(rect.height, 1)) * 2 + 1
+  );
+  syncViewCubeOrientation();
+  viewCubeRaycaster.setFromCamera(viewCubePointer, viewCubeCamera);
+  const hit = viewCubeRaycaster.intersectObject(viewCubeMesh, false)[0];
+  if (!hit) return null;
+  const localPoint = viewCubeMesh.worldToLocal(hit.point.clone());
+  return viewCubeTargetFromPoint(localPoint.toArray());
+}
+
+function setActiveStandardView(viewName) {
+  activeStandardView = viewName;
+  const viewButtons = { perspective:'viewPerspectiveBtn', front:'viewFrontBtn', left:'viewLeftBtn', back:'viewBackBtn', top:'viewTopBtn' };
+  Object.entries(viewButtons).forEach(([buttonViewName, id]) => $(id).classList.toggle('active', buttonViewName === activeStandardView));
+}
+
+function isAxisStandardView(viewName) {
+  return ['front', 'back', 'left', 'right', 'top', 'bottom'].includes(viewName);
+}
+
+function beginViewCubeDrag(event) {
+  if (event.button !== 0) return;
+  event.preventDefault();
+  event.stopPropagation();
+  suppressViewCubeClick = false;
+  viewCubeDrag = {
+    pointerId:event.pointerId,
+    startX:event.clientX,
+    startY:event.clientY,
+    lastX:event.clientX,
+    lastY:event.clientY,
+    moved:false
+  };
+  viewCubeRenderer.domElement.setPointerCapture?.(event.pointerId);
+  viewCubeRenderer.domElement.focus({ preventScroll:true });
+}
+
+function updateViewCubeDrag(event) {
+  if (!viewCubeDrag || event.pointerId !== viewCubeDrag.pointerId) return false;
+  event.preventDefault();
+  event.stopPropagation();
+  const totalDistance = Math.hypot(event.clientX - viewCubeDrag.startX, event.clientY - viewCubeDrag.startY);
+  if (!viewCubeDrag.moved && totalDistance <= 3) return true;
+  viewCubeDrag.moved = true;
+  suppressViewCubeClick = true;
+  viewCubeStage.classList.add('dragging');
+  setViewCubeHover(null);
+  const rotation = viewCubeDragRotation(event.clientX - viewCubeDrag.lastX, event.clientY - viewCubeDrag.lastY);
+  viewCubeDrag.lastX = event.clientX;
+  viewCubeDrag.lastY = event.clientY;
+  const offset = camera.position.clone().sub(orbit.target);
+  const distance = Math.max(offset.length(), .0001);
+  const spherical = new THREE.Spherical().setFromVector3(offset);
+  spherical.theta += rotation.theta;
+  spherical.phi = THREE.MathUtils.clamp(spherical.phi + rotation.phi, .03, Math.PI - .03);
+  camera.up.set(0, 1, 0);
+  camera.position.copy(orbit.target).add(new THREE.Vector3().setFromSpherical(spherical).setLength(distance));
+  camera.lookAt(orbit.target);
+  camera.updateMatrixWorld(true);
+  orbit.update();
+  setActiveStandardView('custom');
+  viewCubeLabel.textContent = 'Free View';
+  syncGizmo();
+  syncReferenceImageTransformControls();
+  applyReferenceImageDisplay();
+  setStatus(`Free View · ${camera.isOrthographicCamera ? 'Orthographic' : `Perspective · FOV ${perspectiveCamera.fov}°`}`);
+  return true;
+}
+
+function finishViewCubeDrag(event) {
+  if (!viewCubeDrag || event.pointerId !== viewCubeDrag.pointerId) return false;
+  const moved = viewCubeDrag.moved;
+  event.preventDefault();
+  event.stopPropagation();
+  if (viewCubeRenderer.domElement.hasPointerCapture?.(event.pointerId)) {
+    viewCubeRenderer.domElement.releasePointerCapture(event.pointerId);
+  }
+  viewCubeDrag = null;
+  viewCubeStage.classList.remove('dragging');
+  if (!moved) setViewCubeHover(viewCubeTargetAtEvent(event));
+  return moved;
+}
 
 const orbit = new OrbitControls(camera, renderer.domElement);
 orbit.enableDamping = true;
@@ -2092,8 +2294,8 @@ function restoreAppState(state) {
   setMode(state.mode);
   if (selectedProxy) syncFfdLatticePositions(selectedProxy);
   activateCommandTab(state.activeCommandTab);
-  if (activeStandardView !== 'perspective') setStandardView(activeStandardView, { targetOverride:orbit.target.clone() });
-  else useViewportCamera('perspective', { target:orbit.target });
+  if (isAxisStandardView(activeStandardView)) setStandardView(activeStandardView, { targetOverride:orbit.target.clone() });
+  else useViewportCamera(activeStandardView === 'custom' && camera.isOrthographicCamera ? 'orthographic' : 'perspective', { target:orbit.target });
   syncReferenceImageTransformControls();
 }
 
@@ -2505,8 +2707,39 @@ function updateSelectionBadge() {
   viewportBadge.textContent = `${selectedCurve.name} · ${selectedCurve.points.length} Points${multiState}${meshState}${selectedCurve.visible ? '' : ' · HIDDEN'}${selectedCurve.locked ? ' · LOCKED' : ''}`;
 }
 
+function clearObjectSelection({ announce = true } = {}) {
+  if (mode === 'draw') return false;
+  const hadSelection = !!selectedCurve || !!selectedProxy || selectedCurveIds.size > 0;
+  selectedCurve = null;
+  selectedProxy = null;
+  selectedCurveIds = new Set();
+  selectedControl = null;
+  selectedPointIndices = new Set();
+  selectedFfdControlIndex = null;
+  selectedFfdControlIndices = new Set();
+  curves.forEach(updateControlVisuals);
+  if (mode !== 'orbit') setMode('orbit');
+  else {
+    updateControlVisibility();
+    syncGizmo();
+    updateObjectTransformButtons();
+    updateHint();
+  }
+  updateCurveSelectionStyles();
+  updateProxySelectionStyles();
+  refreshCurveList();
+  refreshProxyList();
+  syncModifyContext();
+  updatePointPanel();
+  updateSelectionBadge();
+  updateMeshStats();
+  if (announce && hadSelection) setStatus('객체 선택을 해제했습니다.');
+  return hadSelection;
+}
+
 function selectCurve(curve, options = {}) {
   const { enterEdit = true, preserveCurveSelection = false } = options;
+  if (curve && referenceImageTransformTool !== 'none') setReferenceImageTransformTool('none');
   if (preserveCurveSelection) {
     selectedCurveIds = normalizeCurveSelection(selectedCurveIds, curves.map(item => item.id));
     if (curve) selectedCurveIds.add(curve.id);
@@ -2546,6 +2779,7 @@ function updateProxySelectionStyles() {
 
 function selectProxy(proxy, options = {}) {
   if (mode === 'draw') cancelLineCreation();
+  if (proxy && referenceImageTransformTool !== 'none') setReferenceImageTransformTool('none');
   selectedProxy = proxy;
   selectedCurve = null;
   selectedCurveIds = new Set();
@@ -3934,7 +4168,7 @@ function cancelLineCreation() {
   const draft = drawingCurve;
   const previous = creationPreviousCurve && curves.includes(creationPreviousCurve)
     ? creationPreviousCurve
-    : curves.find(curve => curve !== draft) || null;
+    : null;
   if (draft) history.begin('Line 생성 취소');
   drawingCurve = null;
   creationPreviousCurve = null;
@@ -4001,7 +4235,7 @@ function setMode(next) {
 }
 
 function updateHint() {
-  const navigation = 'MMB Pan · Alt+MMB Orbit · Ctrl+Alt+MMB Zoom · Wheel Zoom';
+  const navigation = 'MMB Pan · Alt+MMB Orbit · Ctrl+Alt+MMB Zoom · Wheel · V Views';
   if (mode === 'draw') hintEl.textContent = drawCameraOverride ? `CREATE 일시 정지 · ${navigation} · Caps Lock으로 Point 생성 복귀 · Esc 취소` : `클릭: 새 Point · ${navigation} · Esc: Line 취소`;
   else if (mode === 'insert') hintEl.textContent = `커브 위 클릭: Bezier Segment 정확히 분할 · ${navigation}`;
   else if (mode === 'edit') {
@@ -4009,7 +4243,7 @@ function updateHint() {
     hintEl.textContent = `LMB 선택/영역 · Ctrl 추가/토글 · Alt 제외 · Point 직접 드래그 · RMB Object Menu · XYZ Gizmo: ${tool} · ${navigation}`;
   } else if (mode === 'ffd') hintEl.textContent = `LMB 선택/영역 · Ctrl 추가/토글 · Alt 제외 · 선택 Control 직접 드래그/기즈모 이동 · RMB Proxy Menu · ${navigation}`;
   else if (mode === 'transform') hintEl.textContent = `${selectedProxy ? 'Proxy Object' : 'Spline Root'} ${objectTransformMode === 'translate' ? 'Move · 긴 축선 드래그 · Shift+G 토글' : objectTransformMode === 'rotate' ? 'Rotate' : 'Scale'} · RMB Object Menu · World / View / Local · ${navigation}`;
-  else hintEl.textContent = `LMB Select · RMB Object Menu · W/E/R Move/Rotate/Scale · Z Frame Selected · ${navigation}`;
+  else hintEl.textContent = `LMB Select · RMB Menu · W/E/R Transform · Z Frame · ${navigation}`;
 }
 
 function setObjectTransformMode(next) { const object = activeSceneObject(); if (!activeObjectIsEditable()) { setStatus(object ? `${object.name}은 ${object.visible ? '잠겨' : '숨겨'} 있습니다.` : 'Curve 또는 Proxy Object를 먼저 선택하세요.'); return; } objectTransformMode = next; setMode('transform'); updateObjectTransformButtons(); syncGizmo(); updateHint(); }
@@ -4067,7 +4301,7 @@ function frameSelected() {
   else if (curves.length || proxies.length) fitObject(curves.length ? curvesRoot : proxyRoot);
 }
 
-function setStandardView(kind, { targetOverride = null } = {}) {
+function setViewportDirection(directionValues, { viewName = null, label = 'Perspective', targetOverride = null } = {}) {
   let target = targetOverride?.clone?.() || orbit.target.clone();
   const selectedGroup = selectedProxy?.visible ? selectedProxy.group : selectedCurve?.visible && selectedCurve.points.length ? selectedCurve.group : null;
   if (!targetOverride && selectedGroup) {
@@ -4075,34 +4309,55 @@ function setStandardView(kind, { targetOverride = null } = {}) {
     if (!box.isEmpty()) target = box.getCenter(new THREE.Vector3());
   }
   const viewHeight = currentProjectionHeight(orbit.target);
-  const projection = standardViewProjection(kind, orthographicStandardViews);
+  const projection = standardViewProjection(viewName || 'perspective', orthographicStandardViews);
   useViewportCamera(projection, { target, viewHeight });
   const distance = camera.isPerspectiveCamera
     ? Math.max(viewHeight / (2 * Math.tan(THREE.MathUtils.degToRad(perspectiveCamera.fov / 2))), .0001)
     : Math.max(camera.position.distanceTo(orbit.target), modelDiagonal * 1.2, 1);
-  let direction = new THREE.Vector3(1, .65, 1).normalize();
-  camera.up.set(0,1,0);
-  if (kind === 'front') direction.set(0,0,1);
-  else if (kind === 'left') direction.set(-1,0,0);
-  else if (kind === 'back') direction.set(0,0,-1);
-  else if (kind === 'top') { direction.set(0,1,0); camera.up.set(0,0,-1); }
+  const direction = new THREE.Vector3().fromArray(directionValues);
+  if (direction.lengthSq() < 1e-12) direction.set(1, .65, 1);
+  direction.normalize();
+  camera.up.fromArray(viewCubeUpVector(directionValues));
   camera.position.copy(target).addScaledVector(direction, distance);
   orbit.target.copy(target);
   camera.lookAt(target);
   orbit.update();
-  activeStandardView = kind;
-  const viewButtons = { perspective:'viewPerspectiveBtn', front:'viewFrontBtn', left:'viewLeftBtn', back:'viewBackBtn', top:'viewTopBtn' };
-  Object.entries(viewButtons).forEach(([viewName, id]) => $(id).classList.toggle('active', viewName === kind));
+  setActiveStandardView(viewName || 'perspective');
   syncGizmo();
   syncReferenceImageTransformControls();
   applyReferenceImageDisplay();
-  const label = kind === 'perspective' ? 'Perspective' : kind[0].toUpperCase() + kind.slice(1);
   setStatus(`${label} View · ${camera.isOrthographicCamera ? 'Orthographic · FOV 왜곡 없음' : `Perspective · FOV ${perspectiveCamera.fov}°`}`);
+}
+function setStandardView(kind, { targetOverride = null } = {}) {
+  const labels = { perspective:'Perspective', front:'Front', left:'Left', back:'Back', top:'Top', right:'Right', bottom:'Bottom' };
+  setViewportDirection(viewCubeDirectionForView(kind), { viewName:kind, label:labels[kind] || 'Perspective', targetOverride });
+}
+function setViewportProjectionView(projection, { viewName, label } = {}) {
+  const target = orbit.target.clone();
+  const viewHeight = currentProjectionHeight(target);
+  useViewportCamera(projection, { target, viewHeight });
+  setActiveStandardView(viewName || (projection === 'orthographic' ? 'user' : 'perspective'));
+  setViewCubeHover(null);
+  syncGizmo();
+  syncReferenceImageTransformControls();
+  applyReferenceImageDisplay();
+  setStatus(`${label || (projection === 'orthographic' ? 'User' : 'Perspective')} View · ${camera.isOrthographicCamera ? 'Orthographic · viewing angle 유지' : `Perspective · FOV ${perspectiveCamera.fov}° · viewing angle 유지`}`);
+}
+function applyViewportView(viewName) {
+  closeViewportContextMenu();
+  if (viewName === 'perspective') setViewportProjectionView('perspective', { viewName:'perspective', label:'Perspective' });
+  else if (viewName === 'user') setViewportProjectionView('orthographic', { viewName:'user', label:'User' });
+  else setStandardView(viewName);
+}
+function applyViewCubeTarget(target) {
+  if (!target) return false;
+  setViewportDirection(target.direction, { viewName:target.viewName, label:target.label });
+  return true;
 }
 function toggleOrthographicStandardViews() {
   orthographicStandardViews = !orthographicStandardViews;
   updateProjectionToggleUI();
-  if (activeStandardView !== 'perspective') setStandardView(activeStandardView, { targetOverride:orbit.target.clone() });
+  if (isAxisStandardView(activeStandardView)) setStandardView(activeStandardView, { targetOverride:orbit.target.clone() });
   markProjectChanged();
   setStatus(`Ortho Views ${orthographicStandardViews ? 'ON · 표준 뷰 FOV 왜곡 제거' : 'OFF · 표준 뷰에도 Perspective FOV 적용'}`);
 }
@@ -4296,10 +4551,14 @@ function handleViewportClick(event) {
     else if (mode === 'orbit') {
       const referenceImageView = findReferenceImagePlane(event);
       if (referenceImageView) {
+        clearObjectSelection({ announce:false });
         setActiveReferenceImageView(referenceImageView, { switchCamera:false });
         if (referenceImageTransformTool === 'none') setReferenceImageTransformTool('translate');
+      } else {
+        if (referenceImageTransformTool !== 'none') setReferenceImageTransformTool('none');
+        clearObjectSelection();
       }
-    }
+    } else if (mode === 'transform') clearObjectSelection();
   }
 }
 
@@ -4388,6 +4647,7 @@ renderer.domElement.addEventListener('pointerdown', event => {
   }
 }, true);
 renderer.domElement.addEventListener('pointermove', event => {
+  lastViewportPointer = { clientX:event.clientX, clientY:event.clientY };
   if (updateDirectViewportMove(event)) return;
   if (updateSelectionMarquee(event)) return;
   updateAxisGuideDrag(event);
@@ -4408,7 +4668,64 @@ renderer.domElement.addEventListener('pointercancel', event => {
 }, true);
 
 const viewportContextMenu = $('viewportContextMenu');
+const viewportViewMenu = $('viewportViewMenu');
+const viewportViewGrid = $('viewportViewGrid');
 let viewportContextTarget = null;
+let lastViewportPointer = null;
+
+function syncViewportViewMenuActive() {
+  viewportViewGrid.querySelectorAll('[data-viewport-view]').forEach(button => {
+    button.classList.toggle('active', button.dataset.viewportView === activeStandardView);
+  });
+}
+
+function closeViewportViewMenu({ restoreFocus = false } = {}) {
+  if (viewportViewMenu.hidden) return;
+  viewportViewMenu.hidden = true;
+  if (restoreFocus) renderer.domElement.focus?.({ preventScroll:true });
+}
+
+function openViewportViewMenu() {
+  closeViewportContextMenu();
+  syncViewportViewMenuActive();
+  viewportViewMenu.hidden = false;
+  const viewportBounds = viewport.getBoundingClientRect();
+  const pointerInsideViewport = lastViewportPointer
+    && lastViewportPointer.clientX >= viewportBounds.left
+    && lastViewportPointer.clientX <= viewportBounds.right
+    && lastViewportPointer.clientY >= viewportBounds.top
+    && lastViewportPointer.clientY <= viewportBounds.bottom;
+  const anchor = pointerInsideViewport
+    ? lastViewportPointer
+    : { clientX:viewportBounds.left + 34, clientY:viewportBounds.top + 34 };
+  const menuBounds = viewportViewMenu.getBoundingClientRect();
+  const position = contextMenuPosition({
+    clientX:anchor.clientX,
+    clientY:anchor.clientY,
+    menuWidth:menuBounds.width,
+    menuHeight:menuBounds.height,
+    viewportWidth:window.innerWidth,
+    viewportHeight:window.innerHeight
+  });
+  viewportViewMenu.style.left = `${position.left}px`;
+  viewportViewMenu.style.top = `${position.top}px`;
+  viewportViewMenu.querySelector('.context-menu-item.active, .context-menu-item')?.focus({ preventScroll:true });
+  setStatus('Viewport Views · P Perspective · U User · F Front · K Back · T Top · B Bottom · L Left');
+}
+
+VIEWPORT_VIEW_MENU_ITEMS.forEach(item => {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'context-menu-item';
+  button.dataset.viewportView = item.viewName;
+  button.setAttribute('role', 'menuitem');
+  button.innerHTML = `<span class="viewport-view-key${item.shortcut ? '' : ' empty'}">${item.shortcut || '—'}</span><span>${item.label}</span>`;
+  button.addEventListener('click', () => {
+    applyViewportView(item.viewName);
+    closeViewportViewMenu({ restoreFocus:true });
+  });
+  viewportViewGrid.appendChild(button);
+});
 
 function closeViewportContextMenu({ restoreFocus = false } = {}) {
   if (viewportContextMenu.hidden) return;
@@ -4510,6 +4827,7 @@ function renderCurveContextMenu(curve) {
 }
 
 function openViewportContextMenu(event) {
+  closeViewportViewMenu();
   closeViewportContextMenu();
   if (mode === 'draw') { setStatus('Line 생성 중에는 Finish 또는 Cancel 후 Object 메뉴를 사용할 수 있습니다.'); return false; }
   const hit = findSceneObjectAtEvent(event);
@@ -4555,11 +4873,23 @@ viewportContextMenu.addEventListener('keydown', event => {
     items[(current + delta + items.length) % items.length]?.focus();
   }
 });
+viewportViewMenu.addEventListener('keydown', event => {
+  const items = [...viewportViewMenu.querySelectorAll('.context-menu-item')];
+  const current = items.indexOf(document.activeElement);
+  if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); closeViewportViewMenu({ restoreFocus:true }); return; }
+  if (event.key === 'ArrowRight' || event.key === 'ArrowLeft' || event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+    event.preventDefault(); event.stopPropagation();
+    const columns = 2;
+    const delta = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : event.key === 'ArrowDown' ? columns : -columns;
+    items[(current + delta + items.length) % items.length]?.focus();
+  }
+});
 document.addEventListener('pointerdown', event => {
   if (!viewportContextMenu.hidden && !viewportContextMenu.contains(event.target)) closeViewportContextMenu();
+  if (!viewportViewMenu.hidden && !viewportViewMenu.contains(event.target)) closeViewportViewMenu();
 }, true);
-window.addEventListener('blur', () => closeViewportContextMenu());
-window.addEventListener('resize', () => closeViewportContextMenu());
+window.addEventListener('blur', () => { closeViewportContextMenu(); closeViewportViewMenu(); });
+window.addEventListener('resize', () => { closeViewportContextMenu(); closeViewportViewMenu(); });
 
 $('modelFile').addEventListener('change', e => { const f = e.target.files?.[0]; if (f) loadModel(f); });
 $('saveProjectBtn').addEventListener('click', saveProject);
@@ -4643,8 +4973,9 @@ function deleteSelectedCurve() {
   selectedCurveIds.delete(c.id);
   disposeCurve(c);
   const nextSelectedId = activeCurveId(selectedCurveIds);
-  const nextSelected = curves.find(curve => curve.id === nextSelectedId) || curves[0] || null;
-  selectCurve(nextSelected, { enterEdit:true, preserveCurveSelection:selectedCurveIds.size > 0 });
+  const nextSelected = curves.find(curve => curve.id === nextSelectedId) || null;
+  if (nextSelected) selectCurve(nextSelected, { enterEdit:true, preserveCurveSelection:true });
+  else clearObjectSelection({ announce:false });
   setStatus(`${c.name} 삭제`);
   history.commit();
 }
@@ -4654,10 +4985,7 @@ function deleteSelectedProxy() {
   const proxy = selectedProxy;
   proxies = proxies.filter(item => item !== proxy);
   disposeProxy(proxy);
-  selectedProxy = null;
-  const next = proxies[0] || null;
-  if (next) selectProxy(next);
-  else selectCurve(curves[0] || null, { enterEdit:false });
+  clearObjectSelection({ announce:false });
   setStatus(`${proxy.name} 삭제`);
   history.commit();
 }
@@ -4979,6 +5307,40 @@ $('viewFrontBtn').addEventListener('click', () => setStandardView('front'));
 $('viewLeftBtn').addEventListener('click', () => setStandardView('left'));
 $('viewBackBtn').addEventListener('click', () => setStandardView('back'));
 $('viewTopBtn').addEventListener('click', () => setStandardView('top'));
+$('viewCubeHome').addEventListener('click', event => {
+  event.preventDefault(); event.stopPropagation();
+  setViewCubeHover(null);
+  setStandardView('perspective');
+});
+viewCubeRenderer.domElement.addEventListener('pointermove', event => {
+  if (!updateViewCubeDrag(event)) setViewCubeHover(viewCubeTargetAtEvent(event));
+});
+viewCubeRenderer.domElement.addEventListener('pointerleave', () => { if (!viewCubeDrag) setViewCubeHover(null); });
+viewCubeRenderer.domElement.addEventListener('pointerdown', beginViewCubeDrag);
+viewCubeRenderer.domElement.addEventListener('pointerup', finishViewCubeDrag);
+viewCubeRenderer.domElement.addEventListener('pointercancel', finishViewCubeDrag);
+viewCubeRenderer.domElement.addEventListener('click', event => {
+  event.preventDefault(); event.stopPropagation();
+  if (suppressViewCubeClick) { suppressViewCubeClick = false; return; }
+  applyViewCubeTarget(viewCubeTargetAtEvent(event));
+});
+viewCubeRenderer.domElement.addEventListener('contextmenu', event => event.preventDefault());
+viewCubeRenderer.domElement.addEventListener('keydown', event => {
+  const views = {
+    ArrowUp:'top', ArrowDown:'bottom', ArrowLeft:'left', ArrowRight:'right'
+  };
+  if (event.key === 'Enter' || event.key === ' ' || event.key === 'Home') {
+    event.preventDefault();
+    setViewCubeHover(null);
+    setStandardView('perspective');
+    return;
+  }
+  const viewName = views[event.key];
+  if (!viewName) return;
+  event.preventDefault();
+  setViewCubeHover(null);
+  setStandardView(viewName);
+});
 $('undoBtn').addEventListener('click', () => { const message = history.undo(); setStatus(message || 'Undo할 작업이 없습니다.'); });
 $('redoBtn').addEventListener('click', () => { const message = history.redo(); setStatus(message || 'Redo할 작업이 없습니다.'); });
 
@@ -5087,11 +5449,38 @@ document.addEventListener('keydown', e => {
     setStatus(message || 'Redo할 작업이 없습니다.');
     return;
   }
+  if (e.key === 'Escape' && !viewportViewMenu.hidden) { e.preventDefault(); closeViewportViewMenu({ restoreFocus:true }); return; }
   if (e.key === 'Escape' && directViewportDrag) { e.preventDefault(); finishDirectViewportMove(null, true); return; }
   if (e.key === 'Escape' && selectionDrag) { e.preventDefault(); finishSelectionRegion(null, true); return; }
   if (e.key === 'Escape' && mode === 'draw') { e.preventDefault(); cancelLineCreation(); return; }
   if (e.code === 'CapsLock' && mode === 'draw') { e.preventDefault(); toggleDrawCameraOverride(); return; }
   if (isTypingTarget(e.target)) return;
+  if (!viewportViewMenu.hidden) {
+    const viewName = viewportViewFromShortcut(e.key, { menuOpen:true });
+    if (viewName && !commandKey && !e.altKey) {
+      e.preventDefault();
+      applyViewportView(viewName);
+      closeViewportViewMenu({ restoreFocus:true });
+      return;
+    }
+    if ((e.key === 'v' || e.key === 'V') && !commandKey && !e.altKey) {
+      e.preventDefault();
+      closeViewportViewMenu({ restoreFocus:true });
+      return;
+    }
+    if (!commandKey && !e.altKey && e.key.length === 1) { e.preventDefault(); return; }
+  }
+  if ((e.key === 'v' || e.key === 'V') && !commandKey && !e.altKey) {
+    e.preventDefault();
+    openViewportViewMenu();
+    return;
+  }
+  const viewportViewName = !commandKey && !e.altKey ? viewportViewFromShortcut(e.key) : null;
+  if (viewportViewName) {
+    e.preventDefault();
+    applyViewportView(viewportViewName);
+    return;
+  }
   if (referenceImageTransformTool !== 'none' && referenceImageRuntime[activeReferenceImageView]?.plane) {
     if (e.key === 'w' || e.key === 'W') { e.preventDefault(); setReferenceImageTransformTool('translate'); return; }
     if (e.key === 'e' || e.key === 'E') { e.preventDefault(); setReferenceImageTransformTool('rotate'); return; }
@@ -5130,7 +5519,13 @@ document.addEventListener('keydown', e => {
   }
 });
 
-function animate() { requestAnimationFrame(animate); orbit.update(); renderer.render(scene, camera); }
+function animate() {
+  requestAnimationFrame(animate);
+  orbit.update();
+  syncViewCubeOrientation();
+  renderer.render(scene, camera);
+  viewCubeRenderer.render(viewCubeScene, viewCubeCamera);
+}
 initNumericScrubbers(document, {
   onStart: ({ label }) => { history.begin(`${label} 수치 조정`); setStatus(`${label} · 좌우 드래그로 값 조정 · Shift 미세 · Ctrl/⌘ 정밀`); },
   onEnd: ({ label, value }) => { history.commit(); setStatus(`${label}: ${value}`); }
@@ -5162,6 +5557,19 @@ if (new URLSearchParams(location.search).has('selftest')) {
       }
       return {
         mode,
+        activeStandardView,
+        cameraProjection:camera.isOrthographicCamera ? 'orthographic' : 'perspective',
+        cameraDirection:camera.position.clone().sub(orbit.target).normalize().toArray(),
+        viewCubeVisible:!!viewCubeRenderer.domElement.offsetParent,
+        viewCubeHoverKind:viewCubeHoverTarget?.kind || null,
+        viewCubeHoverLabel:viewCubeHoverTarget?.label || null,
+        viewCubeDragging:!!viewCubeDrag,
+        viewportViewMenuVisible:!viewportViewMenu.hidden,
+        viewportViewMenuItems:[...viewportViewGrid.querySelectorAll('[data-viewport-view]')].map(button => ({
+          viewName:button.dataset.viewportView,
+          label:button.textContent.trim(),
+          active:button.classList.contains('active')
+        })),
         axisGuidesEnabled,
         axisGuidesVisible:axisGuideGroup.visible && axisGuideLines.some(line => line.visible),
         transformHelperVisible:transformControls.getHelper().visible,

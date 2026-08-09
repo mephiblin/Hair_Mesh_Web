@@ -15,7 +15,7 @@ browser_regression: tests/viewport-regression.mjs
 project_format: .hairmesh.json, version 1
 external_runtime: three@0.180.0 via jsDelivr
 default_branch: master
-current_node_contracts: 29
+current_node_contracts: 31
 current_browser_self_checks: 24
 ```
 
@@ -71,11 +71,13 @@ line_min_points: 2
 editable_curve: visible == true && locked == false
 editable_proxy: visible == true && locked == false
 viewport_pickable_root: visible == true && locked == false; Scene Explorer remains selectable for unlock
-active_root_object: selectedCurve XOR selectedProxy
+active_root_object: selectedCurve와 selectedProxy는 상호 배타적이며 둘 다 null인 무선택 상태가 유효
+empty_root_selection: orbit/transform 빈 LMB는 root/control 선택과 gizmo를 해제; edit/ffd 빈 LMB는 root를 유지하고 sub-control만 해제
 modify_context: none XOR curve XOR proxy
 point_multi_selection: Ctrl/Cmd + active-curve anchor toggles membership, empty selection allowed
 control_region_selection: left-to-right Window, right-to-left Crossing; Ctrl add, Alt remove
 max_viewport_navigation: MMB pan, Alt+MMB orbit, Ctrl+Alt+MMB zoom, wheel zoom
+max_viewport_views: direct T/B/F/L/P/U; V opens POV menu; V then K selects Back; disabled for typing targets
 axis_lines_scope: toggle long constraint lines only; keep the standard XYZ transform gizmo visible and interactive
 curve_multi_selection: Ctrl/Cmd + Scene Explorer row toggles membership, latest added is active
 ready_live_mesh: meshEnabled && meshStatus == "ready" && topology exists
@@ -92,7 +94,8 @@ viewport_reference_images: session-only texture planes; persist alignment and fi
 viewport_reference_image_visibility: visible in perspective and standard views; optional per-plane back-face culling
 viewport_reference_image_transform: independent position/rotation/scale, direct TransformControls, UV horizontal flip
 viewport_environment: background/FOV/grid/directional/fill persisted, MatCap unaffected by lights
-standard_view_projection: Persp always perspective; Ortho Views defaults ON for Front/Left/Back/Top and is persisted
+standard_view_projection: Persp and ViewCube edge/corner/Home are perspective; Ortho Views defaults ON for six face views and is persisted; ViewCube LMB drag preserves the current projection/target as a custom free view
+view_cube: camera inverse-quaternion display; 6 face snaps honor Ortho Views, edge/corner snaps use perspective, Home restores perspective; global POV keys route through applyViewportView
 export_topology: preserve logical quad/ngon faces
 proxy_export: include visible proxy topology beside visible ready curve meshes
 proxy_surface_placement: visible Reference/Proxy nearest raycast hit
@@ -121,12 +124,12 @@ resource_cleanup: dispose removed geometry and material
 2. 2개 이상 Point Line을 완료하고 Point/Handle 편집을 Undo/Redo한다.
    - 같은 Curve의 Anchor를 Ctrl/⌘ 클릭해 추가/해제하고, Curve 행도 2개 이상 다중 선택 후 활성 행 전환과 전체 해제를 확인한다.
 3. Ribbon과 Tube를 생성하고 제한 경계에서 Live 상태와 topology를 확인한다.
-4. Box/Sphere/Quad Sphere/Cylinder를 생성하고 Modify 문맥, 세그먼트 변경, transform, Proxy 표면 직접 Move drag, visibility/lock, clone/delete를 확인한다. Axis Lines OFF에서도 기본 XYZ gizmo가 남아 있는지 확인하고, FFD 2/4/8 추가, Window/Crossing·Ctrl/Alt 선택, 선택 전체의 노란 표시, 다중 Point 직접/기즈모 Move, Edit/Finish 편집 토글, FFD 상태에서 다른 Proxy viewport 선택, stack reorder/ON/OFF/reset/remove·Undo/Redo와 Proxy Surface Line 생성을 함께 확인한다. Proxy/Curve RMB 메뉴도 실제 포인터 대상과 동일한 panel command 결과를 내야 한다.
+4. Box/Sphere/Quad Sphere/Cylinder를 생성하고 Modify 문맥, 세그먼트 변경, transform, Proxy 표면 직접 Move drag, visibility/lock, clone/delete를 확인한다. Select/Object 모드의 빈 Viewport 클릭과 단일 삭제 뒤에는 무선택·`NONE` Modify·gizmo 해제가 유지되어야 한다. Axis Lines OFF에서도 기본 XYZ gizmo가 남아 있는지 확인하고, FFD 2/4/8 추가, Window/Crossing·Ctrl/Alt 선택, 선택 전체의 노란 표시, 다중 Point 직접/기즈모 Move, Edit/Finish 편집 토글, FFD 상태에서 다른 Proxy viewport 선택, stack reorder/ON/OFF/reset/remove·Undo/Redo와 Proxy Surface Line 생성을 함께 확인한다. Proxy/Curve RMB 메뉴도 실제 포인터 대상과 동일한 panel command 결과를 내야 한다.
 5. Brush fixture를 Import하여 Sweep하고 저장 후 다시 연다.
 6. 숨김/잠금 Curve와 Proxy가 포인터, 숫자 입력, 단축키로 수정되지 않는지 확인한다. 잠긴 객체는 Viewport LMB·RMB·직접 drag·Edit/FFD click-through로 선택되지 않아야 하며 Scene Explorer에서는 선택·잠금 해제가 가능해야 한다.
 7. 프로젝트 저장/열기와 새로고침 자동 복구를 확인한다.
 8. 관련 변경이면 Curve/Proxy OBJ·FBX를 대상 DCC에 Import한다.
-9. Display 변경이면 Hair/Reference preset, 다중 Reference Mesh 숨김/재질/텍스처, 조명 reset, Wire Only/Surface + Wire, Wire color, Front/Left/Back Plane의 Perspective 표시·Move/Rotate/Scale·Back-face Cull·Flip·파일 재선택, Ortho Views ON/OFF와 표준 뷰·FOV disabled·picking, Background/FOV/Grid와 Recovery를 확인한다.
+9. Display 변경이면 Hair/Reference preset, 다중 Reference Mesh 숨김/재질/텍스처, 조명 reset, Wire Only/Surface + Wire, Wire color, Front/Left/Back Plane의 Perspective 표시·Move/Rotate/Scale·Back-face Cull·Flip·파일 재선택, Ortho Views ON/OFF와 표준 뷰·FOV disabled·picking, `T/B/F/L/P/U`와 `V→K`, ViewCube 현재 방향/6면/edge/corner/좌클릭 drag/Home/방향키/1024px 배치와 우하단 선택 배지 분리, Background/FOV/Grid와 Recovery를 확인한다.
 
 ## 8. 탐색 명령
 

@@ -70,6 +70,12 @@ Viewport RMB commands must resolve the object under the pointer, respect hidden/
 
 Edit-locked Curve and Proxy roots must be filtered by `canPickViewportObject()` before every Viewport raycast list is built. This applies to LMB selection, RMB menus, Proxy direct drag, and Edit/FFD click-through. Do not disable Scene Explorer selection because it is the recovery path for inspecting and unlocking the object.
 
+Treat no active Curve or Proxy as a valid root-selection state. Empty LMB in Select/Object or root Transform mode and deletion of a singly selected root must clear both roots, sub-control selections, Scene highlight, Modify context, lattice, and gizmo through `clearObjectSelection()`; never fall back to `curves[0]` or `proxies[0]`. In `edit`/`ffd`, an empty click clears only the sub-control selection so the user can continue editing the active root.
+
+Keep the ViewCube in an independent overlay renderer so its pointer and keyboard input cannot enter the main canvas selection routes. Its root orientation is the inverse active-camera quaternion. A short LMB click snaps; an LMB drag past the threshold orbits freely around the existing target and preserves the active Perspective/Orthographic projection. Six face snaps honor Ortho Views, edge/corner snaps and Home use Perspective, and no ViewCube action may mutate object selection or History. Preserve keyboard focus through the visible direction label without drawing a border around the canvas, compact-viewport bounds, and a visibly separate bottom-right root-selection badge.
+
+Preserve the 3ds Max point-of-view shortcut map outside typing fields: direct `T` Top, `B` Bottom, `F` Front, `L` Left, `P` Perspective, `U` User Orthographic; `V` opens the Viewport Views menu and `V` then `K` selects Back. `P`/`U` preserve the current viewing angle, while ViewCube Home resets the direction. Keep `src/viewport/view-shortcuts.js`, the visible menu keycaps, README, feature docs, and browser regression synchronized whenever this routing changes.
+
 For Proxy/FFD changes, acceptance must include Window/Crossing plus Ctrl/Alt control selection, a real multi-control direct or gizmo drag, one-step Undo/Redo, stack ON/OFF or reorder, project round-trip, Proxy-only Surface Line placement, and final baked Export topology. For viewport-input changes, also verify MMB Pan, Alt+MMB Orbit, Ctrl+Alt+MMB Zoom, wheel zoom, and that object/control picking still works.
 
 Report checks actually run. Keep commit and push actions conditional on explicit user authorization.

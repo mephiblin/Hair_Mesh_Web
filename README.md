@@ -17,7 +17,8 @@ Hair Mesh Web은 브라우저에서 Bézier 가이드를 그리고, 가이드를
 - 하나의 Reference 파일 안의 여러 Mesh를 개별 표시/숨김하고 재질·이미지 텍스처 지정
 - 원본 텍스처를 유지하면서 텍스처 없는 검은 재질만 밝히는 Reference `Auto` 표시
 - Viewport 배경색, Perspective Camera FOV, Ground Grid, 환경광과 방향광 조정
-- `Ortho Views` 토글로 Front / Left / Back / Top의 FOV 원근 왜곡 제거
+- `Ortho Views` 토글로 Front / Left / Back / Top과 ViewCube 6면의 FOV 원근 왜곡 제거
+- 우측 상단 3ds Max식 ViewCube 방향 표시, 좌클릭 드래그 자유 회전, `T/B/F/L/P/U` 시점 키와 `V` Viewport Views 메뉴
 - AI 처리 없이 Front / Left / Back 이미지를 실제 3D Plane Mesh로 배치하고 Move/Rotate/Scale
 - Reference 전용 Wire Only / Surface + Wire와 독립 선 색상
 - Quad/N-gon OBJ 및 실험적 FBX 7.4 ASCII 출력
@@ -64,7 +65,8 @@ HTML 파일을 직접 더블클릭하는 방식은 ES Module/CORS 제한 때문�
 6. `Apply / Rebuild Live Mesh`를 누릅니다.
 7. `Display → Viewport Material`에서 전체 Reference 재질을 고르고, `Reference Objects`에서 Mesh별 표시·재질·텍스처를 조정합니다.
 8. `Display → Viewport Reference Images`에서 Front / Left / Back 이미지를 각각 불러옵니다. 카드를 누르면 해당 Plane과 기준 뷰를 선택하며 Move/Rotate/Scale gizmo, Position/Rotation/Size 수치, Flip Horizontal, Back-face Cull, Opacity와 앞/뒤 레이어를 조정할 수 있습니다. Plane은 Perspective에서도 그대로 보입니다.
-9. 상단 `Ortho Views`를 켜면 Front / Left / Back / Top이 실제 Orthographic Camera로 전환되어 깊이에 따른 크기 왜곡이 사라집니다. `Persp`는 항상 Perspective며, 토글을 끄면 표준 뷰에서도 FOV를 사용합니다.
+9. 상단 `Ortho Views`를 켜면 Front / Left / Back / Top 버튼과 ViewCube의 6면이 실제 Orthographic Camera로 전환되어 깊이에 따른 크기 왜곡이 사라집니다. `Persp`, ViewCube 모서리·꼭짓점과 Home은 Perspective며, 토글을 끄면 모든 표준 뷰에서도 FOV를 사용합니다.
+   우측 상단 ViewCube는 현재 카메라 회전을 실시간 표시합니다. 큐브를 좌클릭 드래그하면 현재 주시점과 Perspective/Orthographic 투영을 유지한 채 자유 회전하고, 짧게 클릭하면 면은 Front/Back/Left/Right/Top/Bottom으로, 모서리나 꼭짓점은 해당 사선 Perspective로 전환됩니다. 아래 `⌂`는 Perspective Home입니다. ViewCube 초점에서는 방향키로 Top/Bottom/Left/Right, `Enter`로 Home을 선택합니다. 앱 전역에서는 3ds Max식 `T/B/F/L/P/U` 시점 키를 사용하며 `V`로 Viewport Views 메뉴를 열 수 있습니다. 우하단 `No Selection`은 ViewCube 상태가 아니라 현재 선택 객체가 없다는 표시이며, 객체를 선택하면 그 이름/하위 선택 정보로 바뀝니다.
 10. `Display → Viewport`에서 배경색, Perspective Camera FOV, Grid와 조명을 조정합니다.
 11. `Save Project`로 편집본을 보존하거나 `Export` 탭에서 OBJ/FBX를 출력합니다.
 
@@ -90,6 +92,10 @@ Create·Modify·Display 탭의 내부 항목은 처음에 모두 닫힌 상태�
 | `W / E / R` | 활성 Curve/Proxy/Point 또는 Reference Plane의 Move / Rotate / Scale. FFD Point는 `W` Move만 사용 |
 | `Q` | 3ds Max식 Select/Object 모드 또는 Reference Plane gizmo 숨김 |
 | `Z` | 선택 객체 Frame |
+| `T / B / F / L` | Top / Bottom / Front / Left 표준 뷰 |
+| `P` | 현재 viewing angle을 유지하며 Perspective로 전환 |
+| `U` | 현재 viewing angle을 유지하며 User Orthographic으로 전환 |
+| `V` | 마우스 위치에 Viewport Views 메뉴 열기. 메뉴에서 `P/U/F/K/T/B/L`, `K`는 Back |
 | `I` | Point Insert 모드 |
 | `Shift + G` | 긴 축 가이드만 표시 전환. 기본 XYZ Transform gizmo는 유지 |
 | `Esc` | 진행 중인 Line 생성 취소 |
@@ -99,7 +105,7 @@ Create·Modify·Display 탭의 내부 항목은 처음에 모두 닫힌 상태�
 
 | 입력 | 동작 |
 | --- | --- |
-| `LMB 클릭` | Object 또는 Control 선택 |
+| `LMB 클릭` | Object 또는 Control 선택. Select/Object 모드의 빈 공간 클릭은 객체 선택 해제 |
 | `LMB 드래그` | FFD/Curve Control 사각 영역 선택. 좌→우 Window, 우→좌 Crossing |
 | `RMB` | 포인터 아래 Proxy/Curve를 선택하고 대상별 Viewport 메뉴 열기 |
 | `Ctrl/⌘ + LMB` | 선택 추가, Control 클릭은 추가/해제 토글 |
@@ -112,6 +118,8 @@ Create·Modify·Display 탭의 내부 항목은 처음에 모두 닫힌 상태�
 | Mouse Wheel | Zoom |
 
 사각 영역 선택은 현재 Curve Point와 FFD Control을 대상으로 합니다. Proxy Object는 Viewport 클릭 또는 Scene Explorer에서 선택하며, `W` 상태에서는 선택 Proxy 표면을 직접 드래그해 이동합니다.
+
+Select/Object 모드에서 빈 Viewport를 클릭하면 Curve/Proxy 활성 선택, 노란 강조와 Transform gizmo가 모두 해제되고 Modify는 `NONE` 문맥으로 바뀝니다. 단일 Curve/Proxy를 삭제해도 남은 첫 객체를 임의로 선택하지 않습니다. Point/FFD 편집 모드의 빈 클릭은 root 객체를 유지한 채 하위 Control 선택만 해제하므로, root까지 해제하려면 `Q`로 Select/Object 모드로 나온 뒤 빈 공간을 클릭합니다.
 
 Scene Explorer에서 편집 잠금한 Curve/Proxy는 Viewport LMB·RMB 선택과 직접 드래그 대상에서 제외됩니다. 잠긴 객체의 상태 확인과 잠금 해제는 Scene Explorer에서 할 수 있습니다.
 
@@ -127,9 +135,9 @@ npm run check
 npm run test:viewport
 ```
 
-`npm run test:viewport`는 임시 로컬 서버와 Chromium을 자동으로 실행해 Axis Lines/기본 XYZ gizmo 분리, Proxy 직접 drag/Undo, FFD 다중 선택의 노란 표시·동시 drag·편집 토글, FFD 모드의 Proxy 선택 전달, Proxy/Curve 우클릭 메뉴 명령, 잠긴 Curve/Proxy의 Viewport LMB·RMB 선택 차단과 1024px 레이아웃을 검사합니다. 브라우저 핵심 진단은 실행 주소 뒤에 `?selftest=1`을 붙여 확인할 수 있으며 결과는 개발자 도구의 `globalThis.__CURVE_TOOL_SELF_TEST__`, 회귀 진단 상태는 `globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__`에서 조회할 수 있습니다.
+`npm run test:viewport`는 임시 로컬 서버와 Chromium을 자동으로 실행해 3ds Max식 `T/B/F/L/P/U`와 `V→K`, 입력 필드 단축키 차단, ViewCube 면/드래그/키보드/Home과 Ortho 연동, ViewCube와 우하단 선택 배지 분리, 빈 공간 클릭·단일 삭제 뒤 무선택 상태, Axis Lines/기본 XYZ gizmo 분리, Proxy 직접 drag/Undo, FFD 다중 선택의 노란 표시·동시 drag·편집 토글, FFD 모드의 Proxy 선택 전달, Proxy/Curve 우클릭 메뉴 명령, 잠긴 Curve/Proxy의 Viewport LMB·RMB 선택 차단과 1024px 레이아웃을 검사합니다. 브라우저 핵심 진단은 실행 주소 뒤에 `?selftest=1`을 붙여 확인할 수 있으며 결과는 개발자 도구의 `globalThis.__CURVE_TOOL_SELF_TEST__`, 회귀 진단 상태는 `globalThis.__CURVE_TOOL_RUNTIME_DIAGNOSTICS__`에서 조회할 수 있습니다.
 
-현재 기능 기준 커밋 `969a05e`에서 `npm run check` 29/29, 브라우저 self-test 24/24, `npm run test:viewport`와 GitHub Actions Validate(run `31267391750`) 통과를 확인했습니다.
+원격 기능 기준 커밋 `969a05e`는 GitHub Actions Validate(run `31267391750`)를 통과했습니다. ViewCube·3ds Max POV 키와 무선택 변경을 포함한 현재 작업 트리는 `npm run check` 31/31, 브라우저 self-test 24/24와 `npm run test:viewport` 통과를 확인했습니다.
 
 ## 저장소 구조
 
@@ -157,7 +165,7 @@ Hair_Mesh_Web/
 - FBX 출력은 ASCII 7.4 실험 기능이므로 대상 DCC에서 반드시 Import 결과를 확인해야 합니다.
 - 기준 모델은 세션 중 표면 배치용이며 `.hairmesh.json`에 직렬화되지 않습니다.
 - Front / Left / Back 참조 이미지는 Perspective를 포함한 모든 View에서 보이는 세션 전용 3D Plane Mesh입니다. `.hairmesh.json`에는 이미지 데이터 대신 파일명 힌트와 3D Transform·표시·반전·Back-face Cull 값만 저장됩니다.
-- `Ortho Views`는 Front / Left / Back / Top에만 적용되고 `Persp`는 항상 Perspective Camera를 사용합니다. Orthographic 상태에서는 Camera FOV 입력이 비활성화됩니다.
+- `Ortho Views`는 Front / Left / Back / Top 버튼과 ViewCube의 6면에 적용됩니다. `Persp`, ViewCube 모서리·꼭짓점과 Home은 Perspective Camera를 사용하며 Orthographic 상태에서는 Camera FOV 입력이 비활성화됩니다.
 - Viewport Material과 수동 Reference 텍스처는 표시 전용입니다. Import 원본 재질은 보존되며 OBJ/FBX Export 형상에는 포함되지 않습니다.
 - FBX/GLTF Loader가 복원한 내장/해결된 텍스처는 `Original`/`Auto`에서 유지됩니다. 단일 파일 선택으로 찾을 수 없는 외부 sidecar 이미지는 `Reference Objects → Color Texture`에서 Mesh별로 다시 지정하십시오.
 - 메시 예산은 Path Segments `2–512`, Tube Sides `3–64`로 제한됩니다.

@@ -4,7 +4,7 @@
 > 대상: `Curve Mesh Hair Tool v4` (`curve_mesh_hair_tool_v4.html`)
 > 목적: 현재 기능을 Blender의 공식 문서와 공개 소스에 대입하고, 불안정 가능성이 있는 부분과 다음 개발 우선순위를 정리한다.
 
-> **구현 동기화 · 2026-08-09:** 이 문서는 Blender 비교 조사 근거를 보존하는 자료입니다. 조사 후 프로젝트 저장/복구, 좌우 Handle Type, 회전 최소화 Sweep Frame, Reference MatCap·재질·텍스처·Wire·3방향 Plane, Viewport 환경/조명/정사영 표준 뷰, Point/Curve/FFD 다중 선택, Proxy primitive와 FFD stack, 3ds Max식 Viewport 입력, FFD 선택 피드백·편집 종료, 대상별 RMB 메뉴와 잠긴 root의 Viewport 선택 차단이 `master`에 반영되었습니다. 현재 코드 계약은 [`doc/CODEX_INDEX.md`](doc/CODEX_INDEX.md)와 [`doc/features/`](doc/features/)를 우선합니다.
+> **구현 동기화 · 2026-08-09:** 이 문서는 Blender 비교 조사 근거를 보존하는 자료입니다. 조사 후 프로젝트 저장/복구, 좌우 Handle Type, 회전 최소화 Sweep Frame, Reference MatCap·재질·텍스처·Wire·3방향 Plane, Viewport 환경/조명/정사영 표준 뷰, Point/Curve/FFD 다중 선택, Proxy primitive와 FFD stack, 3ds Max식 Viewport 입력·무선택 상태·ViewCube, FFD 선택 피드백·편집 종료, 대상별 RMB 메뉴와 잠긴 root의 Viewport 선택 차단이 구현되었습니다. 현재 코드 계약은 [`doc/CODEX_INDEX.md`](doc/CODEX_INDEX.md)와 [`doc/features/`](doc/features/)를 우선합니다.
 
 ## 1. 결론 요약
 

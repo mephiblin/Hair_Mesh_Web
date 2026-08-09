@@ -27,6 +27,8 @@
 - `src/viewport/reference-wireframe.js`: Wire Off/Only/Overlay와 독립 선 색상 정책을 분리했습니다.
 - `src/viewport/reference-object-policy.js`: Reference Mesh별 material mode와 어두운 원본의 Auto fallback을 분리했습니다.
 - `src/viewport/viewport-settings.js`: 배경색과 Camera FOV 정규화를 분리했습니다.
+- `src/viewport/view-cube.js`: ViewCube face/edge/corner hit 분류, camera 방향/up-vector와 drag 회전량 정책을 소형 Three.js 표시 계층에서 분리했습니다.
+- `src/viewport/view-shortcuts.js`: 3ds Max식 direct POV 키와 `V` 메뉴 전용 키 매핑/표시 항목을 DOM event wiring에서 분리했습니다.
 - `src/viewport/reference-images.js`: Front/Left/Back Plane 설정, 기본 layout과 임의 3D transform 정규화를 분리했습니다.
 - `src/viewport/region-selection.js`: 좌→우 Window와 우→좌 Crossing control hit 판정을 분리했습니다.
 
@@ -45,5 +47,5 @@
 - geometry 모듈은 DOM을 직접 참조하지 않습니다.
 - UI 모듈은 Three.js 객체를 직접 수정하지 않고 명령 또는 표준 이벤트를 전달합니다.
 - 각 단계는 기존 동작을 브라우저에서 확인한 뒤 별도 커밋으로 진행합니다.
-- Viewport pointer/gizmo/context-menu 단계는 `npm run test:viewport`로 Axis Lines/기본 XYZ helper 분리, Proxy drag/Undo, FFD 선택 표시·다중 drag·편집 토글/Scene click-through, Proxy/Curve RMB command와 잠긴 root의 LMB/RMB 제외를 확인합니다.
+- Viewport pointer/gizmo/context-menu 단계는 `npm run test:viewport`로 3ds Max `T/B/F/L/P/U`·`V→K`와 typing 차단, ViewCube face/drag/keyboard/Home·Ortho/compact bounds와 선택 배지 분리, 빈 공간/단일 삭제 뒤 무선택, Axis Lines/기본 XYZ helper 분리, Proxy drag/Undo, FFD 선택 표시·다중 drag·편집 토글/Scene click-through, Proxy/Curve RMB command와 잠긴 root의 LMB/RMB 제외를 확인합니다.
 - 단일 HTML의 대규모 일괄 분해 대신 기능 단위로 이동해 회귀 원인을 좁힙니다.
